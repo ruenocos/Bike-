@@ -1,6 +1,6 @@
 extends PlayerState
 ## Airborne: gravity, a little air steering, lean to pitch the bike,
-## right-stick tricks, and grind snapping.
+## right-stick tricks, grind snapping, and wall rides.
 
 var _pre_move_velocity: Vector3 = Vector3.ZERO
 
@@ -46,3 +46,7 @@ func physics_update(delta: float) -> void:
 
 	if player.is_on_floor():
 		machine.transition_to(&"Land", {"velocity": _pre_move_velocity})
+		return
+	var wall: Vector3 = player.find_wall_ride(_pre_move_velocity)
+	if wall != Vector3.ZERO:
+		machine.transition_to(&"WallRide", {"normal": wall, "velocity": _pre_move_velocity})

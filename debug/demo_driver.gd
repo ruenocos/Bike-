@@ -56,17 +56,24 @@ const TIMELINE: Array[Array] = [
 	[9.820, &"grind", 1.00],
 	[9.920, &"grind", 0.00],
 	[10.100, &"steer_right", 0.00],
-	[12.000, &"brake", 1.00],
+	# After the rail: swing right onto the WallKicker, wall ride, hop off.
+	[11.450, &"steer_right", 1.00],
+	[12.000, &"steer_right", 0.00],
+	[12.300, &"steer_left", 1.00],
+	[12.450, &"steer_left", 0.00],
+	[14.050, &"hop", 1.00],
+	[14.100, &"hop", 0.00],
+	[15.000, &"brake", 1.00],
 	[20.000, &"brake", 0.00],
 ]
 
 ## [time, file name] for --demo-shots.
 const SHOTS: Array[Array] = [
-	[4.900, "v0.2_trick_whirl.png"],
-	[6.700, "v0.2_speed_lines.png"],
-	[8.470, "v0.2_trick_frontloop.png"],
-	[10.600, "v0.2_grind.png"],
-	[13.300, "v0.2_combo_banked.png"],
+	[5.400, "v0.3_hud_stacked_whirl.png"],
+	[9.000, "v0.3_hud_stacked_frontloop.png"],
+	[10.500, "v0.3_grind_rail_glow.png"],
+	[13.600, "v0.3_wall_ride.png"],
+	[14.300, "v0.3_wall_hop_off.png"],
 ]
 
 var _time: float = 0.0
@@ -98,6 +105,7 @@ func _ready() -> void:
 		Events.bailed.connect(func() -> void: print("t=%5.2f BAILED" % _time))
 		Events.trick_completed.connect(func(trick_name: String, score: int) -> void: print("t=%5.2f TRICK %s +%d" % [_time, trick_name, score]))
 		Events.grind_started.connect(func() -> void: print("t=%5.2f GRIND" % _time))
+		Events.wall_ride_started.connect(func() -> void: print("t=%5.2f WALL RIDE" % _time))
 		Events.combo_banked.connect(func(score: int) -> void: print("t=%5.2f BANKED %d" % [_time, score]))
 
 

@@ -33,18 +33,50 @@ theme_override_fonts/font = SubResource("SystemFont_mono")
 theme_override_font_sizes/font_size = 18
 text = "debug"
 
+[node name="TrickLabel" type="Label" parent="."]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -400.0
+offset_top = 120.0
+offset_right = 400.0
+offset_bottom = 200.0
+pivot_offset = Vector2(400, 40)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 12
+theme_override_font_sizes/font_size = 60
+text = "FRONTLOOP  +300"
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="GradeLabel" type="Label" parent="."]
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -300.0
-offset_top = 140.0
-offset_right = 300.0
-offset_bottom = 240.0
-pivot_offset = Vector2(300, 50)
+offset_left = -400.0
+offset_top = 200.0
+offset_right = 400.0
+offset_bottom = 290.0
+pivot_offset = Vector2(400, 45)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 12
 theme_override_font_sizes/font_size = 72
 text = "PERFECT"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BankLabel" type="Label" parent="."]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -400.0
+offset_top = 290.0
+offset_right = 400.0
+offset_bottom = 360.0
+pivot_offset = Vector2(400, 35)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 12
+theme_override_font_sizes/font_size = 52
+text = "BANKED 944"
 horizontal_alignment = 1
 vertical_alignment = 1

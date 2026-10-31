@@ -41,6 +41,10 @@ extends Resource
 @export var hop_min_velocity: float = 5.0
 @export var hop_max_velocity: float = 9.5
 @export var hop_full_charge: float = 0.25
+## Hop direction: 0 = straight up, 1 = along the ground normal. Toward the normal
+## means a hop on a downhill slope pops off the slope instead of being cancelled
+## by it (0.7 = mostly along the normal).
+@export_range(0.0, 1.0) var hop_normal_blend: float = 0.7
 
 @export_group("Air")
 ## Pitch rate when leaning in the air (deg/s). Visual only for now.
@@ -111,6 +115,39 @@ extends Resource
 ## Small upward pop when riding off the end of a rail (m/s).
 @export var grind_exit_pop: float = 2.0
 
+@export_group("Wall ride")
+## A wall counts when its normal's y is within +-this (0.3 = within ~17 deg of vertical).
+@export var wall_ride_max_normal_y: float = 0.3
+## Speed along the wall needed to start a wall ride (m/s).
+@export var wall_ride_min_speed: float = 8.0
+## Below this speed along the wall you drop off (m/s).
+@export var wall_ride_fall_off_speed: float = 5.0
+## Gravity while on the wall, as a fraction of normal gravity.
+@export var wall_ride_gravity_scale: float = 0.3
+## Speed lost per second along the wall (m/s^2).
+@export var wall_ride_drag: float = 2.0
+## Longest a wall ride can last (s).
+@export var wall_ride_max_time: float = 1.6
+## Upward speed kept from the approach when hitting the wall (0.4 = 40%).
+@export var wall_ride_keep_vertical: float = 0.4
+## Upward speed added when you stick to the wall from the air (m/s).
+@export var wall_ride_entry_lift: float = 3.0
+## Upward speed when you steer into a wall from the ground (m/s). Lifts you up the wall.
+@export var wall_ride_ground_lift: float = 4.0
+## Push into the wall each tick so contact holds (m/s).
+@export var wall_ride_stick_velocity: float = 1.0
+## Steering into a wall while riding on the ground at least this hard starts a wall ride (0-1).
+@export var wall_ride_steer_threshold: float = 0.5
+## How far the bike tilts to the wall: 0 = upright, 1 = wheels flat on the wall.
+@export var wall_ride_tilt: float = 0.7
+## Hop off the wall: speed away from the wall and upward (m/s).
+@export var wall_ride_hop_away: float = 5.0
+@export var wall_ride_hop_up: float = 4.0
+## Small push away from the wall when the ride ends without a hop (m/s).
+@export var wall_ride_exit_push: float = 2.0
+## No new wall ride for this long after leaving one (s).
+@export var wall_ride_cooldown: float = 0.4
+
 @export_group("Combo")
 ## Combo banks after this long of plain riding (s).
 @export var combo_drop_time: float = 1.5
@@ -118,6 +155,7 @@ extends Resource
 @export var combo_multiplier_cap: int = 10
 @export var perfect_landing_score: int = 50
 @export var grind_score_per_second: float = 120.0
+@export var wall_ride_score_per_second: float = 150.0
 
 @export_group("Camera")
 @export var fov_base: float = 75.0

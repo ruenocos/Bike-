@@ -1,12 +1,21 @@
 extends CanvasLayer
 ## Top-left readout for tuning feel: speed, state, last landing, trick, combo.
-## Big centre text flashes landing grades, trick names and banked combos.
+## Big centre text flashes three stacked lines, each with its own timing so
+## one never overwrites another: trick / grind / wall ride on top, the landing
+## grade under it, banked combos at the bottom.
 ## Finds the player through the "player" group, so it works in any scene.
 
 @onready var label: Label = $Panel/Label
+@onready var trick_label: Label = $TrickLabel
 @onready var grade_label: Label = $GradeLabel
+@onready var bank_label: Label = $BankLabel
+
+## Each flash holds fully visible this long, then fades out (s).
+const FLASH_HOLD: float = 0.6
+const FLASH_FADE: float = 0.3
 
 var _player: Player
+var _tweens: Dictionary[Label, Tween] = {}
 
 
 func _ready() -> void:
@@ -14,7 +23,10 @@ func _ready() -> void:
 	Events.bailed.connect(_on_bailed)
 	Events.trick_completed.connect(_on_trick_completed)
 	Events.combo_banked.connect(_on_combo_banked)
-	grade_label.modulate.a = 0.0
+	Events.grind_started.connect(_on_grind_started)
+	Events.wall_ride_started.connect(_on_wall_ride_started)
+	for flash_label: Label in [trick_label, grade_label, bank_label]:
+		flash_label.modulate.a = 0.0
 
 
 func _process(_delta: float) -> void:
@@ -50,25 +62,38 @@ func _on_landed(grade: StringName) -> void:
 		&"sketchy": Color(1.0, 0.6, 0.15),
 		&"bail": Color(1.0, 0.35, 0.3),
 	}
-	_flash(String(grade).to_upper(), colors.get(grade, Color.WHITE))
+	_flash(grade_label, String(grade).to_upper(), colors.get(grade, Color.WHITE))
 
 
 func _on_bailed() -> void:
-	_flash("BAIL", Color(1.0, 0.35, 0.3))
+	_flash(grade_label, "BAIL", Color(1.0, 0.35, 0.3))
 
 
 func _on_trick_completed(trick_name: String, score: int) -> void:
-	_flash("%s  +%d" % [trick_name.to_upper(), score], Color(0.75, 1.0, 0.55))
+	_flash(trick_label, "%s  +%d" % [trick_name.to_upper(), score], Color(0.75, 1.0, 0.55))
+
+
+func _on_grind_started() -> void:
+	_flash(trick_label, "GRIND", Color(0.4, 0.95, 1.0))
+
+
+func _on_wall_ride_started() -> void:
+	_flash(trick_label, "WALL RIDE", Color(0.4, 0.95, 1.0))
 
 
 func _on_combo_banked(score: int) -> void:
-	_flash("BANKED %d" % score, Color(1.0, 0.85, 0.2))
+	_flash(bank_label, "BANKED %d" % score, Color(1.0, 0.85, 0.2))
 
 
-func _flash(text: String, color: Color) -> void:
-	grade_label.text = text
-	grade_label.modulate = color
-	grade_label.scale = Vector2(1.25, 1.25)
+## Pops the label in, holds it, fades it. A new flash on the same label
+## restarts it; the other labels keep their own tweens.
+func _flash(target: Label, text: String, color: Color) -> void:
+	if _tweens.has(target):
+		_tweens[target].kill()
+	target.text = text
+	target.modulate = color
+	target.scale = Vector2(1.25, 1.25)
 	var tween: Tween = create_tween().set_parallel(true).set_ignore_time_scale(true)
-	tween.tween_property(grade_label, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
-	tween.tween_property(grade_label, "modulate:a", 0.0, 0.5).set_delay(0.45)
+	tween.tween_property(target, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+	tween.tween_property(target, "modulate:a", 0.0, FLASH_FADE).set_delay(FLASH_HOLD)
+	_tweens[target] = tween

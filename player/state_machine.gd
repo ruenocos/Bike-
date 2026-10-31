@@ -1,7 +1,7 @@
 class_name PlayerStateMachine
 extends Node
 ## Runs one PlayerState at a time. States are the child nodes of this node,
-## and they are looked up by node name (Ride, Air, Land, Bail).
+## and they are looked up by node name (Ride, Air, Land, Grind, WallRide, Bail).
 
 signal state_changed(state_name: StringName)
 

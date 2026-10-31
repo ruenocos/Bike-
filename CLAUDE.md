@@ -59,11 +59,21 @@ Done (v0.2, phase 2 batch A):
 - Record: `<exe> --path . --write-movie <abs path>/v0.x.avi --fixed-fps 30 --quit-after 600 -- --demo --demo-shots=<abs dir>`
 
 Done (v0.2.1, forgiving landings, after Wons's v0.2 playtest "kept getting bail"): sketchy grade (orange flash), trick land tolerance, shorter bail + immunity, bail_min_impact, landing test harness. Debug overlay shows the last bail reason (angle or unfinished trick %).
-Note: a min-charge hop on the 12° slope at ~25 m/s doesn't leave the ground (hop is world-up, slope pulls the bike down as fast). Consider hopping along the ground normal.
+
+Done (v0.3, after Wons's v0.2.1 playtest "although very primitive, it felt fun to use"):
+- Hop fix: hop pops along a blend of ground normal and up (`hop_normal_blend` 0.7), and a hop turns floor snapping off until the next ground tick (the snap was what ate small hops on the slope). Min hop on the 12° slope at 25 m/s now lands PERFECT.
+- player/states/wall_ride.gd: from Air when hitting a wall (|normal.y| <= 0.3) with >= 8 m/s along it, or from Ride when steering into a wall at speed. Reduced gravity, speed bleeds, bike tilts to the wall, max 1.6 s. Hop = wall jump (away + up), else time/speed/lost wall -> Air, touching the floor -> Land. One combo action + 150 pts/s. All numbers in PlayerTuning "Wall ride" group.
+- Test track: Wall moved to z -265..-305 and made 5 m tall; WallKicker (angled 30° toward the wall) at x 6.8 z -272; runout extended to z -340.
+- rails/rail.gd (class Rail, on every rail Path3D): 0.12 m cyan emissive bar, posts every 5 m, glows brighter while within snap radius (Player._update_rail_highlight).
+- HUD (debug overlay): three stacked flash lines with their own timers (0.6 s hold + 0.3 s fade): trick / GRIND / WALL RIDE on top, landing grade in the middle, BANKED at the bottom.
+- Landing test: 20 scenarios (added 4 wall-ride cases: kicker -> wall ride -> hop off at 18 and 24 m/s, ride until it ends, steer into wall from the ground; plus `expect_landing` on the slope min hop).
+- Demo timeline: after the rail, swing right onto the WallKicker, wall ride ~0.9 s, hop off, brake. Grind + wall ride bank as one combo.
+- Fix: hitting a wall during a hit-stop tick (delta 0) gave NaN speed; ground_move skips the wall speed clamp then.
 
 ## Next tasks, in order
-1. Playtest v0.2.1 with gamepad: landing forgiveness, then trick flick feel (window/threshold), grind snap, combo pacing, speed line strength.
-2. Tune PlayerTuning (and trick .tres durations/scores) from playtest notes.
-3. WallRide state (wall on the test track at x=11.5).
+1. Playtest v0.3 with gamepad: wall ride entry (min speed, steer threshold), height/duration on the wall, wall-jump feel, rail glow readability, stacked HUD timing.
+2. Tune PlayerTuning (and trick .tres durations/scores) from playtest notes. Wall rides currently stay low (~1-1.5 m) and end by touching the floor before wall_ride_max_time; consider more entry lift or less wall gravity.
+3. Camera on walls: the spring arm hugs the wall during a wall ride; offset the camera away from the wall.
 4. Bail recovery: proper bail animation/ragdoll-lite and a quicker way back into flow.
-5. Trick/landing feedback: trick names get overwritten by the landing grade flash; real combo HUD in ui/.
+5. Real combo HUD in ui/ (the stacked flashes still live in the debug overlay).
+6. Riding into a wall on the ground at an angle kills nearly all speed (pre-existing ground_move clamp); make it a glancing slide.

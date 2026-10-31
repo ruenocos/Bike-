@@ -9,6 +9,9 @@ extends Node
 ## as [time, action, strength] (strength 0 releases), and whether a bail is
 ## the expected result. "hop_on_air" holds hop until the bike leaves the
 ## ground, then releases it: a perfectly timed coyote hop off a lip.
+## "expect_landing" fails the scenario if the bike never leaves the ground and
+## lands. Wall rides: "wall_min" is the shortest wall ride that passes (s),
+## "wall_hop_after" taps hop once the wall ride has lasted that long (s).
 
 const SCENARIOS: Array[Dictionary] = [
 	{"name": "flat deck hop, min charge", "pos": Vector3(0, 25.1, 12), "speed": 14.0,
@@ -20,7 +23,7 @@ const SCENARIOS: Array[Dictionary] = [
 	{"name": "flat deck hop, full charge, 3 m/s", "pos": Vector3(0, 25.1, 12), "speed": 3.0,
 		"inputs": [[0.2, &"hop", 1.0], [0.5, &"hop", 0.0]], "time": 2.0},
 	{"name": "slope hop, min charge", "pos": Vector3(0, 30, -90), "speed": 25.0,
-		"inputs": [[0.3, &"hop", 1.0], [0.31, &"hop", 0.0]], "time": 1.5},
+		"inputs": [[0.3, &"hop", 1.0], [0.31, &"hop", 0.0]], "time": 1.5, "expect_landing": true},
 	{"name": "slope hop, full charge", "pos": Vector3(0, 30, -90), "speed": 25.0,
 		"inputs": [[0.3, &"hop", 1.0], [0.6, &"hop", 0.0]], "time": 2.0},
 	{"name": "slope kicker, no input, 22 m/s", "pos": Vector3(0, 30, -58), "speed": 22.0,
@@ -50,11 +53,20 @@ const SCENARIOS: Array[Dictionary] = [
 		"inputs": [[0.2, &"hop", 1.0], [0.21, &"hop", 0.0], [0.3, &"trick_up", 1.0], [0.4, &"trick_up", 0.0],
 			[1.35, &"hop", 1.0], [1.36, &"hop", 0.0], [1.45, &"trick_up", 1.0], [1.55, &"trick_up", 0.0]],
 		"time": 2.4, "expect_bail": true},
+	# Wall rides on the runout wall (x 11.5) off the angled WallKicker.
+	{"name": "wall kicker -> wall ride -> hop off, 18 m/s", "pos": Vector3(1.8, 1, -263.3), "heading": -PI / 6.0, "speed": 18.0,
+		"inputs": [], "wall_min": 0.8, "wall_hop_after": 0.9, "expect_landing": true, "time": 4.0},
+	{"name": "wall kicker -> wall ride -> hop off, 24 m/s", "pos": Vector3(1.8, 1, -263.3), "heading": -PI / 6.0, "speed": 24.0,
+		"inputs": [], "wall_min": 0.8, "wall_hop_after": 0.9, "expect_landing": true, "time": 4.0},
+	{"name": "wall kicker -> wall ride until it ends, 20 m/s", "pos": Vector3(1.8, 1, -263.3), "heading": -PI / 6.0, "speed": 20.0,
+		"inputs": [], "wall_min": 0.8, "expect_landing": true, "time": 4.0},
+	{"name": "steer into wall on the ground, 16 m/s", "pos": Vector3(9.0, 1, -281), "heading": -PI / 12.0, "speed": 16.0,
+		"inputs": [[0.1, &"steer_right", 1.0], [0.5, &"steer_right", 0.0]], "wall_min": 0.8, "expect_landing": true, "time": 3.0},
 ]
 
 ## Landings this early in a scenario are just the drop onto the start point.
 const SETTLE_TIME: float = 0.15
-const ACTIONS: Array[StringName] = [&"hop", &"trick_up", &"pedal", &"brake", &"grind"]
+const ACTIONS: Array[StringName] = [&"hop", &"trick_up", &"pedal", &"brake", &"grind", &"steer_right"]
 
 var _player: Player
 var _index: int = -1
@@ -63,6 +75,10 @@ var _step: int = 0
 var _left_ground: bool = false
 var _landings: Array[String] = []
 var _bails: int = 0
+## Current and longest wall ride in this scenario (s), and the hop-off tap state.
+var _wall_time: float = 0.0
+var _wall_best: float = 0.0
+var _wall_hop_ticks: int = -1
 var _rows: PackedStringArray = PackedStringArray()
 var _failed: int = 0
 
@@ -99,6 +115,20 @@ func _physics_process(delta: float) -> void:
 		_left_ground = true
 		Input.action_release(&"hop")
 
+	if _player.state_machine.get_state_name() == &"WallRide":
+		_wall_time += delta
+		_wall_best = maxf(_wall_best, _wall_time)
+		if s.has("wall_hop_after") and _wall_hop_ticks < 0 and _wall_time >= float(s["wall_hop_after"]):
+			Input.action_press(&"hop")
+			_wall_hop_ticks = 0
+	else:
+		_wall_time = 0.0
+	# Hop fires on release, so let go two ticks after the tap.
+	if _wall_hop_ticks >= 0:
+		_wall_hop_ticks += 1
+		if _wall_hop_ticks == 2:
+			Input.action_release(&"hop")
+
 
 func _start_scenario() -> void:
 	var s: Dictionary = SCENARIOS[_index]
@@ -110,6 +140,9 @@ func _start_scenario() -> void:
 	_left_ground = false
 	_landings.clear()
 	_bails = 0
+	_wall_time = 0.0
+	_wall_best = 0.0
+	_wall_hop_ticks = -1
 
 	# Drop onto the ground under the start point.
 	var start: Vector3 = s["pos"]
@@ -149,9 +182,15 @@ func _finish_scenario() -> void:
 	var s: Dictionary = SCENARIOS[_index]
 	var expect_bail: bool = s.get("expect_bail", false)
 	var ok: bool = (_bails > 0) == expect_bail
+	if s.get("expect_landing", false) and _landings.is_empty():
+		ok = false
+	if s.has("wall_min") and _wall_best < float(s["wall_min"]):
+		ok = false
 	if not ok:
 		_failed += 1
 	var landings: String = ", ".join(_landings) if not _landings.is_empty() else "roll-in only"
+	if s.has("wall_min"):
+		landings = "WALL %.2fs, %s" % [_wall_best, landings]
 	_rows.append("%-4s | %-40s | %s" % ["ok" if ok else "FAIL", s["name"], landings])
 
 

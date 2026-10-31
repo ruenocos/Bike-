@@ -2,7 +2,7 @@ class_name Player
 extends CharacterBody3D
 ## The rider. Holds shared data and movement helpers. The scripts in
 ## player/states/ decide what happens each physics tick (Ride, Air, Land,
-## Grind, Bail). Children: TrickRunner plays tricks, ComboTracker scores.
+## Grind, WallRide, Bail). Children: TrickRunner plays tricks, ComboTracker scores.
 ##
 ## Godot note: the body itself never rotates. Direction lives in `heading`
 ## (yaw in radians) and only the Visual child is tilted to match the ground.
@@ -36,6 +36,10 @@ var coyote_timer: float = 0.0
 # short cooldown so riding off its end doesn't snap straight back on.
 var grind_buffer_timer: float = 0.0
 var grind_cooldown_timer: float = 0.0
+## No new wall ride while > 0 (set when one ends).
+var wall_ride_cooldown_timer: float = 0.0
+## Extra Visual offset in world space, eased in. WallRide sets it so the wheels touch the wall.
+var visual_offset: Vector3 = Vector3.ZERO
 
 # Pump tracking.
 var _prev_lean: float = 0.0
@@ -53,8 +57,13 @@ var bail_immunity_timer: float = 0.0
 var _visual_up: Vector3 = Vector3.UP
 ## Smoothed orientation of the Visual without the trick spin on top.
 var _visual_rotation: Quaternion = Quaternion.IDENTITY
+var _visual_offset_smoothed: Vector3 = Vector3.ZERO
 var _spawn_position: Vector3 = Vector3.ZERO
 var _spawn_heading: float = 0.0
+## floor_snap_length from the scene. A hop turns snapping off until the next ground tick.
+var _ground_snap_length: float = 0.0
+## Rail lit up because it is within snap reach (see _update_rail_highlight).
+var _highlighted_rail: Rail
 
 
 func _ready() -> void:
@@ -63,6 +72,7 @@ func _ready() -> void:
 	rotation = Vector3.ZERO
 	_spawn_position = global_position
 	_spawn_heading = heading
+	_ground_snap_length = floor_snap_length
 	speed = tuning.base_speed
 	velocity = get_heading_dir() * speed
 	_visual_rotation = Quaternion(visual.global_basis.orthonormalized())
@@ -77,8 +87,10 @@ func _physics_process(delta: float) -> void:
 	_update_hop_input(delta)
 	_update_grind_input(delta)
 	bail_immunity_timer = maxf(bail_immunity_timer - delta, 0.0)
+	wall_ride_cooldown_timer = maxf(wall_ride_cooldown_timer - delta, 0.0)
 	tricks.poll_gesture(delta)
 	state_machine.physics_update(delta)
+	_update_rail_highlight()
 	if global_position.y < -40.0 or Input.is_action_just_pressed(&"debug_reset"):
 		respawn()
 
@@ -112,16 +124,24 @@ func has_buffered_hop() -> bool:
 
 
 ## Launches the hop. Call from a state, then switch to Air.
+## The pop goes mostly along the ground normal (hop_normal_blend), so on a
+## downhill slope it lifts you off the slope instead of fighting it.
 func do_hop() -> void:
-	do_hop_from(get_ground_forward(ground_normal) * speed)
+	var hop_dir: Vector3 = Vector3.UP.lerp(ground_normal, tuning.hop_normal_blend).normalized()
+	do_hop_from(get_ground_forward(ground_normal) * speed, hop_dir)
 
 
 ## Hop on top of a given velocity (the Grind state passes the rail velocity).
-func do_hop_from(base_velocity: Vector3) -> void:
+func do_hop_from(base_velocity: Vector3, hop_dir: Vector3 = Vector3.UP) -> void:
 	var hop_velocity: float = lerpf(tuning.hop_min_velocity, tuning.hop_max_velocity, hop_release_charge)
-	velocity = base_velocity + Vector3.UP * hop_velocity
+	velocity = base_velocity + hop_dir * hop_velocity
 	jump_buffer_timer = 0.0
 	coyote_timer = 0.0
+	# Godot note: move_and_slide() snaps a body that was on the floor back down
+	# whenever its velocity points even slightly downward. Going 25 m/s down a
+	# 12 deg slope, a small hop still points down, so the snap ate it. Snapping
+	# comes back on the next ground tick (ground_move).
+	floor_snap_length = 0.0
 
 
 func _update_grind_input(delta: float) -> void:
@@ -140,6 +160,36 @@ func find_grind_rail() -> RailSnap:
 	if snap != null:
 		grind_buffer_timer = 0.0
 	return snap
+
+
+## Wall to ride after a move_and_slide(), as its normal, or Vector3.ZERO.
+## `approach` is the velocity before the move (the slide already removed the
+## part going into the wall). Needs a near-vertical wall and enough speed along it.
+func find_wall_ride(approach: Vector3) -> Vector3:
+	if not is_on_wall() or wall_ride_cooldown_timer > 0.0 or tricks.is_mid_trick():
+		return Vector3.ZERO
+	var normal: Vector3 = get_wall_normal()
+	if absf(normal.y) > tuning.wall_ride_max_normal_y:
+		return Vector3.ZERO
+	normal = Vector3(normal.x, 0.0, normal.z).normalized()
+	var flat: Vector3 = Vector3(approach.x, 0.0, approach.z)
+	var along: Vector3 = flat - normal * flat.dot(normal)
+	if along.length() < tuning.wall_ride_min_speed:
+		return Vector3.ZERO
+	return normal
+
+
+## Highlights the rail you could snap onto right now (or are grinding).
+func _update_rail_highlight() -> void:
+	var snap: RailSnap = RailSnap.find_closest(get_tree(), global_position, tuning.rail_snap_radius)
+	var rail: Rail = snap.rail as Rail if snap != null else null
+	if rail == _highlighted_rail:
+		return
+	if _highlighted_rail != null:
+		_highlighted_rail.set_highlighted(false)
+	_highlighted_rail = rail
+	if rail != null:
+		rail.set_highlighted(true)
 
 
 func _on_trick_completed(trick: TrickData) -> void:
@@ -177,6 +227,7 @@ func update_ground_normal() -> void:
 ## With input disabled the bike just rolls and follows gravity.
 func ground_move(delta: float, input_enabled: bool) -> void:
 	var t: PlayerTuning = tuning
+	floor_snap_length = _ground_snap_length
 	update_ground_normal()
 
 	var steer: float = get_steer() if input_enabled else 0.0
@@ -197,8 +248,9 @@ func ground_move(delta: float, input_enabled: bool) -> void:
 	velocity = forward * speed - ground_normal * t.ground_stick_velocity
 	move_and_slide()
 
-	# Hitting a wall eats speed.
-	if is_on_wall():
+	# Hitting a wall eats speed. (Skipped during hit-stop: with delta 0 the
+	# real velocity is a division by zero.)
+	if is_on_wall() and delta > 0.0:
 		speed = minf(speed, get_real_velocity().length())
 
 	_slope_trend = lerpf(_slope_trend, forward.y, 1.0 - exp(-delta / 0.2))
@@ -245,7 +297,8 @@ func update_visual(delta: float, steer: float, pitch: float, up_target: Vector3)
 	# Spin around the rider's hips instead of the wheels: shift the Visual so
 	# the pivot point stays where it would be without the trick.
 	var pivot: Vector3 = Vector3.UP * tuning.trick_pivot_height
-	visual.position = base * pivot - full * pivot
+	_visual_offset_smoothed = _visual_offset_smoothed.lerp(visual_offset, 1.0 - exp(-delta / 0.05))
+	visual.position = base * pivot - full * pivot + _visual_offset_smoothed
 
 
 ## Freezes the game for a few frames. Sells impact.
@@ -263,6 +316,8 @@ func respawn() -> void:
 	velocity = get_heading_dir() * speed
 	air_pitch = 0.0
 	bail_immunity_timer = 0.0
+	wall_ride_cooldown_timer = 0.0
+	visual_offset = Vector3.ZERO
 	tricks.cancel()
 	combo.drop()
 	state_machine.transition_to(&"Air", {})
