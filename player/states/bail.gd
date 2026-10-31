@@ -1,5 +1,7 @@
 extends PlayerState
-## Crashed a landing. No control for a moment, the bike skids and slows.
+## Crashed a landing. No control for a moment while the bike rolls on (Land
+## already took the speed penalty). When it ends, a short immunity window
+## keeps the next landing from bailing again.
 ## Placeholder until there is a proper ragdoll / recovery animation.
 
 var _timer: float = 0.0
@@ -12,8 +14,11 @@ func enter(_msg: Dictionary) -> void:
 	Events.bailed.emit()
 
 
+func exit() -> void:
+	player.bail_immunity_timer = player.tuning.bail_immunity
+
+
 func physics_update(delta: float) -> void:
-	player.speed = maxf(player.speed - player.tuning.brake_decel * 0.5 * delta, 0.0)
 	player.ground_move(delta, false)
 	# Wobble the visual so the bail reads on screen.
 	player.visual.rotate_object_local(Vector3.BACK, sin(_timer * 30.0) * 0.05)

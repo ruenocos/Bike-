@@ -34,7 +34,9 @@ Goal right now: a playable demo built from the vertical slice. No deadline. Game
 - The folder name contains `!`: quote paths, and in bash use single quotes to avoid history expansion.
 
 ## Starting feel values (in PlayerTuning, tune live)
-- Landing grade by angle between velocity and ground normal: perfect ≤10° (+12% speed), good ≤25° (0%), bad >25° (-30%, Bail).
+- Landing grade by angle between velocity and ground plane: perfect ≤12° (+12% speed, juice), good ≤30° (0%), sketchy ≤55° (-15%, camera shake, combo kept), bail >55° (-50%, Bail). Steep touchdowns slower than 14 m/s into the ground (≈4 m drop) are sketchy, never bail.
+- Landing mid-trick: ≥70% done → trick auto-completes, landing is sketchy at best; <70% → Bail.
+- Bail: 0.6 s, keeps 50% speed, then 1.0 s immunity (the next landing in that window is sketchy instead of a bail).
 - Perfect landing juice: 40 ms hit-stop, camera punch 0.12 s ease-out expo, bright SFX.
 - FOV 75° → 95° with speed, ease-out over 0.25 s. Speed lines above 70% max speed.
 - Coyote 0.10 s, jump buffer 0.12 s, hop full charge 0.25 s, pump +4% per clean pump.
@@ -47,16 +49,20 @@ steer_left/right: left stick X · lean_back/forward: left stick Y · pedal: RT �
 ## Status (2026-10-31)
 Done (v0.1): project settings, input map (+ debug_reset on Back/R), test track, Player with Ride/Air/Land/Bail, landing grades, debug overlay, physics interpolation. Feel gate approved by Wons.
 Done (v0.2, phase 2 batch A):
-- tricks/: TrickData resource + 4 starter tricks in tricks/data (up Frontloop, down Pocket, left/right Whirl). TrickRunner (child of Player) reads right-stick flicks (neutral -> >0.7 within 0.15 s), plays them on the Visual around the hips, chains a new flick in the last 30%. Landing mid-trick = bad landing.
+- tricks/: TrickData resource + 4 starter tricks in tricks/data (up Frontloop, down Pocket, left/right Whirl). TrickRunner (child of Player) reads right-stick flicks (neutral -> >0.7 within 0.15 s), plays them on the Visual around the hips, chains a new flick in the last 30%.
 - player/states/grind.gd + rails/rail_snap.gd: press grind within 1.5 m of a Path3D in group "rails" (Ride or Air). Rides the curve, slope gravity + grind_drag, hop or rail end -> Air.
 - scoring/combo_tracker.gd (child of Player): points x multiplier (action count, capped). Tricks, grinds (+ points/s), perfect landings. Banks after combo_drop_time of plain riding (Events.combo_banked), bail drops it. Debug overlay shows trick, combo, run total.
 - vfx/speed_lines.tscn (child of Player): radial streak shader, fades in from 70% to 90% of max_speed.
 - debug/demo_driver.gd (node in test_track.tscn): input timeline, only with `-- --demo`. `--demo-trace` prints state, `--demo-shots=<dir>` saves stills. Timeline is tuned for --fixed-fps 30; retune if track or tuning changes.
 - Test track fixes: bumps are now wide rollers (r 12 m, 0.7 m tall) so they can be pumped (the old ones launched you into the next bump at any speed above ~8 m/s); tabletop ramp/deck/landing made flush (old lip fired you up at 45 deg).
+- Landing check: `<exe> --headless --path . --fixed-fps 60 --quit-after 6000 -- --landing-test` runs debug/landing_test.gd (16 scenarios: hops, kickers, tabletop, drops, nose-dive bails), prints grade + angle per landing, exit 1 on failure. Run it after any landing/tuning/track change.
 - Record: `<exe> --path . --write-movie <abs path>/v0.x.avi --fixed-fps 30 --quit-after 600 -- --demo --demo-shots=<abs dir>`
 
+Done (v0.2.1, forgiving landings, after Wons's v0.2 playtest "kept getting bail"): sketchy grade (orange flash), trick land tolerance, shorter bail + immunity, bail_min_impact, landing test harness. Debug overlay shows the last bail reason (angle or unfinished trick %).
+Note: a min-charge hop on the 12° slope at ~25 m/s doesn't leave the ground (hop is world-up, slope pulls the bike down as fast). Consider hopping along the ground normal.
+
 ## Next tasks, in order
-1. Playtest v0.2 with gamepad: trick flick feel (window/threshold), grind snap, combo pacing, speed line strength.
+1. Playtest v0.2.1 with gamepad: landing forgiveness, then trick flick feel (window/threshold), grind snap, combo pacing, speed line strength.
 2. Tune PlayerTuning (and trick .tres durations/scores) from playtest notes.
 3. WallRide state (wall on the test track at x=11.5).
 4. Bail recovery: proper bail animation/ragdoll-lite and a quicker way back into flow.

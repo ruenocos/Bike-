@@ -28,6 +28,9 @@ func _process(_delta: float) -> void:
 	lines.append("speed      %5.1f m/s   %3d km/h" % [p.speed, roundi(p.speed * 3.6)])
 	lines.append("state      %s" % p.state_machine.get_state_name())
 	lines.append("landing    %4.1f°  %s" % [p.last_landing_angle, p.last_landing_grade])
+	lines.append("last bail  %s" % p.last_bail_reason)
+	if p.bail_immunity_timer > 0.0:
+		lines.append("bail immune %.2f s" % p.bail_immunity_timer)
 	if p.tricks.is_mid_trick():
 		lines.append("trick      %s  %3d%%" % [p.tricks.current.display_name, roundi(p.tricks.get_progress() * 100.0)])
 	else:
@@ -44,7 +47,8 @@ func _on_landed(grade: StringName) -> void:
 	var colors: Dictionary[StringName, Color] = {
 		&"perfect": Color(1.0, 0.85, 0.2),
 		&"good": Color(0.6, 0.9, 1.0),
-		&"bad": Color(1.0, 0.35, 0.3),
+		&"sketchy": Color(1.0, 0.6, 0.15),
+		&"bail": Color(1.0, 0.35, 0.3),
 	}
 	_flash(String(grade).to_upper(), colors.get(grade, Color.WHITE))
 

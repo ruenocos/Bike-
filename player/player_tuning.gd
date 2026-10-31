@@ -47,16 +47,34 @@ extends Resource
 @export var air_pitch_rate: float = 180.0
 
 @export_group("Landing")
-@export var perfect_angle_deg: float = 10.0
-@export var good_angle_deg: float = 25.0
+## Grades by the angle between the velocity and the ground at touchdown (deg).
+## <= perfect: speed bonus + juice. <= good: no change. <= sketchy: speed loss
+## and a wobble, combo kept. Above sketchy: Bail.
+@export var perfect_angle_deg: float = 12.0
+@export var good_angle_deg: float = 30.0
+@export var sketchy_angle_deg: float = 55.0
 @export var perfect_bonus: float = 0.12
-@export var bad_penalty: float = 0.30
+## Speed lost on a sketchy landing (0.15 = -15%).
+@export var sketchy_penalty: float = 0.15
+## Speed lost on a bail (0.5 = keep half).
+@export var bad_penalty: float = 0.5
+## Landing mid-trick: a trick at least this far done (0-1) is completed for you
+## and the landing is graded sketchy at best. Less than this is a Bail.
+@export var trick_land_tolerance: float = 0.7
+## Steep touchdowns slower than this (m/s into the ground, 14 = a ~4 m drop) are sketchy, not a
+## Bail, so hopping in place or dropping off a ledge at low speed never crashes.
+@export var bail_min_impact: float = 14.0
+## Camera shake on a sketchy landing.
+@export var sketchy_shake_strength: float = 0.12
+@export var sketchy_shake_time: float = 0.25
 ## Touchdowns softer than this (m/s into the ground) are just roll-ins: no grade.
 @export var land_min_impact: float = 2.0
 ## Time spent in Land before control returns to Ride (s).
 @export var land_duration: float = 0.08
 @export var hit_stop_perfect: float = 0.04
-@export var bail_duration: float = 0.9
+@export var bail_duration: float = 0.6
+## After a bail ends, the next landing within this window can't bail; it is sketchy instead (s).
+@export var bail_immunity: float = 1.0
 
 @export_group("Input")
 @export var coyote_time: float = 0.10

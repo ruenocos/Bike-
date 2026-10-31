@@ -10,6 +10,9 @@ extends Node3D
 
 var _punch: float = 0.0
 var _punch_tween: Tween
+var _shake_strength: float = 0.0
+var _shake_time: float = 0.0
+var _shake_timer: float = 0.0
 
 
 func _ready() -> void:
@@ -47,10 +50,22 @@ func _process(delta: float) -> void:
 	# The spring arm places its child at z = hit length, so offset from there.
 	camera.position = Vector3(0.0, -_punch * 0.5, spring_arm.get_hit_length() - _punch)
 
+	# Shake: random offset that fades out linearly over the shake time.
+	if _shake_timer > 0.0:
+		_shake_timer = maxf(_shake_timer - delta, 0.0)
+		var amount: float = _shake_strength * _shake_timer / _shake_time
+		camera.position += Vector3(randf_range(-amount, amount), randf_range(-amount, amount), 0.0)
+
 
 ## Frame-rate independent smoothing. `time_constant` in seconds; smaller = snappier.
 func _damp_weight(time_constant: float, delta: float) -> float:
 	return 1.0 - exp(-delta / maxf(time_constant, 0.0001))
+
+
+func shake(strength: float, duration: float) -> void:
+	_shake_strength = strength
+	_shake_time = maxf(duration, 0.0001)
+	_shake_timer = _shake_time
 
 
 func punch() -> void:

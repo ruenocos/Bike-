@@ -5,6 +5,8 @@ extends Node
 ## Extra user args:
 ##   --demo-trace          print position / state / speed every 0.1 s
 ##   --demo-shots=<dir>    save PNG stills at the SHOTS times into <dir>
+## Or, instead of --demo:
+##   --landing-test        run debug/landing_test.gd (landing grade checks) and quit
 ##
 ## Godot note: everything after a bare `--` on the command line is ignored by
 ## the engine and handed to the game via OS.get_cmdline_user_args().
@@ -78,6 +80,8 @@ var _player: Player
 
 func _ready() -> void:
 	var args: PackedStringArray = OS.get_cmdline_user_args()
+	if args.has("--landing-test"):
+		add_child(preload("res://debug/landing_test.gd").new())
 	if not args.has("--demo"):
 		set_physics_process(false)
 		set_process(false)

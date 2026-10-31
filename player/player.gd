@@ -46,6 +46,9 @@ var pump_count: int = 0
 # Landing info, read by the debug overlay.
 var last_landing_angle: float = 0.0
 var last_landing_grade: StringName = &"-"
+var last_bail_reason: String = "-"
+## Counts down after a bail; while > 0 a landing that would bail is sketchy instead.
+var bail_immunity_timer: float = 0.0
 
 var _visual_up: Vector3 = Vector3.UP
 ## Smoothed orientation of the Visual without the trick spin on top.
@@ -73,6 +76,7 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	_update_hop_input(delta)
 	_update_grind_input(delta)
+	bail_immunity_timer = maxf(bail_immunity_timer - delta, 0.0)
 	tricks.poll_gesture(delta)
 	state_machine.physics_update(delta)
 	if global_position.y < -40.0 or Input.is_action_just_pressed(&"debug_reset"):
@@ -258,6 +262,7 @@ func respawn() -> void:
 	speed = tuning.base_speed
 	velocity = get_heading_dir() * speed
 	air_pitch = 0.0
+	bail_immunity_timer = 0.0
 	tricks.cancel()
 	combo.drop()
 	state_machine.transition_to(&"Air", {})

@@ -95,7 +95,18 @@ func _start(trick: TrickData) -> void:
 	elapsed = 0.0
 
 
-## True while a trick is unfinished. Touching down now is a bad landing.
+## Finishes the running trick right now (landing it close to done counts).
+## A queued chain trick is dropped.
+func complete_current() -> void:
+	if current == null:
+		return
+	var done: TrickData = current
+	cancel()
+	last_trick_name = done.display_name
+	trick_completed.emit(done)
+
+
+## True while a trick is unfinished. Touching down now ends it (see Land).
 func is_mid_trick() -> bool:
 	return current != null
 
