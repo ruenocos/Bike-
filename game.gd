@@ -154,6 +154,8 @@ func _update_out_of_bounds(delta: float) -> void:
 func _update_collapse_feel() -> void:
 	var near: float = collapse.proximity(player_progress)
 	player.camera_rig.set_collapse_shake(near * collapse.shake_max)
+	player.audio.set_collapse_proximity(near)
+	player.vfx.set_collapse_proximity(near)
 	if near > 0.01:
 		Input.start_joy_vibration(0, near * collapse.rumble_weak_max, near * collapse.rumble_strong_max, 0.1)
 
@@ -270,6 +272,8 @@ func _freeze_player() -> void:
 	player.velocity = Vector3.ZERO
 	player.speed = 0.0
 	player.camera_rig.set_collapse_shake(0.0)
+	player.audio.set_collapse_proximity(0.0)
+	player.vfx.set_collapse_proximity(0.0)
 	Input.stop_joy_vibration(0)
 	hud.show_out_of_bounds(-1.0)
 	for action: StringName in [&"hop", &"pedal", &"brake", &"grind", &"steer_left", &"steer_right"]:

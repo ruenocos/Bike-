@@ -75,6 +75,8 @@ func enter(msg: Dictionary) -> void:
 	if grade != &"bail" and player.air_tricks > 0:
 		var boost: float = minf(player.air_tricks * t.trick_land_boost, t.trick_land_boost_max)
 		player.speed = minf(player.speed + boost, t.max_speed)
+		if boost > 0.0:
+			player.flash_boost()
 	player.air_tricks = 0
 
 	player.last_landing_angle = angle
@@ -94,6 +96,7 @@ func enter(msg: Dictionary) -> void:
 			else:
 				player.combo.add_action(t.perfect_landing_score)
 			player.hit_stop(t.hit_stop_perfect)
+			player.flash_boost()
 			player.camera_rig.punch()
 		&"good":
 			player.combo.keep_alive()

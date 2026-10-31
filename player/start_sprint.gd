@@ -75,3 +75,6 @@ func _judge() -> void:
 		if _player.is_on_floor():
 			_player.velocity = _player.ground_dir * _player.speed
 	launched.emit(grade, boost)
+	Events.sprint_launched.emit(grade)
+	if _player != null and boost > 0.0:
+		_player.flash_boost()

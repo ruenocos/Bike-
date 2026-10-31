@@ -17,3 +17,6 @@ signal grind_started
 signal carve_started
 @warning_ignore("unused_signal")
 signal lip_air
+## The sprint start was judged: &"perfect", &"good" or &"none".
+@warning_ignore("unused_signal")
+signal sprint_launched(grade: StringName)

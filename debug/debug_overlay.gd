@@ -4,6 +4,8 @@ extends CanvasLayer
 ## one never overwrites another: trick / grind / carve / lip air on top, the landing
 ## grade under it, banked combos at the bottom.
 ## Finds the player through the "player" group, so it works in any scene.
+## The readout panel is hidden by default (v0.8.2); F3 (debug_overlay action)
+## toggles it. The centre flashes always show.
 
 @onready var label: Label = $Panel/Label
 @onready var trick_label: Label = $TrickLabel
@@ -28,6 +30,16 @@ func _ready() -> void:
 	Events.lip_air.connect(_on_lip_air)
 	for flash_label: Label in [trick_label, grade_label, bank_label]:
 		flash_label.modulate.a = 0.0
+	($Panel as Control).visible = show_panel
+
+
+## Show the top-left readout at start (F3 toggles it while playing).
+@export var show_panel: bool = false
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed(&"debug_overlay"):
+		($Panel as Control).visible = not ($Panel as Control).visible
 
 
 func _process(_delta: float) -> void:

@@ -295,3 +295,6 @@ extends Resource
 @export var speed_lines_density_max: float = 0.55
 ## Time for the lines to catch up with speed (s, ease-out).
 @export var speed_lines_fade_time: float = 0.3
+## After a speed boost the lines flash at full strength for this long (s),
+## whatever the speed.
+@export var speed_lines_boost_time: float = 0.0

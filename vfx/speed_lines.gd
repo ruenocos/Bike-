@@ -1,7 +1,8 @@
 extends CanvasLayer
 ## Speed lines overlay. Child of Player. Fades the shader in between
 ## speed_lines_threshold and speed_lines_full (x max_speed), eased out,
-## smoothed over speed_lines_fade_time, and gets denser as it does.
+## smoothed over speed_lines_fade_time, and gets denser as it does. A boost
+## (Player.flash_boost) flashes them for speed_lines_boost_time.
 ##
 ## Godot note: a CanvasLayer draws its 2D children on top of the 3D view,
 ## independent of the camera. The ColorRect fills the screen and the shader
@@ -25,6 +26,9 @@ func _process(delta: float) -> void:
 	var x: float = clampf((ratio - t.speed_lines_threshold) / maxf(t.speed_lines_full - t.speed_lines_threshold, 0.0001), 0.0, 1.0)
 	# Ease out: lines show up quickly past the threshold, then settle.
 	var target: float = 1.0 - (1.0 - x) * (1.0 - x)
+	# A boost flashes them whatever the speed.
+	if t.speed_lines_boost_time > 0.0 and player.boost_timer > 0.0:
+		target = maxf(target, 0.6 * player.boost_timer / t.speed_lines_boost_time)
 	_alpha = lerpf(_alpha, target, 1.0 - exp(-delta / maxf(t.speed_lines_fade_time / 3.0, 0.0001)))
 	rect.visible = _alpha > 0.005
 	_material.set_shader_parameter(&"intensity", _alpha * t.speed_lines_max_alpha)

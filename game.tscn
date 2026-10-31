@@ -1,4 +1,4 @@
-[gd_scene load_steps=27 format=3]
+[gd_scene load_steps=28 format=3]
 
 [ext_resource type="Script" path="res://game.gd" id="1_game"]
 [ext_resource type="Script" path="res://chunks/stage_builder.gd" id="2_builder"]
@@ -21,12 +21,16 @@
 [ext_resource type="Resource" path="res://scoring/upgrades/slow_collapse.tres" id="19_u7"]
 [ext_resource type="Resource" path="res://scoring/upgrades/showboat.tres" id="20_u8"]
 [ext_resource type="Script" path="res://player/start_sprint.gd" id="21_sprint"]
+[ext_resource type="Script" path="res://chunks/parts/mountain_ring.gd" id="22_mountains"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
-sky_top_color = Color(0.32, 0.5, 0.78, 1)
-sky_horizon_color = Color(0.78, 0.8, 0.84, 1)
-ground_bottom_color = Color(0.2, 0.2, 0.24, 1)
-ground_horizon_color = Color(0.78, 0.8, 0.84, 1)
+sky_top_color = Color(0.17, 0.29, 0.56, 1)
+sky_horizon_color = Color(1, 0.72, 0.5, 1)
+sky_curve = 0.09
+ground_bottom_color = Color(0.28, 0.22, 0.22, 1)
+ground_horizon_color = Color(0.95, 0.69, 0.52, 1)
+sun_angle_max = 25.0
+sun_curve = 0.08
 
 [sub_resource type="Sky" id="Sky_main"]
 sky_material = SubResource("ProceduralSkyMaterial_sky")
@@ -35,18 +39,26 @@ sky_material = SubResource("ProceduralSkyMaterial_sky")
 background_mode = 2
 sky = SubResource("Sky_main")
 ambient_light_source = 3
+ambient_light_energy = 1.1
 tonemap_mode = 4
 glow_enabled = true
+glow_intensity = 0.9
+glow_bloom = 0.08
 fog_enabled = true
-fog_light_color = Color(0.78, 0.8, 0.84, 1)
-fog_density = 0.0015
+fog_light_color = Color(0.93, 0.72, 0.56, 1)
+fog_sun_scatter = 0.35
+fog_density = 0.0011
+fog_aerial_perspective = 0.35
+fog_sky_affect = 0.5
+adjustment_enabled = true
+adjustment_saturation = 1.12
 
 [sub_resource type="ShaderMaterial" id="Mat_far"]
 render_priority = 0
 shader = ExtResource("11_grid")
-shader_parameter/base_color = Color(0.42, 0.45, 0.5, 1)
-shader_parameter/line_color = Color(0.36, 0.39, 0.44, 1)
-shader_parameter/major_color = Color(0.3, 0.33, 0.38, 1)
+shader_parameter/base_color = Color(0.46, 0.41, 0.33, 1)
+shader_parameter/line_color = Color(0.43, 0.38, 0.31, 1)
+shader_parameter/major_color = Color(0.4, 0.36, 0.29, 1)
 shader_parameter/cell = 10.0
 shader_parameter/major_every = 5.0
 shader_parameter/line_width = 0.15
@@ -63,9 +75,11 @@ upgrade_pool = Array[ExtResource("12_upgrade")]([ExtResource("13_u1"), ExtResour
 environment = SubResource("Environment_main")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(0.86603, -0.38302, 0.32139, 0, 0.64279, 0.76604, -0.5, -0.66341, 0.55667, 0, 0, 0)
+transform = Transform3D(-0.81915, 0.19617, -0.53899, 0.00000, 0.93969, 0.34202, 0.57358, 0.28017, -0.76975, 0, 0, 0)
+light_color = Color(1, 0.79, 0.56, 1)
+light_energy = 1.5
 shadow_enabled = true
-directional_shadow_max_distance = 150.0
+directional_shadow_max_distance = 220.0
 
 [node name="StageBuilder" type="Node3D" parent="."]
 script = ExtResource("2_builder")
@@ -76,6 +90,9 @@ script = ExtResource("2_builder")
 
 [node name="FarGround" type="MeshInstance3D" parent="."]
 mesh = SubResource("PlaneMesh_far")
+
+[node name="Mountains" type="Node3D" parent="FarGround"]
+script = ExtResource("22_mountains")
 
 [node name="StartSprint" type="Node" parent="."]
 script = ExtResource("21_sprint")

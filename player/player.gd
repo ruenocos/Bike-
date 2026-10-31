@@ -24,6 +24,8 @@ signal fell
 @onready var camera_rig: PlayerCamera = $CameraRig
 @onready var tricks: TrickRunner = $TrickRunner
 @onready var combo: ComboTracker = $ComboTracker
+@onready var audio: RiderAudio = $RiderAudio
+@onready var vfx: RiderVfx = $RiderVfx
 
 ## Speed along the ground (m/s). The heart of the game.
 var speed: float = 0.0
@@ -114,6 +116,9 @@ var tight_zones: int = 0
 var air_tricks: int = 0
 ## Set by ground_move / check_air_crash when this tick hit an obstacle hard.
 var crashed: bool = false
+## Counts down after a speed boost (perfect landing, landed tricks, sprint
+## start); the speed lines flash while it's running.
+var boost_timer: float = 0.0
 ## Steer after steer_response_time smoothing and the steer_curve.
 var _steer_smoothed: float = 0.0
 ## After a crash, obstacles only glance you off for this long (s), so staying
@@ -146,6 +151,7 @@ func _physics_process(delta: float) -> void:
 	_update_grind_input(delta)
 	bail_immunity_timer = maxf(bail_immunity_timer - delta, 0.0)
 	_crash_cooldown = maxf(_crash_cooldown - delta, 0.0)
+	boost_timer = maxf(boost_timer - delta, 0.0)
 	_lip_timer = maxf(_lip_timer - delta, 0.0)
 	tricks.poll_gesture(delta)
 	state_machine.physics_update(delta)
@@ -672,6 +678,11 @@ func update_visual(delta: float, steer: float, up_target: Vector3, forward: Vect
 	# wheels touch where the sphere meets it, so move the Visual there.
 	var contact: Vector3 = (Vector3.UP - _visual_up) * _body_radius
 	visual.position = base * pivot - full * pivot + contact
+
+
+## Speed lines flash for speed_lines_boost_time (a boost just happened).
+func flash_boost() -> void:
+	boost_timer = tuning.speed_lines_boost_time
 
 
 ## Freezes the game for a few frames. Sells impact.

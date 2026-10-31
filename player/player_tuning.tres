@@ -20,3 +20,6 @@ cam_open_pitch_deg = 5.0
 cam_tight_distance = -0.8
 cam_tight_height = -0.2
 cam_turn_lead_time = 0.3
+speed_lines_threshold = 0.93
+speed_lines_full = 1.0
+speed_lines_boost_time = 0.7
