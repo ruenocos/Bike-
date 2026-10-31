@@ -1,7 +1,8 @@
 class_name Player
 extends CharacterBody3D
 ## The rider. Holds shared data and movement helpers. The scripts in
-## player/states/ decide what happens each physics tick (Ride, Air, Land, Bail).
+## player/states/ decide what happens each physics tick (Ride, Air, Land,
+## Grind, Bail). Children: TrickRunner plays tricks, ComboTracker scores.
 ##
 ## Godot note: the body itself never rotates. Direction lives in `heading`
 ## (yaw in radians) and only the Visual child is tilted to match the ground.
@@ -13,6 +14,8 @@ extends CharacterBody3D
 @onready var ground_probe: ShapeCast3D = $GroundProbe
 @onready var state_machine: PlayerStateMachine = $StateMachine
 @onready var camera_rig: PlayerCamera = $CameraRig
+@onready var tricks: TrickRunner = $TrickRunner
+@onready var combo: ComboTracker = $ComboTracker
 
 ## Forward speed along the ground (m/s). The heart of the game.
 var speed: float = 0.0
@@ -29,19 +32,24 @@ var hop_release_charge: float = 0.0
 var jump_buffer_timer: float = 0.0
 var coyote_timer: float = 0.0
 
+# Grind input: a press is buffered briefly; after leaving a rail there is a
+# short cooldown so riding off its end doesn't snap straight back on.
+var grind_buffer_timer: float = 0.0
+var grind_cooldown_timer: float = 0.0
+
 # Pump tracking.
 var _prev_lean: float = 0.0
 var _pump_cooldown_timer: float = 0.0
 var _slope_trend: float = 0.0
 var pump_count: int = 0
 
-# Landing and combo info, read by the debug overlay.
+# Landing info, read by the debug overlay.
 var last_landing_angle: float = 0.0
 var last_landing_grade: StringName = &"-"
-var combo_count: int = 0
-var combo_timer: float = 0.0
 
 var _visual_up: Vector3 = Vector3.UP
+## Smoothed orientation of the Visual without the trick spin on top.
+var _visual_rotation: Quaternion = Quaternion.IDENTITY
 var _spawn_position: Vector3 = Vector3.ZERO
 var _spawn_heading: float = 0.0
 
@@ -54,11 +62,18 @@ func _ready() -> void:
 	_spawn_heading = heading
 	speed = tuning.base_speed
 	velocity = get_heading_dir() * speed
+	_visual_rotation = Quaternion(visual.global_basis.orthonormalized())
+	tricks.setup(self)
+	combo.setup(self)
+	# Signal up from the TrickRunner, call down into the ComboTracker.
+	tricks.trick_completed.connect(_on_trick_completed)
 	state_machine.setup(self)
 
 
 func _physics_process(delta: float) -> void:
 	_update_hop_input(delta)
+	_update_grind_input(delta)
+	tricks.poll_gesture(delta)
 	state_machine.physics_update(delta)
 	if global_position.y < -40.0 or Input.is_action_just_pressed(&"debug_reset"):
 		respawn()
@@ -94,11 +109,38 @@ func has_buffered_hop() -> bool:
 
 ## Launches the hop. Call from a state, then switch to Air.
 func do_hop() -> void:
+	do_hop_from(get_ground_forward(ground_normal) * speed)
+
+
+## Hop on top of a given velocity (the Grind state passes the rail velocity).
+func do_hop_from(base_velocity: Vector3) -> void:
 	var hop_velocity: float = lerpf(tuning.hop_min_velocity, tuning.hop_max_velocity, hop_release_charge)
-	var forward: Vector3 = get_ground_forward(ground_normal)
-	velocity = forward * speed + Vector3.UP * hop_velocity
+	velocity = base_velocity + Vector3.UP * hop_velocity
 	jump_buffer_timer = 0.0
 	coyote_timer = 0.0
+
+
+func _update_grind_input(delta: float) -> void:
+	grind_buffer_timer = maxf(grind_buffer_timer - delta, 0.0)
+	grind_cooldown_timer = maxf(grind_cooldown_timer - delta, 0.0)
+	if Input.is_action_just_pressed(&"grind"):
+		grind_buffer_timer = tuning.grind_buffer
+
+
+## Rail to snap onto right now, or null. Ride and Air call this each tick
+## and switch to Grind when it returns a rail.
+func find_grind_rail() -> RailSnap:
+	if grind_buffer_timer <= 0.0 or grind_cooldown_timer > 0.0 or tricks.is_mid_trick():
+		return null
+	var snap: RailSnap = RailSnap.find_closest(get_tree(), global_position, tuning.rail_snap_radius)
+	if snap != null:
+		grind_buffer_timer = 0.0
+	return snap
+
+
+func _on_trick_completed(trick: TrickData) -> void:
+	combo.add_action(trick.score)
+	Events.trick_completed.emit(trick.display_name, trick.score)
 
 
 # --- Directions ---------------------------------------------------------------
@@ -176,27 +218,6 @@ func try_pump(delta: float) -> void:
 		pump_count += 1
 
 
-## Counts down the combo during plain riding and banks it when it runs out.
-func tick_combo(delta: float) -> void:
-	if combo_count == 0:
-		return
-	combo_timer -= delta
-	if combo_timer <= 0.0:
-		Events.combo_banked.emit(combo_count * 100)
-		combo_count = 0
-		combo_timer = 0.0
-
-
-func extend_combo() -> void:
-	combo_count += 1
-	combo_timer = tuning.combo_drop_time
-
-
-func drop_combo() -> void:
-	combo_count = 0
-	combo_timer = 0.0
-
-
 # --- Feel -----------------------------------------------------------------------
 
 ## Tilts the Visual child to the ground, banks into turns, applies air pitch.
@@ -211,9 +232,16 @@ func update_visual(delta: float, steer: float, pitch: float, up_target: Vector3)
 	# then pitch around the side axis (positive is nose up).
 	target = target * Basis(Vector3.BACK, -steer * deg_to_rad(tuning.lean_into_turn_deg))
 	target = target * Basis(Vector3.RIGHT, pitch)
-	var current: Quaternion = Quaternion(visual.global_basis.orthonormalized())
-	var smoothed: Quaternion = current.slerp(Quaternion(target), 1.0 - exp(-delta / 0.05))
-	visual.global_basis = Basis(smoothed)
+	_visual_rotation = _visual_rotation.slerp(Quaternion(target), 1.0 - exp(-delta / 0.05))
+	# The trick spin goes on top of the smoothed pose, unsmoothed, so a full
+	# 360 doesn't get "shortest-path" blended back to zero.
+	var base: Basis = Basis(_visual_rotation)
+	var full: Basis = base * tricks.get_visual_offset()
+	visual.global_basis = full
+	# Spin around the rider's hips instead of the wheels: shift the Visual so
+	# the pivot point stays where it would be without the trick.
+	var pivot: Vector3 = Vector3.UP * tuning.trick_pivot_height
+	visual.position = base * pivot - full * pivot
 
 
 ## Freezes the game for a few frames. Sells impact.
@@ -230,5 +258,6 @@ func respawn() -> void:
 	speed = tuning.base_speed
 	velocity = get_heading_dir() * speed
 	air_pitch = 0.0
-	drop_combo()
+	tricks.cancel()
+	combo.drop()
 	state_machine.transition_to(&"Air", {})

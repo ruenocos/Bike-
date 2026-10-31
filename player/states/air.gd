@@ -1,5 +1,6 @@
 extends PlayerState
-## Airborne: gravity, a little air steering, and lean to pitch the bike.
+## Airborne: gravity, a little air steering, lean to pitch the bike,
+## right-stick tricks, and grind snapping.
 
 var _pre_move_velocity: Vector3 = Vector3.ZERO
 
@@ -18,6 +19,13 @@ func physics_update(delta: float) -> void:
 	# Coyote hop: hop pressed just after rolling off an edge.
 	if player.coyote_timer > 0.0 and player.has_buffered_hop():
 		player.do_hop()
+
+	var snap: RailSnap = player.find_grind_rail()
+	if snap != null:
+		machine.transition_to(&"Grind", {"snap": snap})
+		return
+
+	player.tricks.air_update(delta)
 
 	player.velocity.y -= t.gravity * delta
 

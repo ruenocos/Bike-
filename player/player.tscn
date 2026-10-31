@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=28 format=3]
 
 [ext_resource type="Script" path="res://player/player.gd" id="1_player"]
 [ext_resource type="Script" path="res://player/state_machine.gd" id="2_machine"]
@@ -7,6 +7,15 @@
 [ext_resource type="Script" path="res://player/states/land.gd" id="5_land"]
 [ext_resource type="Script" path="res://player/states/bail.gd" id="6_bail"]
 [ext_resource type="Script" path="res://player/player_camera.gd" id="7_camera"]
+[ext_resource type="Script" path="res://player/states/grind.gd" id="8_grind"]
+[ext_resource type="Script" path="res://tricks/trick_runner.gd" id="9_tricks"]
+[ext_resource type="Script" path="res://tricks/trick_data.gd" id="10_trick_data"]
+[ext_resource type="Resource" path="res://tricks/data/frontloop.tres" id="11_frontloop"]
+[ext_resource type="Resource" path="res://tricks/data/pocket.tres" id="12_pocket"]
+[ext_resource type="Resource" path="res://tricks/data/whirl_left.tres" id="13_whirl_left"]
+[ext_resource type="Resource" path="res://tricks/data/whirl_right.tres" id="14_whirl_right"]
+[ext_resource type="Script" path="res://scoring/combo_tracker.gd" id="15_combo"]
+[ext_resource type="PackedScene" path="res://vfx/speed_lines.tscn" id="16_speed_lines"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.35
@@ -97,8 +106,20 @@ script = ExtResource("4_air")
 [node name="Land" type="Node" parent="StateMachine"]
 script = ExtResource("5_land")
 
+[node name="Grind" type="Node" parent="StateMachine"]
+script = ExtResource("8_grind")
+
 [node name="Bail" type="Node" parent="StateMachine"]
 script = ExtResource("6_bail")
+
+[node name="TrickRunner" type="Node" parent="."]
+script = ExtResource("9_tricks")
+tricks = Array[ExtResource("10_trick_data")]([ExtResource("11_frontloop"), ExtResource("12_pocket"), ExtResource("13_whirl_left"), ExtResource("14_whirl_right")])
+
+[node name="ComboTracker" type="Node" parent="."]
+script = ExtResource("15_combo")
+
+[node name="SpeedLines" parent="." instance=ExtResource("16_speed_lines")]
 
 [node name="CameraRig" type="Node3D" parent="."]
 top_level = true

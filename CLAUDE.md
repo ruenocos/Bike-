@@ -45,13 +45,19 @@ Goal right now: a playable demo built from the vertical slice. No deadline. Game
 steer_left/right: left stick X · lean_back/forward: left stick Y · pedal: RT · brake: LT · hop: South (hold to charge) · grind: West · trick_left/right/up/down: right stick · pause: Start
 
 ## Status (2026-10-31)
-Done (v0.1): tasks 1-7 of the original plan.
-- Project settings, input map (+ debug_reset on Back/R), player/player_tuning.tres.
-- debug/test_track.tscn: slope, pump bumps, kicker, tabletop, rail, wall. Grid greybox shader in debug/grid.gdshader.
-- Player scene; Ride/Air/Land/Bail states; landing grades; debug overlay.
-- Physics interpolation on.
+Done (v0.1): project settings, input map (+ debug_reset on Back/R), test track, Player with Ride/Air/Land/Bail, landing grades, debug overlay, physics interpolation. Feel gate approved by Wons.
+Done (v0.2, phase 2 batch A):
+- tricks/: TrickData resource + 4 starter tricks in tricks/data (up Frontloop, down Pocket, left/right Whirl). TrickRunner (child of Player) reads right-stick flicks (neutral -> >0.7 within 0.15 s), plays them on the Visual around the hips, chains a new flick in the last 30%. Landing mid-trick = bad landing.
+- player/states/grind.gd + rails/rail_snap.gd: press grind within 1.5 m of a Path3D in group "rails" (Ride or Air). Rides the curve, slope gravity + grind_drag, hop or rail end -> Air.
+- scoring/combo_tracker.gd (child of Player): points x multiplier (action count, capped). Tricks, grinds (+ points/s), perfect landings. Banks after combo_drop_time of plain riding (Events.combo_banked), bail drops it. Debug overlay shows trick, combo, run total.
+- vfx/speed_lines.tscn (child of Player): radial streak shader, fades in from 70% to 90% of max_speed.
+- debug/demo_driver.gd (node in test_track.tscn): input timeline, only with `-- --demo`. `--demo-trace` prints state, `--demo-shots=<dir>` saves stills. Timeline is tuned for --fixed-fps 30; retune if track or tuning changes.
+- Test track fixes: bumps are now wide rollers (r 12 m, 0.7 m tall) so they can be pumped (the old ones launched you into the next bump at any speed above ~8 m/s); tabletop ramp/deck/landing made flush (old lip fired you up at 45 deg).
+- Record: `<exe> --path . --write-movie <abs path>/v0.x.avi --fixed-fps 30 --quit-after 600 -- --demo --demo-shots=<abs dir>`
 
 ## Next tasks, in order
-1. Playtest v0.1 with gamepad. Gate: does a perfect landing feel good with cubes only?
-2. Tune PlayerTuning from playtest notes.
-3. Phase 2: trick flicks (right stick), Grind state on Path3D rails, WallRide, combo scoring, speed lines VFX.
+1. Playtest v0.2 with gamepad: trick flick feel (window/threshold), grind snap, combo pacing, speed line strength.
+2. Tune PlayerTuning (and trick .tres durations/scores) from playtest notes.
+3. WallRide state (wall on the test track at x=11.5).
+4. Bail recovery: proper bail animation/ragdoll-lite and a quicker way back into flow.
+5. Trick/landing feedback: trick names get overwritten by the landing grade flash; real combo HUD in ui/.

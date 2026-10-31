@@ -7,7 +7,8 @@ var _timer: float = 0.0
 
 func enter(_msg: Dictionary) -> void:
 	_timer = player.tuning.bail_duration
-	player.drop_combo()
+	player.tricks.cancel()
+	player.combo.drop()
 	Events.bailed.emit()
 
 

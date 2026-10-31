@@ -7,3 +7,9 @@ signal landed(grade: StringName)
 signal combo_banked(score: int)
 @warning_ignore("unused_signal")
 signal bailed
+@warning_ignore("unused_signal")
+signal combo_dropped
+@warning_ignore("unused_signal")
+signal trick_completed(trick_name: String, score: int)
+@warning_ignore("unused_signal")
+signal grind_started

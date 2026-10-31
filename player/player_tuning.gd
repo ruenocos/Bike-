@@ -62,11 +62,44 @@ extends Resource
 @export var coyote_time: float = 0.10
 @export var jump_buffer: float = 0.12
 
-@export_group("Combo")
-## Combo drops after this long of plain riding (s).
-@export var combo_drop_time: float = 1.5
+@export_group("Tricks")
 ## Window for a right-stick flick to read as a trick gesture (s).
+## The stick must go from neutral to past trick_gesture_threshold within this time.
 @export var trick_gesture_window: float = 0.15
+## Stick magnitude that counts as a full flick (0-1).
+@export var trick_gesture_threshold: float = 0.7
+## Stick magnitude below which the stick counts as back at neutral (0-1).
+@export var trick_neutral_threshold: float = 0.3
+## A new flick in the last part of a trick chains the next one (0.3 = last 30%).
+@export var trick_chain_window: float = 0.3
+## Height above the wheels the bike spins around (m). Roughly the rider's hips.
+@export var trick_pivot_height: float = 0.7
+
+@export_group("Grind")
+## Press grind within this distance of a rail to snap on (m).
+@export var rail_snap_radius: float = 1.5
+## A grind press is remembered this long, so pressing a hair early still snaps (s).
+@export var grind_buffer: float = 0.15
+## Speed lost per second while grinding (m/s^2).
+@export var grind_drag: float = 1.0
+## Never grind slower than this; snapping on at an angle keeps some flow (m/s).
+@export var grind_min_speed: float = 6.0
+## Below this speed you fall off the rail (m/s).
+@export var grind_fall_off_speed: float = 2.0
+## Time to slide from where you were onto the rail (s).
+@export var grind_snap_time: float = 0.06
+## No re-snapping for this long after leaving a rail (s).
+@export var grind_resnap_cooldown: float = 0.35
+## Small upward pop when riding off the end of a rail (m/s).
+@export var grind_exit_pop: float = 2.0
+
+@export_group("Combo")
+## Combo banks after this long of plain riding (s).
+@export var combo_drop_time: float = 1.5
+## The multiplier is the number of actions in the combo, capped here.
+@export var combo_multiplier_cap: int = 10
+@export var perfect_landing_score: int = 50
+@export var grind_score_per_second: float = 120.0
 
 @export_group("Camera")
 @export var fov_base: float = 75.0
@@ -83,3 +116,12 @@ extends Resource
 @export var cam_look_ahead: float = 3.0
 @export var cam_punch_distance: float = 0.35
 @export var cam_punch_time: float = 0.12
+
+@export_group("Speed lines")
+## Speed lines start fading in above this fraction of max_speed (0.7 = 70%).
+@export var speed_lines_threshold: float = 0.7
+## ...and reach full strength at this fraction of max_speed.
+@export var speed_lines_full: float = 0.9
+@export var speed_lines_max_alpha: float = 0.6
+## Time for the lines to catch up with speed (s, ease-out).
+@export var speed_lines_fade_time: float = 0.3

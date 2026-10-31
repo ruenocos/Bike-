@@ -1,5 +1,6 @@
 extends CanvasLayer
-## Top-left readout for tuning feel: speed, state, last landing, combo.
+## Top-left readout for tuning feel: speed, state, last landing, trick, combo.
+## Big centre text flashes landing grades, trick names and banked combos.
 ## Finds the player through the "player" group, so it works in any scene.
 
 @onready var label: Label = $Panel/Label
@@ -11,6 +12,8 @@ var _player: Player
 func _ready() -> void:
 	Events.landed.connect(_on_landed)
 	Events.bailed.connect(_on_bailed)
+	Events.trick_completed.connect(_on_trick_completed)
+	Events.combo_banked.connect(_on_combo_banked)
 	grade_label.modulate.a = 0.0
 
 
@@ -25,7 +28,13 @@ func _process(_delta: float) -> void:
 	lines.append("speed      %5.1f m/s   %3d km/h" % [p.speed, roundi(p.speed * 3.6)])
 	lines.append("state      %s" % p.state_machine.get_state_name())
 	lines.append("landing    %4.1f°  %s" % [p.last_landing_angle, p.last_landing_grade])
-	lines.append("combo      x%d   %.2f s" % [p.combo_count, maxf(p.combo_timer, 0.0)])
+	if p.tricks.is_mid_trick():
+		lines.append("trick      %s  %3d%%" % [p.tricks.current.display_name, roundi(p.tricks.get_progress() * 100.0)])
+	else:
+		lines.append("trick      - (last: %s)" % p.tricks.last_trick_name)
+	var c: ComboTracker = p.combo
+	lines.append("combo      %d x%d = %d   %.2f s" % [floori(c.points), c.get_multiplier(), c.get_total(), maxf(c.timer, 0.0)])
+	lines.append("run total  %d" % c.run_total)
 	lines.append("hop charge %3d%%" % roundi(p.hop_charge / p.tuning.hop_full_charge * 100.0))
 	lines.append("pumps      %d" % p.pump_count)
 	label.text = "\n".join(lines)
@@ -42,6 +51,14 @@ func _on_landed(grade: StringName) -> void:
 
 func _on_bailed() -> void:
 	_flash("BAIL", Color(1.0, 0.35, 0.3))
+
+
+func _on_trick_completed(trick_name: String, score: int) -> void:
+	_flash("%s  +%d" % [trick_name.to_upper(), score], Color(0.75, 1.0, 0.55))
+
+
+func _on_combo_banked(score: int) -> void:
+	_flash("BANKED %d" % score, Color(1.0, 0.85, 0.2))
 
 
 func _flash(text: String, color: Color) -> void:

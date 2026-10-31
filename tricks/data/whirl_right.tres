@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TrickData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://tricks/trick_data.gd" id="1_trick"]
+
+[resource]
+script = ExtResource("1_trick")
+display_name = "Whirl Right"
+direction = 3
+duration = 0.6
+score = 200
+rotation_axis = Vector3(0, 1, 0)
+rotation_degrees = -360.0
+squash = 0.0

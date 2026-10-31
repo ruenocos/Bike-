@@ -1,8 +1,9 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Shader" path="res://debug/grid.gdshader" id="1_grid"]
 [ext_resource type="PackedScene" path="res://player/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://debug/debug_overlay.tscn" id="3_overlay"]
+[ext_resource type="Script" path="res://debug/demo_driver.gd" id="4_demo"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.32, 0.5, 0.78, 1)
@@ -79,34 +80,34 @@ size = Vector3(20, 1, 124.577)
 material = SubResource("Mat_ground")
 
 [node name="Bump1" type="CSGCylinder3D" parent="Track/Slope"]
-transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, -1.55, 45)
-radius = 2.5
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, -10.8, 45)
+radius = 12.0
 height = 14
-sides = 32
+sides = 128
 smooth_faces = true
 material = SubResource("Mat_feature")
 
 [node name="Bump2" type="CSGCylinder3D" parent="Track/Slope"]
-transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, -1.55, 37)
-radius = 2.5
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, -10.8, 37)
+radius = 12.0
 height = 14
-sides = 32
+sides = 128
 smooth_faces = true
 material = SubResource("Mat_feature")
 
 [node name="Bump3" type="CSGCylinder3D" parent="Track/Slope"]
-transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, -1.55, 29)
-radius = 2.5
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, -10.8, 29)
+radius = 12.0
 height = 14
-sides = 32
+sides = 128
 smooth_faces = true
 material = SubResource("Mat_feature")
 
 [node name="Bump4" type="CSGCylinder3D" parent="Track/Slope"]
-transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, -1.55, 21)
-radius = 2.5
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, -10.8, 21)
+radius = 12.0
 height = 14
-sides = 32
+sides = 128
 smooth_faces = true
 material = SubResource("Mat_feature")
 
@@ -148,17 +149,17 @@ sides = 64
 material = SubResource("Mat_feature")
 
 [node name="TableFront" type="CSGBox3D" parent="Track"]
-transform = Transform3D(1, 0, 0, 0, 0.92308, -0.38462, 0, 0.38462, 0.92308, 0, -0.13462, -167.577)
+transform = Transform3D(1, 0, 0, 0, 0.92308, -0.38462, 0, 0.38462, 0.92308, 0, -0.17312, -167.577)
 size = Vector3(8, 3, 6.7)
 material = SubResource("Mat_feature")
 
 [node name="TableDeck" type="CSGBox3D" parent="Track"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, -175)
-size = Vector3(8, 2.5, 10.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, -174.9967)
+size = Vector3(8, 2.5, 9.8086)
 material = SubResource("Mat_feature")
 
 [node name="TableLanding" type="CSGBox3D" parent="Track"]
-transform = Transform3D(1, 0, 0, 0, 0.99049, 0.13757, 0, -0.13757, 0.99049, 0, -0.23574, -188.794)
+transform = Transform3D(1, 0, 0, 0, 0.99049, 0.13757, 0, -0.13757, 0.99049, 0, -0.24954, -188.794)
 size = Vector3(8, 3, 18.3728)
 material = SubResource("Mat_feature")
 
@@ -186,3 +187,6 @@ material = SubResource("Mat_rail")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 25.05, 8)
 
 [node name="DebugOverlay" parent="." instance=ExtResource("3_overlay")]
+
+[node name="DemoDriver" type="Node" parent="."]
+script = ExtResource("4_demo")

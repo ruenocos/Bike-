@@ -4,6 +4,7 @@ extends PlayerState
 ##
 ## Angle used: how far the velocity points INTO the ground, measured from the
 ## ground plane. 0 deg = touching down exactly parallel to the slope.
+## Touching down while a trick is still spinning is always a bad landing.
 
 var _timer: float = 0.0
 
@@ -26,14 +27,20 @@ func enter(msg: Dictionary) -> void:
 			player.heading = atan2(-flat.x, -flat.z)
 	player.speed = minf(tangent.length(), t.max_speed)
 
-	if impact < t.land_min_impact:
+	var mid_trick: bool = player.tricks.is_mid_trick()
+	player.tricks.cancel()
+
+	if impact < t.land_min_impact and not mid_trick:
 		# Soft roll-in (small drop, respawn): no grade.
 		machine.transition_to(&"Ride", {})
 		return
 
 	var angle: float = rad_to_deg(asin(clampf(impact / maxf(v.length(), 0.001), 0.0, 1.0)))
 	var grade: StringName
-	if angle <= t.perfect_angle_deg:
+	if mid_trick:
+		grade = &"bad"
+		player.speed *= 1.0 - t.bad_penalty
+	elif angle <= t.perfect_angle_deg:
 		grade = &"perfect"
 		player.speed = minf(player.speed * (1.0 + t.perfect_bonus), t.max_speed)
 	elif angle <= t.good_angle_deg:
@@ -48,11 +55,11 @@ func enter(msg: Dictionary) -> void:
 
 	match grade:
 		&"perfect":
-			player.extend_combo()
+			player.combo.add_action(t.perfect_landing_score)
 			player.hit_stop(t.hit_stop_perfect)
 			player.camera_rig.punch()
 		&"good":
-			player.extend_combo()
+			player.combo.keep_alive()
 		&"bad":
 			machine.transition_to(&"Bail", {})
 
