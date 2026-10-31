@@ -36,6 +36,11 @@ const PROFILE: Array[float] = [8.0, 5.0, 40.0, 0.6, 4.0]
 
 @export_tool_button("Rebuild TrackLine from keys") var rebuild_button: Callable = rebuild_line
 
+## How much the chunk turns from entry to exit (deg, + = left). Written by
+## the landscape authoring tool from the Terrain's heading curve; StageBuilder
+## reads it (without instancing) to keep a stage from curling back on itself.
+@export var exit_heading_deg: float = 0.0
+
 ## How hard this chunk is (1 = easy). Later stages pick higher tiers more
 ## often (StageBuilder.tier_bias). Stages get harder through harder chunks,
 ## never through more length.
@@ -89,13 +94,33 @@ func get_finish_gate() -> FinishGate:
 	return get_node_or_null(^"FinishGate") as FinishGate
 
 
-## Half the play area's width (crest to crest for a landscape chunk, the
-## ribbon's walls for a corridor chunk). Past it is out of bounds.
+## Half the play area's widest width (crest to crest for a landscape chunk,
+## the ribbon's walls for a corridor chunk).
 func get_play_half_width() -> float:
 	var terrain: TerrainPatch = get_node_or_null(^"Terrain") as TerrainPatch
 	if terrain != null:
-		return terrain.width * 0.5
+		return terrain.half_total_width() - terrain.outside_width
 	return PROFILE[0] + PROFILE[1] + 6.0
+
+
+## True when a global point is past the valley's crests here (follows the
+## bend and the width). Corridor chunks: sideways from the centerline sample
+## nearest to the point.
+func is_out_of_bounds(global_pos: Vector3) -> bool:
+	var terrain: TerrainPatch = get_node_or_null(^"Terrain") as TerrainPatch
+	if terrain != null:
+		return terrain.is_out_of_bounds_local(terrain.to_local(global_pos))
+	var local: Vector3 = to_local(global_pos)
+	var best: int = 0
+	var best_d: float = INF
+	for i: int in _points.size():
+		var dd: float = _points[i].distance_squared_to(local)
+		if dd < best_d:
+			best_d = dd
+			best = i
+	if _points.is_empty():
+		return false
+	return absf((local - _points[best]).dot(_frames[best].x)) > get_play_half_width()
 
 
 ## The chunk's ride lines (RideLine children of "Lines"), if any.

@@ -12,8 +12,8 @@ extends Node
 ## Like the demo driver it only presses InputMap actions (Input.action_press),
 ## so the player code can't tell it from a pad. Menus get ui_accept events.
 ## v0.8: does the sprint start (releases in the sweet zone) and follows one
-## ride line per landscape chunk (a different style each chunk), with
-## LineFollower; chunks without lines fall back to the centerline.
+## of the chunk's invisible paths (the one nearest to where it enters the
+## chunk), with LineFollower; chunks without paths fall back to the centerline.
 
 ## Steer toward the line this far ahead (m).
 const LOOK_AHEAD: float = 14.0
@@ -55,6 +55,8 @@ var _shots_taken: Dictionary[String, bool] = {}
 var _shooting: bool = false
 var _rail_cache: Dictionary[int, Vector3] = {}
 var _sprint: StartSprint
+## Path picked per chunk (by chunk instance id).
+var _chosen: Dictionary[int, RideLine] = {}
 var _oob: bool = false
 var _was_oob: bool = false
 
@@ -133,8 +135,15 @@ func _steer(progress: float) -> void:
 	if is_instance_valid(chunk):
 		var lines: Array[RideLine] = chunk.get_ride_lines()
 		if lines.size() > 0:
-			var line: RideLine = lines[(index + int(_game.get("stage_index"))) % lines.size()]
-			LineFollower.steer(_player, line, LineFollower.look_ahead(_player.speed))
+			var id: int = chunk.get_instance_id()
+			if not _chosen.has(id):
+				var best: float = INF
+				for candidate: RideLine in lines:
+					var dist: float = LineFollower.distance_to(candidate, _player.global_position)
+					if dist < best:
+						best = dist
+						_chosen[id] = candidate
+			LineFollower.steer(_player, _chosen[id], LineFollower.look_ahead(_player.speed))
 			return
 	var ahead: Transform3D = _builder.transform_at_distance(progress + LOOK_AHEAD)
 	var target: Vector3 = ahead.origin + ahead.basis.x * _rail_aim(progress)
@@ -267,34 +276,34 @@ func _process(_delta: float) -> void:
 	if _shot_dir.is_empty() or _shooting:
 		return
 	if (_menus.get_node(^"StageSummary") as Control).visible and _menu_timer > 1.0:
-		_shot("v0.8_stage_summary.png", null)
+		_shot("v0.8.1_stage_summary.png", null)
 	elif (_menus.get_node(^"UpgradePicker") as Control).visible and _menu_timer > 1.0:
-		_shot("v0.8_upgrade_picker.png", null)
+		_shot("v0.8.1_upgrade_picker.png", null)
 	elif (_menus.get_node(^"RunOver") as Control).visible and _menu_timer > 1.0:
-		_shot("v0.8_run_over.png", null)
+		_shot("v0.8.1_run_over.png", null)
 	if not bool(_game.get("in_stage")) or _builder.chunks.size() < 3:
 		return
 	var progress: float = _game.get("player_progress")
 	if _sprint.active and _sprint.meter > 0.55:
-		_shot("v0.8_sprint_start.png", null)
+		_shot("v0.8.1_sprint_start.png", null)
 	_landscape_shots(progress)
 	# The join between the 2nd and 3rd chunk, from above, as you ride up to it.
 	var join: float = _builder.chunk_start_distance[2]
-	if progress > join - 60.0 and progress < join - 40.0 and not _shots_taken.has("v0.8_chunk_join.png"):
+	if progress > join - 60.0 and progress < join - 40.0 and not _shots_taken.has("v0.8.1_chunk_join.png"):
 		var at: Transform3D = _builder.transform_at_distance(join)
 		var eye: Vector3 = at.origin + Vector3.UP * 45.0 + at.basis.x * 40.0 + at.basis.z * 35.0
-		_shot("v0.8_chunk_join.png", _make_camera(eye, at.origin - at.basis.z * 25.0))
+		_shot("v0.8.1_chunk_join.png", _make_camera(eye, at.origin - at.basis.z * 25.0))
 	# Looking back up the track at you and the collapse behind you.
 	var gap: float = progress - _collapse.distance
-	if _stage_time > 5.0 and gap < 45.0 and gap > 15.0 and not _shots_taken.has("v0.8_collapse_chasing.png"):
+	if _stage_time > 5.0 and gap < 45.0 and gap > 15.0 and not _shots_taken.has("v0.8.1_collapse_chasing.png"):
 		var me: Transform3D = _builder.transform_at_distance(progress)
 		var eye2: Vector3 = _player.global_position - me.basis.z * 18.0 + Vector3.UP * 7.0 + me.basis.x * 6.0
 		var look: Vector3 = _builder.transform_at_distance(progress - 20.0).origin + Vector3.UP * 4.0
-		_shot("v0.8_collapse_chasing.png", _make_camera(eye2, look))
+		_shot("v0.8.1_collapse_chasing.png", _make_camera(eye2, look))
 	if _player.catchable_rail != null and _player.state_machine.get_state_name() != &"Grind":
-		_shot("v0.8_grind_prompt.png", null)
+		_shot("v0.8.1_grind_prompt.png", null)
 	if _player.tricks.is_mid_trick() and _player.tricks.get_progress() > 0.45:
-		_shot("v0.8_trick_air.png", null)
+		_shot("v0.8.1_trick_air.png", null)
 
 
 ## v0.8 stills: an aerial of the 2nd chunk's split lines, and the rider's
@@ -304,19 +313,20 @@ func _landscape_shots(progress: float) -> void:
 	if progress > start2 - 40.0 and progress < start2 - 20.0:
 		var at: Transform3D = _builder.transform_at_distance(start2 + 150.0)
 		var eye: Vector3 = _builder.transform_at_distance(start2 - 10.0).origin + Vector3.UP * 70.0 + Vector3(40.0, 0.0, 0.0)
-		_shot("v0.8_overview_lines.png", _make_camera(eye, at.origin))
+		_shot("v0.8.1_overview_lines.png", _make_camera(eye, at.origin))
 	var index: int = _builder.chunk_index_at(progress)
 	var file: String = _builder.chunk_paths[index].get_file().get_basename()
 	var into: float = progress - _builder.chunk_start_distance[index]
-	for kind: String in ["canyon", "slalom"]:
+	for kind: String in ["switchback_left", "switchback_right", "fast_s", "slalom", "gorge"]:
 		if not file.ends_with(kind):
 			continue
-		if into > 150.0 and into < 170.0:
-			_shot("v0.8_%s_ride.png" % kind, null)
-		if into > 40.0 and into < 60.0:
-			var mid: Transform3D = _builder.transform_at_distance(_builder.chunk_start_distance[index] + 190.0)
-			var eye2: Vector3 = _builder.transform_at_distance(_builder.chunk_start_distance[index] + 30.0).origin + Vector3.UP * 75.0 + Vector3(-50.0, 0.0, 0.0)
-			_shot("v0.8_%s_aerial.png" % kind, _make_camera(eye2, mid.origin))
+		if into > 170.0 and into < 190.0:
+			_shot("v0.8.1_%s_ride.png" % kind, null)
+		if into > 20.0 and into < 40.0:
+			# High above the chunk's middle, looking down the bend.
+			var mid: Transform3D = _builder.transform_at_distance(_builder.chunk_start_distance[index] + 200.0)
+			var eye2: Vector3 = mid.origin + Vector3.UP * 190.0 + Vector3(mid.basis.z.x, 0.0, mid.basis.z.z).normalized() * 150.0
+			_shot("v0.8.1_%s_aerial.png" % kind, _make_camera(eye2, mid.origin))
 
 
 func _make_camera(eye: Vector3, target: Vector3) -> Camera3D:

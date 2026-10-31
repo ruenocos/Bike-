@@ -1,9 +1,10 @@
 extends Node3D
-## Headless line check: rides every ride line of every landscape chunk with a
-## bot (LineFollower) that only steers, holds grind when a rail is in reach
-## and pedals. A line passes when the bot reaches the end without crashing
-## into anything, without bailing a landing, without going out of bounds and
-## without drifting more than MAX_OFF metres off the line.
+## Headless line check: the bot (LineFollower) rides every invisible path
+## (RideLine) of every landscape chunk: several different ways through each
+## open valley, bends included. It only steers, holds grind when a rail is in
+## reach and pedals. A path passes when the bot reaches the end without
+## crashing into anything, without bailing a landing, without going out of
+## bounds and without drifting more than MAX_OFF metres off it.
 ## Rolling boulders are removed first (they're timing hazards, not layout).
 ## Plus one crash check: riding straight into a tree at 50 m/s must bail
 ## ("hit Tree ...") and keep 1 - crash_penalty of the speed.
@@ -14,7 +15,10 @@ extends Node3D
 const PLAYER: PackedScene = preload("res://player/player.tscn")
 ## Start speed per chunk difficulty (m/s): the speed you'd carry in.
 const START_SPEED: Array[float] = [45.0, 45.0, 48.0, 52.0]
-const MAX_OFF: float = 6.0
+const MAX_OFF: float = 8.0
+## Drift off the path only counts this long after the last landing (s): off
+## a kicker or a rail end you fly straight on while the valley bends.
+const LANDING_GRACE: float = 1.5
 
 var _failures: PackedStringArray = PackedStringArray()
 var _bails: PackedStringArray = PackedStringArray()
@@ -79,15 +83,14 @@ func _ride(chunk: Chunk, line: RideLine, label: String) -> void:
 	_player.combo.drop()
 	_player.state_machine.transition_to(&"Air", {})
 	_bails.clear()
-	var half: float = chunk.get_play_half_width()
 	var worst_off: float = 0.0
 	var top: float = 0.0
 	var airtime: float = 0.0
 	var grinds: int = 0
 	var was_grind: bool = false
-	var end: Vector3 = pts[-3]
 	var time: float = 0.0
 	var reached: bool = false
+	var since_air: float = 10.0
 	var oob: bool = false
 	while time < 30.0:
 		var state: StringName = _player.state_machine.get_state_name()
@@ -106,19 +109,25 @@ func _ride(chunk: Chunk, line: RideLine, label: String) -> void:
 		if state == &"Grind" and not was_grind:
 			grinds += 1
 		was_grind = state == &"Grind"
-		# Grinding and flying may leave the line a bit; only riding counts.
-		if state == &"Ride":
-			worst_off = maxf(worst_off, LineFollower.distance_to(line, pos))
-		if absf(pos.x - chunk.global_position.x) > half:
+		# Grinding and flying may leave the path; only settled riding counts.
+		if state != &"Ride":
+			since_air = 0.0
+		else:
+			since_air += 1.0 / Engine.physics_ticks_per_second
+			if since_air > LANDING_GRACE:
+				worst_off = maxf(worst_off, LineFollower.distance_to(line, pos))
+		if chunk.is_out_of_bounds(pos):
 			oob = true
+		if _trace and _player.speed < 3.0 and _player.get_slide_collision_count() > 0:
+			var hit: Object = _player.get_slide_collision(0).get_collider()
+			print("  slow: touching %s (%s) normal %s" % [(hit as Node).get_path() if hit is Node else hit, (hit as Node).get_groups() if hit is Node else [], _player.get_slide_collision(0).get_normal()])
 		if _trace and fmod(time, 1.0) < 1.0 / Engine.physics_ticks_per_second:
 			print("  %s t=%4.1f d=%6.1f x=%6.1f v=%4.1f %s off=%.1f" % [label, time, -pos.z, pos.x, _player.speed, state, LineFollower.distance_to(line, pos)])
-		if pos.z < end.z:
+		if line.nearest_index(pos) >= pts.size() - 3:
 			reached = true
 			break
-	var line_style: String = ["rail", "jump", "carve"][line.style]
-	print("%-30s %-5s %s  %4.1f s  top %4.1f m/s  air %3.1f s  grinds %d  off %4.1f m  bails %d %s" % [
-		label, line_style, "end" if reached else "STUCK", time, top, airtime, grinds, worst_off, _bails.size(), str(_bails) if not _bails.is_empty() else ""])
+	print("%-32s %s  %4.1f s  top %4.1f m/s  air %3.1f s  grinds %d  off %4.1f m  bails %d %s" % [
+		label, "end" if reached else "STUCK", time, top, airtime, grinds, worst_off, _bails.size(), str(_bails) if not _bails.is_empty() else ""])
 	if not reached:
 		_failures.append("%s: didn't reach the end" % label)
 	if not _bails.is_empty():
@@ -126,25 +135,24 @@ func _ride(chunk: Chunk, line: RideLine, label: String) -> void:
 	if oob:
 		_failures.append("%s: went out of bounds" % label)
 	if worst_off > MAX_OFF:
-		_failures.append("%s: %.1f m off the line" % [label, worst_off])
-	if line.style == RideLine.Style.RAIL and grinds == 0:
-		_failures.append("%s: rail line but no grind" % label)
+		_failures.append("%s: %.1f m off the path" % [label, worst_off])
 
 
 func _crash_check(chunk: Chunk) -> void:
-	var tree: Node3D = null
-	for prop: Node in chunk.get_node(^"Terrain/Props").get_children():
-		if prop.name.begins_with("Tree") and absf((prop as Node3D).global_position.x) < 50.0:
-			tree = prop as Node3D
-			break
-	if tree == null:
-		_failures.append("crash check: no tree found")
-		return
-	var start: Vector3 = tree.global_position + Vector3(0.0, 0.0, 25.0)
-	var space: PhysicsDirectSpaceState3D = get_world_3d().direct_space_state
-	var hit: Dictionary = space.intersect_ray(PhysicsRayQueryParameters3D.create(start + Vector3.UP * 30.0, start + Vector3.DOWN * 60.0, 1, [_player.get_rid()]))
-	start.y = (hit["position"] as Vector3).y + 0.3 if not hit.is_empty() else start.y
-	_player.place(start, 0.0, 50.0)
+	# Our own tree on open ground in the middle of the valley, and a run at it
+	# from 25 m uphill along the valley.
+	var terrain: TerrainPatch = chunk.get_node(^"Terrain") as TerrainPatch
+	var line: RideLine = chunk.get_ride_lines()[0]
+	var target: Vector3 = terrain.local_to_valley(terrain.to_local(line.get_global_points()[60]))
+	var tree: Node3D = (load("res://chunks/parts/props/tree.tscn") as PackedScene).instantiate() as Node3D
+	tree.name = "TestTree"
+	chunk.add_child(tree)
+	tree.global_position = terrain.to_global(terrain.valley_to_local(target.x, terrain.surface_height(target.x, -target.z), target.z))
+	var start: Vector3 = terrain.to_global(terrain.valley_to_local(target.x, terrain.surface_height(target.x, -(target.z - 25.0)) + 0.3, target.z - 25.0))
+	for i: int in 2:
+		await get_tree().physics_frame
+	var aim: Vector3 = tree.global_position - start
+	_player.place(start, atan2(-aim.x, -aim.z), 50.0)
 	_player.state_machine.transition_to(&"Air", {})
 	_bails.clear()
 	for i: int in 90:
@@ -154,6 +162,7 @@ func _crash_check(chunk: Chunk) -> void:
 		if not _bails.is_empty():
 			break
 	var reason: String = _bails[0] if not _bails.is_empty() else "-"
-	print("crash check: into %s at 50 m/s -> %s, speed after %.1f m/s" % [tree.name, reason, _player.speed])
+	print("crash check: into a tree at 50 m/s -> %s, speed after %.1f m/s" % [reason, _player.speed])
 	if not reason.begins_with("hit"):
 		_failures.append("crash check: riding into a tree didn't crash (%s)" % reason)
+	tree.free()

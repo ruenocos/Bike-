@@ -12,6 +12,7 @@ extends Node3D
 ## Open valley (v0.8): at speed it pulls up and back to read the lines ahead;
 ## inside a TightZone (slaloms, gaps) it tucks in closer instead.
 ## The collapse drives a continuous shake (set_collapse_shake) as it closes in.
+## In bends (v0.8.1) the yaw leads into the turn (cam_turn_lead_*).
 
 @onready var player: Player = get_parent() as Player
 @onready var spring_arm: SpringArm3D = $SpringArm3D
@@ -41,6 +42,9 @@ var _tight_blend: float = 0.0
 ## Continuous shake from the collapse (m), and its own noise clock.
 var _collapse_shake: float = 0.0
 var _collapse_time: float = 0.0
+## Smoothed yaw rate of the rider (rad/s) and last heading, for the turn lead.
+var _yaw_rate: float = 0.0
+var _last_heading: float = 0.0
 
 
 func _ready() -> void:
@@ -66,6 +70,8 @@ func snap() -> void:
 	_transition_hold_timer = 0.0
 	_slope_pitch = 0.0
 	_slope_target = 0.0
+	_yaw_rate = 0.0
+	_last_heading = player.heading
 
 
 func _process(delta: float) -> void:
@@ -98,6 +104,15 @@ func _process(delta: float) -> void:
 	var inset: Vector3 = _transition_normal * t.cam_transition_inset * _transition_blend
 	var target_position: Vector3 = player.get_global_transform_interpolated().origin + look_ahead + inset
 	global_position = global_position.lerp(target_position, _damp_weight(t.cam_position_damping, delta))
+
+	# Turn lead: look ahead into the bend you're carving.
+	if delta > 0.0:
+		var rate: float = angle_difference(_last_heading, player.heading) / delta
+		_yaw_rate = lerpf(_yaw_rate, rate, _damp_weight(0.15, delta))
+	_last_heading = player.heading
+	if not on_transition:
+		var lead: float = clampf(_yaw_rate * t.cam_turn_lead_time, -deg_to_rad(t.cam_turn_lead_max_deg), deg_to_rad(t.cam_turn_lead_max_deg))
+		target_yaw += lead
 
 	# Rotation: swing behind the heading (or along the ramp). Yaw only, so the
 	# camera never rolls with the rider.

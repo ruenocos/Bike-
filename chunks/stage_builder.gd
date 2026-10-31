@@ -26,14 +26,23 @@ signal finished
 	preload("res://chunks/landscape/land_ridge.tscn"),
 	preload("res://chunks/landscape/land_forest.tscn"),
 	preload("res://chunks/landscape/land_boulders.tscn"),
-	preload("res://chunks/landscape/land_canyon.tscn"),
+	preload("res://chunks/landscape/land_gorge.tscn"),
 	preload("res://chunks/landscape/land_slalom.tscn"),
+	preload("res://chunks/landscape/land_fast_s.tscn"),
+	preload("res://chunks/landscape/land_switchback_left.tscn"),
+	preload("res://chunks/landscape/land_switchback_right.tscn"),
 ]
 @export var finish_chunk: PackedScene = preload("res://chunks/landscape/land_finish.tscn")
 @export_range(0, 20) var middle_count: int = 8
 ## Later stages lean toward harder chunks: a chunk's pick weight is
 ## 1 + tier_bias * stage_index * (difficulty - 1). 0 = every chunk equally likely.
 @export_range(0.0, 5.0, 0.05) var tier_bias: float = 0.5
+## Bending valleys (v0.8.1): the stage's total turn (sum of the chunks'
+## exit_heading_deg) never goes past this either way...
+@export_range(0.0, 180.0, 1.0, "suffix:deg") var max_stage_heading_deg: float = 85.0
+## ...and a new chunk's centerline must stay this far from every earlier
+## chunk except its neighbour, so a stage never curls back over itself.
+@export_range(0.0, 1000.0, 5.0, "suffix:m") var min_clearance: float = 250.0
 ## Chunks that end this far behind the player are freed.
 @export_range(50.0, 2000.0, 10.0, "suffix:m") var free_behind_distance: float = 300.0
 ## Chunks the collapse has passed drop this far...
@@ -90,44 +99,88 @@ func build(stage_seed: int, middle: int = -1, stage_index: int = 0) -> void:
 	var weights: PackedFloat32Array = PackedFloat32Array()
 	for scene: PackedScene in middle_chunks:
 		weights.append(1.0 + tier_bias * stage_index * (_difficulty_of(scene) - 1))
-	var picks: Array[PackedScene] = [start_chunk]
+	var at: Transform3D = _place(start_chunk, global_transform)
 	var last: int = -1
+	var heading: float = 0.0
 	for i: int in (middle_count if middle < 0 else middle):
-		# Never the same chunk twice in a row.
+		# Never the same chunk twice in a row; never turning past the limit
+		# or back over earlier chunks (rejected picks are dropped for this slot).
 		var allowed: PackedFloat32Array = weights.duplicate()
 		if last >= 0 and middle_chunks.size() > 1:
 			allowed[last] = 0.0
-		var index: int = rng.rand_weighted(allowed)
-		picks.append(middle_chunks[index])
-		last = index
-	picks.append(finish_chunk)
-
-	var at: Transform3D = global_transform
-	for scene: PackedScene in picks:
-		var chunk: Chunk = scene.instantiate() as Chunk
-		add_child(chunk)
-		# Entry onto the previous exit. Every join is at the same slope, so
-		# in practice this only moves and turns the chunk around up.
-		chunk.global_transform = at * chunk.get_entry_transform().affine_inverse()
-		at = chunk.global_transform * chunk.get_exit_transform()
-		_append_line(chunk)
-		chunks.append(chunk)
-		chunk_paths.append(scene.resource_path)
-		_gone.append(false)
-		chunk.finish_crossed.connect(finished.emit)
+		while true:
+			var total: float = 0.0
+			for w: float in allowed:
+				total += w
+			if total <= 0.0:
+				push_warning("StageBuilder: no chunk fits slot %d; stage is one chunk short" % i)
+				break
+			var index: int = rng.rand_weighted(allowed)
+			var turn: float = float(_chunk_property(middle_chunks[index], &"exit_heading_deg", 0.0))
+			if absf(heading + turn) > max_stage_heading_deg:
+				allowed[index] = 0.0
+				continue
+			var next: Transform3D = _place(middle_chunks[index], at)
+			if next == Transform3D():
+				allowed[index] = 0.0
+				continue
+			at = next
+			heading += turn
+			last = index
+			break
+	_place(finish_chunk, at, false)
 	length = line_distance[-1]
 	var gate: FinishGate = chunks[-1].get_finish_gate()
 	finish_distance = nearest_distance(gate.global_position) if gate != null else length
 
 
-## A chunk scene's `difficulty` without instancing it (read from the scene's
-## saved properties; 1 when it was never changed from the default).
+## Instances `scene` with its Entry on `at` and appends it to the stage.
+## With `check`, a chunk that comes too close to an earlier one (not its
+## neighbour) is freed instead and an empty Transform3D() is returned.
+## Returns the global transform of the new chunk's Exit.
+func _place(scene: PackedScene, at: Transform3D, check: bool = true) -> Transform3D:
+	var chunk: Chunk = scene.instantiate() as Chunk
+	add_child(chunk)
+	# Entry onto the previous exit. Every join is at the same slope, so this
+	# only moves and turns the chunk around up.
+	chunk.global_transform = at * chunk.get_entry_transform().affine_inverse()
+	if check and chunks.size() >= 2 and _too_close(chunk):
+		chunk.free()
+		return Transform3D()
+	_append_line(chunk)
+	chunks.append(chunk)
+	chunk_paths.append(scene.resource_path)
+	_gone.append(false)
+	chunk.finish_crossed.connect(finished.emit)
+	return chunk.global_transform * chunk.get_exit_transform()
+
+
+## True when the chunk's centerline passes within min_clearance of any
+## chunk before the last one (horizontal distance, every 10 m).
+func _too_close(chunk: Chunk) -> bool:
+	var points: PackedVector3Array = chunk.get_points()
+	var limit: int = chunk_first_sample[chunks.size() - 1]
+	for i: int in range(0, points.size(), 10):
+		var p: Vector3 = chunk.global_transform * points[i]
+		for j: int in range(0, limit, 10):
+			if Vector2(p.x - line_points[j].x, p.z - line_points[j].z).length() < min_clearance:
+				return true
+	return false
+
+
+## A chunk scene's `difficulty` without instancing it.
 static func _difficulty_of(scene: PackedScene) -> int:
+	return int(_chunk_property(scene, &"difficulty", 1))
+
+
+## A property saved on a chunk scene's root, without instancing it (the
+## default when it was never changed).
+static func _chunk_property(scene: PackedScene, property: StringName, default: Variant) -> Variant:
 	var state: SceneState = scene.get_state()
 	for i: int in state.get_node_property_count(0):
-		if state.get_node_property_name(0, i) == &"difficulty":
-			return int(state.get_node_property_value(0, i))
-	return 1
+		if state.get_node_property_name(0, i) == property:
+			return state.get_node_property_value(0, i)
+	return default
 
 
 func _append_line(chunk: Chunk) -> void:
@@ -213,13 +266,13 @@ func chunk_index_at(d: float) -> int:
 	return chunks.size() - 1
 
 
-## Half the play width at stage distance `d` (sideways from the centerline,
-## past it is out of bounds).
-func half_width_at(d: float) -> float:
+## True when a global point is past the valley's crests in the chunk at
+## stage distance `d` (follows bends and narrowing).
+func out_of_bounds(pos: Vector3, d: float) -> bool:
 	var i: int = chunk_index_at(d)
-	if i < 0 or not is_instance_valid(chunks[i]):
-		return INF
-	return chunks[i].get_play_half_width()
+	if i < 0 or _gone[i] or not is_instance_valid(chunks[i]):
+		return false
+	return chunks[i].is_out_of_bounds(pos)
 
 
 ## The ride line nearest to `pos` in the chunks around `d`, or null.

@@ -169,6 +169,10 @@ extends Resource
 ## turned this far away under you (deg). Above the ~40 deg of a test-track
 ## roller, so bumps stay rideable and pumpable.
 @export var convex_release_deg: float = 45.0
+## Riding into a face whose normal points up at least this much (world up,
+## 0.6 = within ~53 deg of flat) rides up it instead of counting as a wall
+## that stops you. Steeper faces still stop you.
+@export_range(0.0, 1.0, 0.01) var ramp_min_normal_y: float = 0.6
 ## Same, rolling over the coping at the top of a steep face (deg).
 @export var lip_release_deg: float = 20.0
 ## Vert assist in a lip air: aim this far out over the pipe from the lip line (m).
@@ -274,6 +278,11 @@ extends Resource
 @export var cam_tight_height: float = 0.0
 ## Time to blend between open and tight framing (s).
 @export var cam_open_blend_time: float = 0.8
+## Turn lead: in a bend the camera swings ahead into the turn by your yaw
+## rate x this (s), so you see where the valley goes...
+@export var cam_turn_lead_time: float = 0.0
+## ...up to this much (deg).
+@export var cam_turn_lead_max_deg: float = 20.0
 
 @export_group("Speed lines")
 ## Speed lines start fading in above this fraction of max_speed (0.7 = 70%).

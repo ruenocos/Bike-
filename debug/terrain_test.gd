@@ -36,6 +36,7 @@ func _ready() -> void:
 func _run() -> void:
 	await _check_seam_and_collision()
 	await _check_shapes()
+	await _check_bends()
 	await _check_rides()
 	if _failures.is_empty():
 		print("terrain test: all passed")
@@ -235,3 +236,106 @@ func _check_rides() -> void:
 		if String(ride[0]).contains("rest") and top_speed < 20.0:
 			_fail("ride %s: only reached %.1f m/s" % [ride[0], top_speed])
 	sandbox.queue_free()
+
+
+## Bent valleys (v0.8.1): a left bend into a right S-bend into a straight
+## patch, each put on the previous one's exit_transform(). The edges must
+## meet (position and height, < 1 mm), the collision across both seams has
+## no step, the collision matches surface_height on the bends, a LINE shape
+## drawn along the bend lands where it should, and no bend folds over.
+func _check_bends() -> void:
+	var specs: Array = [
+		[_curve([Vector2(0, 0), Vector2(0.15, 0), Vector2(0.85, 45), Vector2(1, 45)]), 7],
+		[_curve([Vector2(0, 0), Vector2(0.1, 0), Vector2(0.45, -25), Vector2(0.8, 0), Vector2(1, 0)]), 8],
+		[null, 9]]
+	var patches: Array[TerrainPatch] = []
+	var at: Transform3D = Transform3D.IDENTITY
+	for spec: Array in specs:
+		var p: TerrainPatch = TerrainPatch.new()
+		p.length = 320.0
+		p.heading_curve = spec[0]
+		p.noise_seed = spec[1]
+		p.noise_amplitude = 3.0
+		add_child(p)
+		# Entry frame onto the previous exit (the pitch cancels: both 23 deg).
+		if not patches.is_empty():
+			p.global_transform = at * p.frame_at(0.0).affine_inverse()
+		at = p.global_transform * p.exit_transform()
+		patches.append(p)
+	# A LINE shape along the first bend, 2 m under the plain slope at x = -20.
+	var line: TerrainShape = TerrainShape.new()
+	line.mode = TerrainShape.Mode.LINE
+	line.width = 10.0
+	line.curve = Curve3D.new()
+	var first: TerrainPatch = patches[0]
+	for d: float in range(60, 260, 4):
+		line.curve.add_point(first.valley_to_local(-20.0, first.base_height(-20.0, -d) - 2.0, d))
+	first.add_child(line)
+	first.rebuild()
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+
+	for i: int in patches.size() - 1:
+		var a: TerrainPatch = patches[i]
+		var b: TerrainPatch = patches[i + 1]
+		var worst: float = 0.0
+		var x: float = -a.half_total_width()
+		while x <= a.half_total_width():
+			var pa: Vector3 = a.to_global(a.valley_to_local(x, a.surface_height(x, -a.length), a.length))
+			var pb: Vector3 = b.to_global(b.valley_to_local(x, b.surface_height(x, 0.0), 0.0))
+			worst = maxf(worst, pa.distance_to(pb))
+			x += 1.0
+		print("bent seam %d: edges differ by at most %.5f m (exit heading %.0f deg)" % [i, worst, rad_to_deg(a.heading_at(a.length))])
+		if worst > 0.001:
+			_fail("bent seam %d: edges differ by %.4f m" % [i, worst])
+		# Collision just before and after the seam, across the flat middle.
+		var seam: Transform3D = a.global_transform * a.exit_transform()
+		for side: float in [-40.0, -10.0, 0.0, 10.0, 40.0]:
+			var p0: Vector3 = seam.origin + seam.basis.x * side
+			var before: Dictionary = _ray_down(p0.x + seam.basis.z.x * 0.3, p0.z + seam.basis.z.z * 0.3)
+			var after: Dictionary = _ray_down(p0.x - seam.basis.z.x * 0.3, p0.z - seam.basis.z.z * 0.3)
+			if before.is_empty() or after.is_empty():
+				_fail("bent seam %d: no ground at %.0f" % [i, side])
+				continue
+			var plane_step: float = ((before["position"] as Vector3) - (after["position"] as Vector3)).dot(seam.basis.y)
+			if absf(plane_step) > 0.05:
+				_fail("bent seam %d: step %.3f m at %.0f" % [i, plane_step, side])
+
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	rng.seed = 11
+	var worst_hit: float = 0.0
+	for p: TerrainPatch in patches:
+		if p.fold_margin < 0.0:
+			_fail("bend folds: %.0f m too tight" % -p.fold_margin)
+		for i: int in 150:
+			var vx: float = rng.randf_range(-p.half_total_width() + 3.0, p.half_total_width() - 3.0)
+			var vd: float = rng.randf_range(3.0, p.length - 3.0)
+			var g: Vector3 = p.to_global(p.valley_to_local(vx, 0.0, vd))
+			var hit: Dictionary = _ray_down(g.x, g.z)
+			if hit.is_empty():
+				_fail("bent patch %d: no collision at valley (%.0f, %.0f) = global %s" % [patches.find(p), vx, vd, g])
+				continue
+			var want: float = p.to_global(Vector3(0.0, p.surface_height(vx, -vd), 0.0)).y
+			if absf((hit["position"] as Vector3).y - want) > 0.05:
+				print("  patch %d valley (%.0f, %.0f): hit y %.2f want %.2f" % [patches.find(p), vx, vd, (hit["position"] as Vector3).y, want])
+			worst_hit = maxf(worst_hit, absf((hit["position"] as Vector3).y - want))
+	print("bent collision vs surface_height: at most %.3f m off; tightest radius %.0f m" % [worst_hit, patches[1].tightest_radius])
+	if worst_hit > 0.05:
+		_fail("bent collision differs from surface_height by %.3f m" % worst_hit)
+	_expect_height(first, "bent line", -20.0, -160.0, first.base_height(-20.0, -160.0) - 2.0)
+	var oob_in: bool = first.is_out_of_bounds_local(first.valley_to_local(70.0, 0.0, 160.0))
+	var oob_out: bool = first.is_out_of_bounds_local(first.valley_to_local(80.0, 0.0, 160.0))
+	if oob_in or not oob_out:
+		_fail("bent out-of-bounds check wrong (x 70: %s, x 80: %s)" % [oob_in, oob_out])
+	for p: TerrainPatch in patches:
+		p.queue_free()
+	await get_tree().physics_frame
+
+
+static func _curve(points: Array[Vector2]) -> Curve:
+	var c: Curve = Curve.new()
+	c.min_value = -120.0
+	c.max_value = 120.0
+	for p: Vector2 in points:
+		c.add_point(p)
+	return c

@@ -141,9 +141,7 @@ func _physics_process(delta: float) -> void:
 ## Past the valley crests (sideways from the centerline): count down, then
 ## put the rider back on the nearest ride line.
 func _update_out_of_bounds(delta: float) -> void:
-	var at: Transform3D = builder.transform_at_distance(player_progress)
-	var side: float = absf((player.global_position - at.origin).dot(at.basis.x))
-	if side > builder.half_width_at(player_progress):
+	if builder.out_of_bounds(player.global_position, player_progress):
 		oob_timer += delta
 		if oob_timer >= oob_time:
 			_respawn_on_line()

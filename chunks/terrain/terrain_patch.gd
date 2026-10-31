@@ -1,15 +1,18 @@
 @tool
 class_name TerrainPatch
 extends Node3D
-## A wide downhill landscape: one generated mesh + collision, built from the
+## A wide downhill valley: one generated mesh + collision, built from the
 ## settings below and the shaping nodes placed under it. Previews live in the
 ## editor: change a value or drag a shaping node and the terrain rebuilds.
 ##
-## Space: the origin is the middle of the entry edge at height 0. Downhill is
-## -Z (the exit edge is at z = -length), X runs across. The play area is
-## `width` wide (-width/2 .. width/2, edge walls included); past the wall
-## crests the ground falls away for `outside_width` more on each side. That
-## outside strip is rideable but out of bounds (the game counts it down).
+## The valley runs along a spine that starts at this node's origin heading
+## down -Z and bends as `heading_curve` says (v0.8.1). Everything about the
+## valley's shape is worked out in "valley space": x = metres across from the
+## spine (+ = right), d = metres downhill along it. The play area is `width`
+## wide (|x| <= width/2, edge walls included, optionally narrowed along the
+## length by `width_profile`); past the wall crests the ground falls away for
+## `outside_width` more on each side. That strip is rideable but out of
+## bounds (the game counts it down).
 ##
 ## Height at a point, in order:
 ##   1. base slope (slope_deg, shaped along the length by slope_profile)
@@ -21,10 +24,17 @@ extends Node3D
 ##      optional invisible boundary walls at the very edge
 ## Steps 2-4 fade out over `seam_blend` at the entry and exit, so every patch
 ## with the same width / slope / walls / cell size has exactly the same entry
-## and exit edge: patches placed exit-to-entry meet without a step.
+## and exit edge, whatever its bend: patches placed exit-to-entry (exit_transform)
+## meet without a step.
 ##
-## Shaping nodes can sit anywhere under this node (also nested). Their order
-## matters for LINE and Flatten (later ones win where they overlap).
+## Shaping nodes can sit anywhere under this node (also nested), in the
+## patch's normal 3D space: they follow the bend because the patch converts
+## them into valley space. Their order matters for LINE and Flatten (later
+## ones win where they overlap).
+##
+## Bending: the inner side of a bend must stay wider than the valley's half
+## width (plus the outside strip), or the ground would fold over itself. The
+## inspector shows the tightest radius; rebuilding warns when it's too tight.
 ##
 ## Godot note: the mesh and collision are generated children that aren't
 ## saved with the scene (they're "internal" and have no owner); the scene
@@ -43,7 +53,7 @@ const BOUNDARY_SEGMENT: float = 20.0
 	set(v):
 		width = v
 		queue_rebuild()
-## Downhill, along -Z.
+## Downhill, along the spine.
 @export_range(20.0, 1000.0, 1.0, "suffix:m") var length: float = 300.0:
 	set(v):
 		length = v
@@ -54,6 +64,25 @@ const BOUNDARY_SEGMENT: float = 20.0
 	set(v):
 		cell_size = v
 		queue_rebuild()
+## Optional: the play width along the length, as a multiplier of `width`
+## (x 0 = entry, x 1 = exit). Keep both ends at 1 so patches still join.
+## Empty = the same width all the way.
+@export var width_profile: Curve:
+	set(v):
+		width_profile = _watch(width_profile, v)
+
+@export_group("Bend")
+## The valley's heading along its length, in degrees (+ = bending left,
+## - = right; x 0 = entry, x 1 = exit). Start at 0. The exit edge faces the
+## end heading, and the next chunk carries on from there. Empty = straight.
+## Set the curve's min/max value (e.g. -120 / 120) to draw big bends.
+@export var heading_curve: Curve:
+	set(v):
+		heading_curve = _watch(heading_curve, v)
+## Tightest bend radius of the spine in the last build (m, read only, not saved).
+## `fold_margin` is the smallest (radius - local half width incl. the outside
+## strip) along the spine; below 0 the ground folds over itself.
+@export_custom(PROPERTY_HINT_NONE, "suffix:m", PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY) var tightest_radius: float = INF
 
 @export_group("Slope")
 ## Downhill angle. Chunks join at 23 deg (Chunk.JOIN_PITCH_DEG).
@@ -66,12 +95,7 @@ const BOUNDARY_SEGMENT: float = 20.0
 ## Empty = the same slope all the way.
 @export var slope_profile: Curve:
 	set(v):
-		if slope_profile != null and slope_profile.changed.is_connected(queue_rebuild):
-			slope_profile.changed.disconnect(queue_rebuild)
-		slope_profile = v
-		if slope_profile != null:
-			slope_profile.changed.connect(queue_rebuild)
-		queue_rebuild()
+		slope_profile = _watch(slope_profile, v)
 
 @export_group("Noise")
 ## Height of the rolling ground, up and down from the slope.
@@ -139,7 +163,8 @@ const BOUNDARY_SEGMENT: float = 20.0
 		if _mesh_instance != null:
 			_mesh_instance.material_override = material
 
-## Grid size and heights of the last build (row-major: row r = z -r*dz).
+## Grid size and heights of the last build (row-major; row r is r * row
+## spacing down the spine, column c runs across it).
 var columns: int = 0
 var rows: int = 0
 var heights: PackedFloat32Array = PackedFloat32Array()
@@ -148,8 +173,14 @@ var _mesh_instance: MeshInstance3D
 var _body: StaticBody3D
 var _rebuild_queued: bool = false
 var _noise: FastNoiseLite = FastNoiseLite.new()
-## Height of the base slope at each row (index = row).
+## Per row: height of the base slope, half the play width, the spine point
+## (x, z in patch space) and its heading (radians, + = left).
 var _row_base: PackedFloat32Array = PackedFloat32Array()
+var _row_half: PackedFloat32Array = PackedFloat32Array()
+var _row_center: PackedVector2Array = PackedVector2Array()
+var _row_heading: PackedFloat32Array = PackedFloat32Array()
+## Smallest bend radius minus the local half width (m); < 0 = folds over.
+var fold_margin: float = INF
 
 
 func _ready() -> void:
@@ -176,30 +207,46 @@ func rebuild() -> void:
 	_rebuild_queued = false
 	if not is_inside_tree():
 		return
+	_compute_rows()
 	_compute_heights()
 	_build_mesh()
 	_build_collision()
 
 
-## Height of the plain slope + edge walls (no noise or shaping) at local
-## (x, z). The entry and exit edges are exactly this.
+## Swaps a watched Curve: edits to the curve rebuild the terrain.
+func _watch(old: Curve, new: Curve) -> Curve:
+	if old != null and old.changed.is_connected(queue_rebuild):
+		old.changed.disconnect(queue_rebuild)
+	if new != null and not new.changed.is_connected(queue_rebuild):
+		new.changed.connect(queue_rebuild)
+	queue_rebuild()
+	return new
+
+
+# --- Valley space ------------------------------------------------------------
+
+## Height of the plain slope + edge walls (no noise or shaping) at valley
+## (x across, z = -d along). The entry and exit edges are exactly this.
 func base_height(x: float, z: float) -> float:
-	return _slope_height(-z) + _wall_height(x)
+	return _slope_height(-z) + _wall_height(x, half_play_at(-z))
 
 
-## Height of the built surface at local (x, z): the mesh / collision, the same
-## triangles. Outside the patch it clamps to the nearest edge.
+## Height of the built surface at valley (x across, z = -d along): the mesh /
+## collision. Outside the patch it clamps to the nearest edge.
 func surface_height(x: float, z: float) -> float:
 	if heights.is_empty():
 		return 0.0
-	var dx: float = half_total_width() * 2.0 / float(columns - 1)
 	var dz: float = length / float(rows - 1)
-	var fx: float = clampf((x + half_total_width()) / dx, 0.0, float(columns - 1) - 0.0001)
 	var fz: float = clampf(-z / dz, 0.0, float(rows - 1) - 0.0001)
-	var c: int = int(fx)
 	var r: int = int(fz)
-	var tx: float = fx - c
 	var tz: float = fz - r
+	# Columns are spaced per row (the width can change), so find the column
+	# fraction in both rows and blend.
+	var fx0: float = _column_f(r, x)
+	var fx1: float = _column_f(r + 1, x)
+	var fx: float = lerpf(fx0, fx1, tz)
+	var c: int = int(fx)
+	var tx: float = fx - c
 	var h00: float = heights[r * columns + c]
 	var h10: float = heights[r * columns + c + 1]
 	var h01: float = heights[(r + 1) * columns + c]
@@ -210,14 +257,92 @@ func surface_height(x: float, z: float) -> float:
 	return h00 + (h11 - h01) * tx + (h01 - h00) * tz
 
 
-## Middle of the exit edge in this patch's space: put the next patch here.
+## Surface height under a point in this patch's own 3D space.
+func height_at_local(p: Vector3) -> float:
+	var v: Vector3 = local_to_valley(p)
+	return surface_height(v.x, -v.z)
+
+
+## Valley (x across, y up, d along) to this patch's 3D space.
+func valley_to_local(x: float, y: float, d: float) -> Vector3:
+	var f: Dictionary = _spine_at(d)
+	var right: Vector3 = f["right"]
+	var center: Vector3 = f["center"]
+	return Vector3(center.x + right.x * x, y, center.z + right.z * x)
+
+
+## This patch's 3D space to valley space: Vector3(x across, y, d along).
+## `hint` = a row to start searching from (speeds up walking along a curve).
+func local_to_valley(p: Vector3, hint: int = -1) -> Vector3:
+	if _row_center.is_empty():
+		return Vector3(p.x, p.y, -p.z)
+	var best: int = 0
+	var best_d: float = INF
+	var from: int = 0 if hint < 0 else maxi(hint - 12, 0)
+	var to: int = rows - 1 if hint < 0 else mini(hint + 12, rows - 1)
+	var p2: Vector2 = Vector2(p.x, p.z)
+	for r: int in range(from, to + 1):
+		var dd: float = _row_center[r].distance_squared_to(p2)
+		if dd < best_d:
+			best_d = dd
+			best = r
+	var dz: float = length / float(rows - 1)
+	var h: float = _row_heading[best]
+	var forward: Vector2 = Vector2(-sin(h), -cos(h))
+	var right: Vector2 = Vector2(cos(h), -sin(h))
+	var rel: Vector2 = p2 - _row_center[best]
+	return Vector3(rel.dot(right), p.y, clampf(best * dz + rel.dot(forward), 0.0, length))
+
+
+## Spine frame at distance d: origin on the plain slope at the spine, -Z
+## down the slope along the heading, X across to the right, no bank.
+func frame_at(d: float) -> Transform3D:
+	var f: Dictionary = _spine_at(d)
+	var right: Vector3 = f["right"]
+	var flat_forward: Vector3 = Vector3.UP.cross(right)
+	var pitch: float = deg_to_rad(_slope_at(clampf(d / length, 0.0, 1.0)))
+	var forward: Vector3 = (flat_forward * cos(pitch) + Vector3.DOWN * sin(pitch)).normalized()
+	var up: Vector3 = right.cross(forward)
+	var center: Vector3 = f["center"]
+	return Transform3D(Basis(right, up, -forward), Vector3(center.x, _slope_height(d), center.z))
+
+
+## Where the next patch's entry goes (its frame_at(0) lands here).
+func exit_transform() -> Transform3D:
+	return frame_at(length)
+
+
+## Middle of the exit edge in this patch's space.
 func exit_point() -> Vector3:
-	return Vector3(0.0, _slope_height(length), -length)
+	return exit_transform().origin
 
 
-## Half the mesh width: the play area plus the outside strip.
+## Heading at distance d (radians, + = left).
+func heading_at(d: float) -> float:
+	if heading_curve == null:
+		return 0.0
+	return deg_to_rad(heading_curve.sample(clampf(d / length, 0.0, 1.0)))
+
+
+## Half the play width at distance d (crest to spine).
+func half_play_at(d: float) -> float:
+	var k: float = 1.0 if width_profile == null else width_profile.sample(clampf(d / length, 0.0, 1.0))
+	return width * 0.5 * maxf(k, 0.05)
+
+
+## Half the mesh width at the widest point: the play area plus the outside strip.
 func half_total_width() -> float:
-	return width * 0.5 + outside_width
+	var widest: float = width * 0.5
+	if width_profile != null:
+		for i: int in 21:
+			widest = maxf(widest, half_play_at(length * i / 20.0))
+	return widest + outside_width
+
+
+## True when a point (this patch's space) is past the crests.
+func is_out_of_bounds_local(p: Vector3) -> bool:
+	var v: Vector3 = local_to_valley(p)
+	return absf(v.x) > half_play_at(v.z)
 
 
 ## Sets the height of every child of the "Props" node to the surface under it.
@@ -233,17 +358,83 @@ func snap_props() -> void:
 			continue
 		var at: Vector3 = _to_patch(prop).origin
 		var offset: float = float(prop.get_meta(&"ground_offset", 0.0))
-		prop.position.y += surface_height(at.x, at.z) + offset - at.y
+		prop.position.y += height_at_local(at) + offset - at.y
+
+
+## Interpolated spine point and right vector at distance d.
+func _spine_at(d: float) -> Dictionary:
+	if _row_center.is_empty():
+		var h0: float = heading_at(d)
+		return {"center": Vector3(0.0, 0.0, -d), "right": Vector3(cos(h0), 0.0, -sin(h0))}
+	var dz: float = length / float(rows - 1)
+	var fr: float = clampf(d / dz, 0.0, float(rows - 1))
+	var r: int = mini(int(fr), rows - 2)
+	var t: float = fr - r
+	var c: Vector2 = _row_center[r].lerp(_row_center[r + 1], t)
+	var h: float = lerpf(_row_heading[r], _row_heading[r + 1], t)
+	# Past the ends: carry on straight.
+	if d > length:
+		c += Vector2(-sin(h), -cos(h)) * (d - length)
+	elif d < 0.0:
+		c += Vector2(-sin(h), -cos(h)) * d
+	return {"center": Vector3(c.x, 0.0, c.y), "right": Vector3(cos(h), 0.0, -sin(h))}
+
+
+## Column position of valley x in row r (fractional).
+func _column_f(r: int, x: float) -> float:
+	var half_total: float = _row_half[r] + outside_width
+	var dx: float = half_total * 2.0 / float(columns - 1)
+	return clampf((x + half_total) / dx, 0.0, float(columns - 1) - 0.0001)
+
+
+## Valley x of column c in row r.
+func _column_x(r: int, c: int) -> float:
+	var half_total: float = _row_half[r] + outside_width
+	return -half_total + c * half_total * 2.0 / float(columns - 1)
+
+
+## Patch-space position (x, z) of grid point (r, c).
+func _grid_xz(r: int, c: int) -> Vector2:
+	var h: float = _row_heading[r]
+	return _row_center[r] + Vector2(cos(h), -sin(h)) * _column_x(r, c)
 
 
 # --- Heights ---------------------------------------------------------------
 
-func _compute_heights() -> void:
-	columns = maxi(2, int(round(half_total_width() * 2.0 / cell_size)) + 1)
+## The spine: per row, base slope, play half width, centre and heading.
+func _compute_rows() -> void:
 	rows = maxi(2, int(round(length / cell_size)) + 1)
-	var dx: float = half_total_width() * 2.0 / float(columns - 1)
+	columns = maxi(2, int(round(half_total_width() * 2.0 / cell_size)) + 1)
 	var dz: float = length / float(rows - 1)
-	_compute_row_base(dz)
+	_row_base.resize(rows)
+	_row_half.resize(rows)
+	_row_center.resize(rows)
+	_row_heading.resize(rows)
+	_row_base[0] = 0.0
+	_row_center[0] = Vector2.ZERO
+	var tightest: float = INF
+	fold_margin = INF
+	for r: int in rows:
+		var d: float = r * dz
+		_row_half[r] = half_play_at(d)
+		_row_heading[r] = heading_at(d)
+		if r == 0:
+			continue
+		var mid: float = (r - 0.5) * dz
+		_row_base[r] = _row_base[r - 1] - tan(deg_to_rad(_slope_at(mid / length))) * dz
+		var h: float = heading_at(mid)
+		_row_center[r] = _row_center[r - 1] + Vector2(-sin(h), -cos(h)) * dz
+		var turn: float = absf(_row_heading[r] - _row_heading[r - 1])
+		if turn > 0.000001:
+			tightest = minf(tightest, dz / turn)
+			fold_margin = minf(fold_margin, dz / turn - (_row_half[r] + outside_width))
+	tightest_radius = tightest
+	if fold_margin < 0.0:
+		push_warning("%s: a bend is %.0f m too tight for the valley's width there; the ground folds over. Ease the bend or narrow the valley (width_profile)." % [name, -fold_margin])
+
+
+func _compute_heights() -> void:
+	var dz: float = length / float(rows - 1)
 
 	_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
 	_noise.seed = noise_seed
@@ -258,37 +449,26 @@ func _compute_heights() -> void:
 	for r: int in rows:
 		var d: float = r * dz
 		for c: int in columns:
-			var x: float = -half_total_width() + c * dx
-			detail[r * columns + c] = _noise.get_noise_2d(x, d) * noise_amplitude
+			detail[r * columns + c] = _noise.get_noise_2d(_column_x(r, c), d) * noise_amplitude
 
 	var shapes: Array[Node3D] = []
 	_collect_shapers(self, shapes)
 	# Additive shapes first (gullies dig into the noise), then the blends.
 	for s: Node3D in shapes:
 		if s is TerrainShape and (s as TerrainShape).mode != TerrainShape.Mode.LINE:
-			_apply_shape(s as TerrainShape, detail, dx, dz)
+			_apply_shape(s as TerrainShape, detail, dz)
 	for s: Node3D in shapes:
 		if s is TerrainShape and (s as TerrainShape).mode == TerrainShape.Mode.LINE:
-			_apply_shape(s as TerrainShape, detail, dx, dz)
+			_apply_shape(s as TerrainShape, detail, dz)
 		elif s is TerrainFlatten:
-			_apply_flatten(s as TerrainFlatten, detail, dx, dz)
+			_apply_flatten(s as TerrainFlatten, detail, dz)
 
 	heights.resize(count)
 	for r: int in rows:
 		var d: float = r * dz
 		var fade: float = _seam_fade(d)
 		for c: int in columns:
-			var x: float = -half_total_width() + c * dx
-			heights[r * columns + c] = _row_base[r] + detail[r * columns + c] * fade + _wall_height(x)
-
-
-## Integrates the slope (with slope_profile) down the rows.
-func _compute_row_base(dz: float) -> void:
-	_row_base.resize(rows)
-	_row_base[0] = 0.0
-	for r: int in range(1, rows):
-		var mid: float = (r - 0.5) * dz / length
-		_row_base[r] = _row_base[r - 1] - tan(deg_to_rad(_slope_at(mid))) * dz
+			heights[r * columns + c] = _row_base[r] + detail[r * columns + c] * fade + _wall_height(_column_x(r, c), _row_half[r])
 
 
 func _slope_at(t: float) -> float:
@@ -307,9 +487,9 @@ func _slope_height(d: float) -> float:
 
 
 ## Edge profile across the valley: 0 in the middle, rising to wall_height at
-## the crests (|x| = width/2), then falling away by outside_drop.
-func _wall_height(x: float) -> float:
-	var e: float = width * 0.5 - absf(x)
+## the crests (|x| = half_play), then falling away by outside_drop.
+func _wall_height(x: float, half_play: float) -> float:
+	var e: float = half_play - absf(x)
 	if e < 0.0:
 		var t: float = minf(-e / maxf(outside_width, 0.001), 1.0)
 		return wall_height - outside_drop * t * t
@@ -344,19 +524,23 @@ func _to_patch(node: Node3D) -> Transform3D:
 	return xform
 
 
-## Rasterizes the curve segment by segment: each grid point within reach gets
-## its distance to the curve and the curve's height there (base slope removed).
-func _apply_shape(shape: TerrainShape, detail: PackedFloat32Array, dx: float, dz: float) -> void:
+## Rasterizes the curve (in valley space) segment by segment: each grid point
+## within reach gets its distance to the curve and the curve's height there.
+func _apply_shape(shape: TerrainShape, detail: PackedFloat32Array, dz: float) -> void:
 	if shape.curve == null or shape.curve.point_count < 2:
 		return
 	var xform: Transform3D = _to_patch(shape)
 	var baked: PackedVector3Array = shape.curve.get_baked_points()
 	if baked.size() < 2:
 		return
+	# Curve points as Vector3(x across, y, d along).
 	var pts: PackedVector3Array = PackedVector3Array()
 	pts.resize(baked.size())
+	var hint: int = -1
+	var step_rows: float = 1.0 / dz
 	for i: int in baked.size():
-		pts[i] = xform * baked[i]
+		pts[i] = local_to_valley(xform * baked[i], hint)
+		hint = int(pts[i].z * step_rows)
 	var half: float = shape.width * 0.5
 	var count: int = columns * rows
 	var best_dist: PackedFloat32Array = PackedFloat32Array()
@@ -370,14 +554,14 @@ func _apply_shape(shape: TerrainShape, detail: PackedFloat32Array, dx: float, dz
 		var a2: Vector2 = Vector2(a.x, a.z)
 		var ab: Vector2 = Vector2(b.x, b.z) - a2
 		var ab_len2: float = ab.length_squared()
-		var c0: int = maxi(0, int(floor((minf(a.x, b.x) - half + half_total_width()) / dx)))
-		var c1: int = mini(columns - 1, int(ceil((maxf(a.x, b.x) + half + half_total_width()) / dx)))
-		var r0: int = maxi(0, int(floor((-maxf(a.z, b.z) - half) / dz)))
-		var r1: int = mini(rows - 1, int(ceil((-minf(a.z, b.z) + half) / dz)))
+		var r0: int = maxi(0, int(floor((minf(a.z, b.z) - half) / dz)))
+		var r1: int = mini(rows - 1, int(ceil((maxf(a.z, b.z) + half) / dz)))
 		for r: int in range(r0, r1 + 1):
-			var z: float = -r * dz
+			var d: float = r * dz
+			var c0: int = int(floor(_column_f(r, minf(a.x, b.x) - half)))
+			var c1: int = mini(columns - 1, int(ceil(_column_f(r, maxf(a.x, b.x) + half))) + 1)
 			for c: int in range(c0, c1 + 1):
-				var p: Vector2 = Vector2(-half_total_width() + c * dx, z)
+				var p: Vector2 = Vector2(_column_x(r, c), d)
 				var t: float = 0.0 if ab_len2 <= 0.0 else clampf((p - a2).dot(ab) / ab_len2, 0.0, 1.0)
 				var dist: float = p.distance_to(a2 + ab * t)
 				var idx: int = r * columns + c
@@ -404,25 +588,25 @@ func _apply_shape(shape: TerrainShape, detail: PackedFloat32Array, dx: float, dz
 
 ## Blends the ground toward the flatten node's own XZ plane (tilt the node to
 ## match the slope) inside its size, easing out over `blend`.
-func _apply_flatten(flat: TerrainFlatten, detail: PackedFloat32Array, dx: float, dz: float) -> void:
+func _apply_flatten(flat: TerrainFlatten, detail: PackedFloat32Array, dz: float) -> void:
 	var xform: Transform3D = _to_patch(flat)
 	var inv: Transform3D = xform.affine_inverse()
 	var plane_n: Vector3 = xform.basis.y.normalized()
 	if absf(plane_n.y) < 0.2:
 		return
 	var origin: Vector3 = xform.origin
+	var at: Vector3 = local_to_valley(origin)
 	var reach: float = flat.size.length() * 0.5 + flat.blend
-	var c0: int = maxi(0, int(floor((origin.x - reach + half_total_width()) / dx)))
-	var c1: int = mini(columns - 1, int(ceil((origin.x + reach + half_total_width()) / dx)))
-	var r0: int = maxi(0, int(floor((-origin.z - reach) / dz)))
-	var r1: int = mini(rows - 1, int(ceil((-origin.z + reach) / dz)))
+	var r0: int = maxi(0, int(floor((at.z - reach) / dz)))
+	var r1: int = mini(rows - 1, int(ceil((at.z + reach) / dz)))
 	for r: int in range(r0, r1 + 1):
-		var z: float = -r * dz
+		var c0: int = int(floor(_column_f(r, at.x - reach)))
+		var c1: int = mini(columns - 1, int(ceil(_column_f(r, at.x + reach))) + 1)
 		for c: int in range(c0, c1 + 1):
-			var x: float = -half_total_width() + c * dx
-			# Height of the pad's plane at (x, z), then its footprint in pad space.
-			var plane_y: float = origin.y - (plane_n.x * (x - origin.x) + plane_n.z * (z - origin.z)) / plane_n.y
-			var local: Vector3 = inv * Vector3(x, plane_y, z)
+			var g: Vector2 = _grid_xz(r, c)
+			# Height of the pad's plane here, then its footprint in pad space.
+			var plane_y: float = origin.y - (plane_n.x * (g.x - origin.x) + plane_n.z * (g.y - origin.z)) / plane_n.y
+			var local: Vector3 = inv * Vector3(g.x, plane_y, g.y)
 			var ex: float = maxf(absf(local.x) - flat.size.x * 0.5, 0.0)
 			var ez: float = maxf(absf(local.z) - flat.size.y * 0.5, 0.0)
 			var out: float = Vector2(ex, ez).length()
@@ -436,9 +620,6 @@ func _apply_flatten(flat: TerrainFlatten, detail: PackedFloat32Array, dx: float,
 # --- Mesh and collision ----------------------------------------------------
 
 func _build_mesh() -> void:
-
-	var dx: float = half_total_width() * 2.0 / float(columns - 1)
-	var dz: float = length / float(rows - 1)
 	var count: int = columns * rows
 	var verts: PackedVector3Array = PackedVector3Array()
 	var normals: PackedVector3Array = PackedVector3Array()
@@ -447,16 +628,14 @@ func _build_mesh() -> void:
 	for r: int in rows:
 		for c: int in columns:
 			var idx: int = r * columns + c
-			verts[idx] = Vector3(-half_total_width() + c * dx, heights[idx], -r * dz)
-			# Central differences (one-sided on the border).
-			var cl: int = maxi(c - 1, 0)
-			var cr: int = mini(c + 1, columns - 1)
-			var ru: int = maxi(r - 1, 0)
-			var rd: int = mini(r + 1, rows - 1)
-			var slope_x: float = (heights[r * columns + cr] - heights[r * columns + cl]) / ((cr - cl) * dx)
-			# z = -r * dz, so going down the rows is going toward -z.
-			var slope_z: float = -(heights[rd * columns + c] - heights[ru * columns + c]) / ((rd - ru) * dz)
-			normals[idx] = Vector3(-slope_x, 1.0, -slope_z).normalized()
+			var g: Vector2 = _grid_xz(r, c)
+			verts[idx] = Vector3(g.x, heights[idx], g.y)
+	for r: int in rows:
+		for c: int in columns:
+			# Central differences (one-sided on the border): across x down-rows.
+			var across: Vector3 = verts[r * columns + mini(c + 1, columns - 1)] - verts[r * columns + maxi(c - 1, 0)]
+			var along: Vector3 = verts[mini(r + 1, rows - 1) * columns + c] - verts[maxi(r - 1, 0) * columns + c]
+			normals[r * columns + c] = across.cross(along).normalized()
 	var indices: PackedInt32Array = PackedInt32Array()
 	indices.resize((columns - 1) * (rows - 1) * 6)
 	var i: int = 0
@@ -486,7 +665,6 @@ func _build_mesh() -> void:
 
 
 func _build_collision() -> void:
-
 	for child: Node in _body.get_children():
 		child.free()
 	var mesh: ArrayMesh = _mesh_instance.mesh as ArrayMesh
@@ -500,26 +678,30 @@ func _build_collision() -> void:
 		_build_boundary(1.0)
 
 
-## Upright boxes along one side edge, one per BOUNDARY_SEGMENT, from below the
+## Upright boxes along one outer edge, one per BOUNDARY_SEGMENT, from below the
 ## lowest edge point to boundary_height above the highest.
 func _build_boundary(side: float) -> void:
-	var x: float = side * (half_total_width() + 0.5)
 	var edge_c: int = 0 if side < 0.0 else columns - 1
 	var dz: float = length / float(rows - 1)
 	var steps: int = maxi(1, int(ceil(length / BOUNDARY_SEGMENT)))
 	for s: int in steps:
-		var d0: float = length * s / steps
-		var d1: float = length * (s + 1) / steps
+		var r0: int = int(floor(length * s / steps / dz))
+		var r1: int = mini(rows - 1, int(ceil(length * (s + 1) / steps / dz)))
 		var low: float = INF
 		var high: float = -INF
-		for r: int in range(int(floor(d0 / dz)), mini(rows - 1, int(ceil(d1 / dz))) + 1):
+		for r: int in range(r0, r1 + 1):
 			low = minf(low, heights[r * columns + edge_c])
 			high = maxf(high, heights[r * columns + edge_c])
+		var a: Vector2 = _grid_xz(r0, edge_c)
+		var b: Vector2 = _grid_xz(r1, edge_c)
+		var along: Vector3 = Vector3(b.x - a.x, 0.0, b.y - a.y)
+		var outward: Vector3 = Vector3.UP.cross(along).normalized() * -side
 		var bottom: float = low - 10.0
 		var top: float = high + boundary_height
 		var box: BoxShape3D = BoxShape3D.new()
-		box.size = Vector3(1.0, top - bottom, d1 - d0 + 1.0)
+		box.size = Vector3(1.0, top - bottom, along.length() + 1.0)
 		var col: CollisionShape3D = CollisionShape3D.new()
 		col.shape = box
-		col.position = Vector3(x, (top + bottom) * 0.5, -(d0 + d1) * 0.5)
+		var mid: Vector2 = (a + b) * 0.5
+		col.transform = Transform3D(Basis.looking_at(along.normalized(), Vector3.UP), Vector3(mid.x, (top + bottom) * 0.5, mid.y) + outward * 0.5)
 		_body.add_child(col)

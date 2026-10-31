@@ -431,10 +431,12 @@ func ground_move(delta: float, input_enabled: bool) -> void:
 
 	if is_on_wall():
 		var wall_normal: Vector3 = get_wall_normal()
-		if wall_normal.y > ground_normal.y + 0.3:
-			# Sharp inside corner (rode down a steep face into the floor): the
-			# floor counts as a wall relative to the tilted up, so it becomes
-			# the new ground.
+		if wall_normal.y > ground_normal.y + 0.3 or (hit == Hit.NONE and wall_normal.y > tuning.ramp_min_normal_y):
+			# Sharp inside corner (rode down a steep face into the floor), or a
+			# kink up into a face that's still walkable in world terms (the
+			# end of a ridge, a bank): it counts as a wall relative to the
+			# tilted up, so it becomes the new ground and you ride up it /
+			# launch off it instead of stopping dead.
 			ground_normal = wall_normal
 			up_direction = wall_normal
 			ground_dir = tangent_dir(ground_dir, wall_normal)
