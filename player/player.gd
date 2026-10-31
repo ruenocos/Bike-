@@ -24,7 +24,6 @@ signal fell
 @onready var camera_rig: PlayerCamera = $CameraRig
 @onready var tricks: TrickRunner = $TrickRunner
 @onready var combo: ComboTracker = $ComboTracker
-@onready var audio: RiderAudio = $RiderAudio
 @onready var vfx: RiderVfx = $RiderVfx
 
 ## Speed along the ground (m/s). The heart of the game.

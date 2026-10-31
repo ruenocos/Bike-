@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=3]
+[gd_scene load_steps=29 format=3]
 
 [ext_resource type="Script" path="res://player/player.gd" id="1_player"]
 [ext_resource type="Script" path="res://player/state_machine.gd" id="2_machine"]
@@ -16,7 +16,6 @@
 [ext_resource type="Resource" path="res://tricks/data/whirl_right.tres" id="14_whirl_right"]
 [ext_resource type="Script" path="res://scoring/combo_tracker.gd" id="15_combo"]
 [ext_resource type="PackedScene" path="res://vfx/speed_lines.tscn" id="16_speed_lines"]
-[ext_resource type="PackedScene" path="res://player/rider_audio.tscn" id="17_audio"]
 [ext_resource type="PackedScene" path="res://vfx/rider_vfx.tscn" id="18_vfx"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_body"]
@@ -121,8 +120,6 @@ tricks = Array[ExtResource("10_trick_data")]([ExtResource("11_frontloop"), ExtRe
 script = ExtResource("15_combo")
 
 [node name="SpeedLines" parent="." instance=ExtResource("16_speed_lines")]
-
-[node name="RiderAudio" parent="." instance=ExtResource("17_audio")]
 
 [node name="RiderVfx" parent="." instance=ExtResource("18_vfx")]
 
