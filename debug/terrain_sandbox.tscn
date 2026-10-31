@@ -1,0 +1,102 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://chunks/terrain/terrain_patch.gd" id="1_patch"]
+[ext_resource type="Script" path="res://chunks/terrain/terrain_shape.gd" id="2_shape"]
+[ext_resource type="Script" path="res://chunks/terrain/terrain_flatten.gd" id="3_flatten"]
+[ext_resource type="PackedScene" path="res://chunks/parts/kicker.tscn" id="4_kicker"]
+[ext_resource type="PackedScene" path="res://player/player.tscn" id="5_player"]
+[ext_resource type="PackedScene" path="res://debug/debug_overlay.tscn" id="6_overlay"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
+sky_top_color = Color(0.32, 0.5, 0.78, 1)
+sky_horizon_color = Color(0.78, 0.8, 0.84, 1)
+ground_bottom_color = Color(0.2, 0.2, 0.24, 1)
+ground_horizon_color = Color(0.78, 0.8, 0.84, 1)
+
+[sub_resource type="Sky" id="Sky_main"]
+sky_material = SubResource("ProceduralSkyMaterial_sky")
+
+[sub_resource type="Environment" id="Environment_main"]
+background_mode = 2
+sky = SubResource("Sky_main")
+ambient_light_source = 3
+tonemap_mode = 4
+glow_enabled = true
+fog_enabled = true
+fog_light_color = Color(0.78, 0.8, 0.84, 1)
+fog_density = 0.002
+
+[sub_resource type="Curve3D" id="Curve3D_gully"]
+_data = {
+"points": PackedVector3Array(0, 0, 30, 0, 0, -30, -30, 0, -30, 0, 0, 30, 0, 0, -30, -40, 0, -120, 0, 0, 30, 0, 0, -30, -25, 0, -220, 0, 0, 30, 0, 0, -30, -38, 0, -320, 0, 0, 30, 0, 0, -30, -30, 0, -380),
+"tilts": PackedFloat32Array(0, 0, 0, 0, 0)
+}
+point_count = 5
+
+[sub_resource type="Curve3D" id="Curve3D_ridge"]
+_data = {
+"points": PackedVector3Array(0, 0, 40, 0, 0, -40, 38, 0, -40, 0, 0, 40, 0, 0, -40, 32, 0, -200, 0, 0, 40, 0, 0, -40, 42, 0, -360),
+"tilts": PackedFloat32Array(0, 0, 0)
+}
+point_count = 3
+
+[sub_resource type="Curve3D" id="Curve3D_line"]
+_data = {
+"points": PackedVector3Array(0, 0, 25, 0, 0, -25, 0, -16.98, -40, 0, 0, 25, 0, 0, -25, 20, -53.94, -120, 0, 0, 25, 0, 0, -25, -10, -87.9, -200, 0, 0, 25, 0, 0, -25, 0, -114.6, -270),
+"tilts": PackedFloat32Array(0, 0, 0, 0)
+}
+point_count = 4
+
+[node name="TerrainSandbox" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_main")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.86603, -0.38302, 0.32139, 0, 0.64279, 0.76604, -0.5, -0.66341, 0.55667, 0, 0, 0)
+shadow_enabled = true
+directional_shadow_max_distance = 200.0
+
+[node name="PatchA" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 400, 0)
+script = ExtResource("1_patch")
+length = 400.0
+
+[node name="Gully" type="Path3D" parent="PatchA"]
+curve = SubResource("Curve3D_gully")
+script = ExtResource("2_shape")
+width = 18.0
+depth = 5.0
+flat = 0.2
+
+[node name="Ridge" type="Path3D" parent="PatchA"]
+curve = SubResource("Curve3D_ridge")
+script = ExtResource("2_shape")
+mode = 1
+width = 16.0
+depth = 6.0
+
+[node name="KickerPad" type="Node3D" parent="PatchA"]
+transform = Transform3D(1, 0, 0, 0, 0.92050487, 0.39073113, 0, -0.39073113, 0.92050487, 0, -63.6713, -150)
+script = ExtResource("3_flatten")
+size = Vector2(16, 30)
+blend = 10.0
+
+[node name="Kicker" parent="PatchA/KickerPad" instance=ExtResource("4_kicker")]
+
+[node name="PatchB" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 230.21, -400)
+script = ExtResource("1_patch")
+noise_seed = 7
+
+[node name="CarvedLine" type="Path3D" parent="PatchB"]
+curve = SubResource("Curve3D_line")
+script = ExtResource("2_shape")
+mode = 2
+width = 24.0
+flat = 0.5
+
+[node name="Player" parent="." instance=ExtResource("5_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 397.5, -8)
+
+[node name="DebugOverlay" parent="." instance=ExtResource("6_overlay")]
