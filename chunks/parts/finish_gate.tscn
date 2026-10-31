@@ -1,0 +1,39 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://chunks/parts/finish_gate.gd" id="1_gate"]
+[ext_resource type="Material" path="res://chunks/materials/feature.tres" id="2_feature"]
+[ext_resource type="Shader" path="res://chunks/parts/checker.gdshader" id="3_checker"]
+
+[sub_resource type="BoxShape3D" id="Shape_gate"]
+size = Vector3(40, 16, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_post"]
+material = ExtResource("2_feature")
+size = Vector3(0.8, 9, 0.8)
+
+[sub_resource type="ShaderMaterial" id="Mat_banner"]
+render_priority = 0
+shader = ExtResource("3_checker")
+
+[sub_resource type="BoxMesh" id="Mesh_banner"]
+material = SubResource("Mat_banner")
+size = Vector3(26, 1.6, 0.3)
+
+[node name="FinishGate" type="Area3D"]
+script = ExtResource("1_gate")
+
+[node name="Trigger" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, 0)
+shape = SubResource("Shape_gate")
+
+[node name="PostLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 4.5, 0)
+mesh = SubResource("Mesh_post")
+
+[node name="PostRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 4.5, 0)
+mesh = SubResource("Mesh_post")
+
+[node name="Banner" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.3, 0)
+mesh = SubResource("Mesh_banner")

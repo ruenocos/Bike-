@@ -49,6 +49,16 @@ func _ready() -> void:
 	_noise.frequency = 1.0
 
 
+## Jumps straight to the rider (after a teleport: respawn, new stage).
+func snap() -> void:
+	global_position = player.global_position
+	rotation = Vector3(0.0, player.heading, 0.0)
+	_transition_blend = 0.0
+	_transition_hold_timer = 0.0
+	_slope_pitch = 0.0
+	_slope_target = 0.0
+
+
 func _process(delta: float) -> void:
 	var t: PlayerTuning = player.tuning
 	var speed_ratio: float = clampf(player.speed / t.max_speed, 0.0, 1.0)

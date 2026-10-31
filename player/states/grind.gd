@@ -28,7 +28,6 @@ func enter(msg: Dictionary) -> void:
 	player.speed = clampf(absf(along), t.grind_min_speed, t.max_speed)
 
 	_snap_gap = player.global_position - RailSnap.point_at(_rail, _offset)
-	player.air_pitch = 0.0
 	player.leave_surface()
 	player.combo.add_action(0)
 	Events.grind_started.emit()
@@ -43,7 +42,7 @@ func physics_update(delta: float) -> void:
 	var tangent: Vector3 = RailSnap.tangent_at(_rail, _offset) * _direction
 
 	# Same slope gravity as riding (a downhill rail speeds you up), plus drag.
-	var accel: float = -t.gravity * tangent.y - t.grind_drag
+	var accel: float = -t.gravity * tangent.y - t.grind_drag + t.grind_accel
 	player.speed = clampf(player.speed + accel * delta, 0.0, t.max_speed)
 	player.velocity = tangent * player.speed
 	player.heading = atan2(-tangent.x, -tangent.z)
@@ -66,4 +65,4 @@ func physics_update(delta: float) -> void:
 	# Teleport onto the rail (no move_and_slide: the curve is the path).
 	_snap_gap = _snap_gap.lerp(Vector3.ZERO, 1.0 - exp(-delta / maxf(t.grind_snap_time, 0.0001)))
 	player.global_position = RailSnap.point_at(_rail, _offset) + _snap_gap
-	player.update_visual(delta, 0.0, 0.0, Vector3.UP)
+	player.update_visual(delta, 0.0, Vector3.UP)

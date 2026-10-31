@@ -18,7 +18,8 @@ Goal right now: a playable demo built from the vertical slice. No deadline. Game
 - Player = CharacterBody3D with hand-written velocity math. Never a RigidBody. Sphere collider (works on any surface angle); on the ground motion is `ground_dir` (tangent to the surface) × `speed`, and `up_direction` follows the smoothed ground normal (world up in Air/Grind).
 - Transition surfaces (quarter pipes) are CSG bodies in group "transitions": Air lands on their steep faces even though they count as walls relative to world up.
 - Rails = Path3D/Curve3D, snap via closest-point lookup (~1.5 m radius).
-- Levels = hand-built chunks stitched in random order per run.
+- Levels = chunk scenes (chunks/chunk_*.tscn) stitched in random order per stage by StageBuilder; main scene is game.tscn (run flow), debug/test_track.tscn stays the feel sandbox.
+- Transition surfaces include the gully's halfpipe (chunks/parts/halfpipe.tscn, group "transitions").
 - Art: Blender → .glb (triangulated, no Draco). Cel shader + inverted-hull outline later; greybox (CSG) until the vertical slice.
 
 ## Conventions
@@ -34,6 +35,15 @@ Goal right now: a playable demo built from the vertical slice. No deadline. Game
 - Git: small commits, tag every playtest build. LFS tracks .glb .blend .png .jpg .exr .wav .ogg.
 - The folder name contains `!`: quote paths, and in bash use single quotes to avoid history expansion.
 
+## Prefer editor-visible setup
+Prefer editor-visible setup: scenes, nodes, .tres, @export, @tool previews; code for behaviour only (Wons's standing preference, from v0.6).
+- Chunks are .tscn files with visible nodes (TrackLine Path3D + CSG Ribbon, Entry/Exit/Spawn Marker3D, instanced kicker/rail/halfpipe/finish-gate scenes). StageBuilder only instances and places them.
+- One .tres per data item (tricks/data/, scoring/upgrades/). HUD, menus and the collapse are scenes laid out with nodes and a Theme (ui/bike_theme.tres).
+- Expose tuning with @export (+ @export_range, groups, doc comments). Use @tool where a live editor preview or a button helps (Chunk "Rebuild TrackLine from keys", Rail "Rebuild posts").
+
+## Design decisions
+- No manual balance (v0.6, Wons: "prob just remove the balance"): the left stick Y does nothing in the air. The bike's nose follows the flight path and settles onto the predicted landing surface in the last `air_land_blend_time`. Landing grade (angle you meet the ground at) stays. Difficulty comes from line choice, hop timing and trick greed. Left-stick-forward pump on the ground stays (timing, not balance).
+
 ## Starting feel values (in PlayerTuning, tune live)
 - Landing grade by angle between velocity and ground plane: perfect ≤12° (+12% speed, juice), good ≤30° (0%), sketchy ≤55° (-15%, camera shake, combo kept), bail >55° (-50%, Bail). Steep touchdowns slower than 14 m/s into the ground (≈4 m drop) are sketchy, never bail.
 - Landing mid-trick: ≥70% done → trick auto-completes, landing is sketchy at best; <70% → Bail.
@@ -45,9 +55,9 @@ Goal right now: a playable demo built from the vertical slice. No deadline. Game
 - Camera: spring arm, look-ahead on velocity, position damping 0.08 s, rotation 0.2 s; lower and further back than a runner cam.
 
 ## Input map (to set up)
-steer_left/right: left stick X · lean_back/forward: left stick Y · pedal: RT · brake: LT · hop: South (hold to charge) · grind: West · trick_left/right/up/down: right stick · pause: Start
+steer_left/right: left stick X · lean_forward: left stick up = pump (ground only; lean_back unused since v0.6) · pedal: RT · brake: LT · hop: South (hold to charge) · grind: West · trick_left/right/up/down: right stick · pause: Start
 
-## Status (2026-10-31, v0.5)
+## Status (2026-10-31, v0.6)
 Done (v0.1): project settings, input map (+ debug_reset on Back/R), test track, Player with Ride/Air/Land/Bail, landing grades, debug overlay, physics interpolation. Feel gate approved by Wons.
 Done (v0.2, phase 2 batch A):
 - tricks/: TrickData resource + 4 starter tricks in tricks/data (up Frontloop, down Pocket, left/right Whirl). TrickRunner (child of Player) reads right-stick flicks (neutral -> >0.7 within 0.15 s), plays them on the Visual around the hips, chains a new flick in the last 30%.
@@ -56,8 +66,8 @@ Done (v0.2, phase 2 batch A):
 - vfx/speed_lines.tscn (child of Player): radial streak shader, fades in from 70% to 90% of max_speed.
 - debug/demo_driver.gd (node in test_track.tscn): input timeline, only with `-- --demo`. `--demo-trace` prints state, `--demo-shots=<dir>` saves stills. Timeline is tuned for --fixed-fps 30; retune if track or tuning changes.
 - Test track fixes: bumps are now wide rollers (r 12 m, 0.7 m tall) so they can be pumped (the old ones launched you into the next bump at any speed above ~8 m/s); tabletop ramp/deck/landing made flush (old lip fired you up at 45 deg).
-- Landing check: `<exe> --headless --path . --fixed-fps 60 --quit-after 12000 -- --landing-test` runs debug/landing_test.gd (42 scenarios in v0.5: hops, kickers, berms, tabletop, drops, nose-dive bails, halfpipe), prints grade + angle per landing, exit 1 on failure. Run it after any landing/tuning/track change.
-- Record: `<exe> --path . --write-movie <abs path>/v0.x.avi --fixed-fps 30 --quit-after 930 -- --demo --demo-shots=<abs dir>` (the v0.5 run is ~31 s)
+- Landing check: `<exe> --headless --path . --fixed-fps 60 --quit-after 12000 res://debug/test_track.tscn -- --landing-test` (since v0.6 the main scene is game.tscn, so name the test track) runs debug/landing_test.gd (42 scenarios in v0.5: hops, kickers, berms, tabletop, drops, nose-dive bails, halfpipe), prints grade + angle per landing, exit 1 on failure. Run it after any landing/tuning/track change.
+- Record the test-track demo: `<exe> --path . --write-movie <abs path>/v0.x.avi --fixed-fps 30 --quit-after 930 res://debug/test_track.tscn -- --demo --demo-shots=<abs dir>` (the v0.5 run is ~31 s)
 
 Done (v0.2.1, forgiving landings, after Wons's v0.2 playtest "kept getting bail"): sketchy grade (orange flash), trick land tolerance, shorter bail + immunity, bail_min_impact, landing test harness. Debug overlay shows the last bail reason (angle or unfinished trick %).
 
@@ -92,12 +102,26 @@ Done (v0.5 "extreme pass", after Wons's v0.4 playtest "looks pretty good, only t
 - Demo driver: steps hang off position cues (fire `dt` s after the rider passes a z) instead of absolute times; helpers `autosteer` (follows TrackLine, `aim_x` offset), `brake_to`. Run: drop-in, pump line, Whirl Right off kicker 1 (perfect), hop + Frontloop + Whirl Left off kicker 2, berms on autosteer, runout kicker, hop + Pocket off the tabletop, rail, halfpipe (3 lip airs, Whirl Left, Frontloop). Top speed 60 (cap, after kicker 2), ~55 through the berms.
 - Landing test: 42 scenarios, scenarios can start at a marker + offset; starts in Air with the velocity along the ground (a flat start velocity launched you off a slope, and the body kept the previous scenario's floor contact for a tick); waits for CSG collision before the first one. New: drop-in, 52 m/s slope hops, rollers at 45/50 m/s, kickers at 22-56 m/s (+ tricks, + full hop), berms at 50 m/s, bottom transition at 56 m/s, tabletop at 45 m/s, halfpipe speed-growth check.
 
+Done (v0.6 "core loop", after Wons's v0.5 playtest "the first half is really great. At the bottom you get really slow because of the flat field"):
+- Chunks (chunks/): `Chunk` (chunk.gd, @tool) scenes: TrackLine (Path3D, points 1 m apart) + Track/Ribbon (CSGPolygon3D, v0.5 profile) + Entry/Exit Marker3D (+ Spawn on the start chunk). Every join is at 23°, heading 0, no bank, so chunks only ever turn around up. "Rebuild TrackLine from keys" (inspector button) rewrites the line from pitch/heading keys + rollers and moves Entry/Exit; features don't follow, move them after. 7 chunks: start (deck, drop-in), rollers (5 × 24 m × 1.5 m), kickers (v0.5 kicker + a 1.4× one), berms (S-turn ±18°, auto-bank ≤14°), rail (two 70-80 m rails on the slope, x ∓5), gully (slope eases to 15°, 150 m halfpipe = v0.4 recipe tilted to the slope), finish (gate at u 60, then a 4° runout). Plus chunk_template.tscn (100 m straight) to duplicate for new chunks. chunks/tools/author_chunks.gd wrote the first versions (re-running it overwrites hand edits).
+- Parts: chunks/parts/kicker.tscn, halfpipe.tscn, finish_gate.tscn (Area3D, `FinishGate.crossed`), rails/rail.tscn (Rail is @tool now; posts are saved nodes under Posts, "Rebuild posts" button; a rail without Posts builds them at runtime, e.g. the test track).
+- chunks/stage_builder.gd: start + N random middle chunks (no immediate repeats) + finish from a seed; keeps the stage centerline for `progress_at()` / `transform_at_distance()`; frees chunks 300 m behind you; chunks the collapse passed drop away. CSG collision needs ~2 physics frames after build (the game and smoke test wait).
+- hazards/collapse.tscn: wall (shader quad), debris, glow light. Follows the centerline; speed 28 → 50 m/s (+1.2 m/s²) with +2 m/s per stage, times `collapse_speed_scale`; leash: never more than 180 m behind (−20 m per stage, min 90), so clean riding keeps it at bay and bails/slow lines bring it close. Catching you = run over.
+- ui/run_hud.tscn: stage, time, run score, COLLAPSE distance, progress bar (you, finish, collapse), red edge vignette under 120 m, "COLLAPSE!" under 50 m. ui/menus/: stage summary (time, best combo, stage score, run score), upgrade picker (3 cards), run over. Gamepad: D-pad/left stick moves focus, A confirms; buttons ignore input for 0.5-0.8 s after opening.
+- scoring/: UpgradeData (.tres per upgrade in scoring/upgrades/: stat on PlayerTuning, add or multiply); 8 upgrades (Clean Landings, Long Fuse, Pump Legs, Air Control, Spring Hop, Slick Pegs, Shaky Ground, Showboat). New tuning fields `grind_accel`, `trick_score_scale`, `collapse_speed_scale`. StageStats tracks time / best combo / stage score.
+- game.tscn + game.gd (main scene): run = stage → summary → upgrade → next stage (one more chunk, harder collapse) until caught → run over → new run. Upgrades apply to a duplicate of player_tuning.tres. Falling off respawns you on the track 10 m back (combo lost). `--seed=<n>` fixes the run.
+- Player: no manual air balance (see Design decisions; `air_pitch`/`air_pitch_rate` removed, new `air_land_blend_time`, `Player.predict_landing()`); `kill_y` + `fell` signal (`auto_respawn` off in the game); `place()` snaps the camera and clears hop input (a hop now needs a fresh press, so the menu's A doesn't hop you).
+- debug/autopilot.gd (`-- --autopilot`): rides game.tscn (steers the centerline, aims at rails, pumps, coyote hops off lips, tricks when the predicted airtime allows), clicks through menus. `--autopilot-lose` brakes in stage 2+ so the collapse catches it, `--autopilot-trace`, `--autopilot-shots=<dir>`.
+- Stage smoke test: `<exe> --headless --path . res://debug/stage_smoke_test.tscn` builds 20 stages and checks every join (markers within 5 cm / 0.5°, raycast surface step < 5 cm across the width, upward normals), chunks upright, always descending after the start deck, start/finish order, no repeats. Exit 1 on failure.
+- Record: `<exe> --path . --write-movie <abs>/v0.6.avi --fixed-fps 30 --quit-after 1760 res://game.tscn -- --autopilot --autopilot-lose --seed=7` (stage 1, upgrade, stage 2 caught, run over).
+
 ## Next tasks, in order
-1. Playtest v0.5 with gamepad: does it feel extreme now (speed, steepness), is the speed rumble/FOV too much (nausea), steering through the berms at 50+ m/s, camera slope follow (`cam_slope_follow`).
-2. Kicker airs are only ~2-3 m over the slope at 45-55 m/s; bigger kickers (taller lip, same 12° angle) if they feel small. Speeds out of the descent are far above what the tabletop/halfpipe are built for (the demo brakes to ~37); consider a speed-check section or bigger runout features.
-3. Stalling straight up a wall rolls you back down backwards and the bike visual flips 180° (no fakie / turn-around yet).
-4. Camera: rider sits off-centre and small during lip airs; at the halfpipe exit the spring arm can dip into the transition wall.
-5. Lip-air pose: bike side-on with wheels to the ramp reads like "lying on the deck" from the chase cam; add a proper vert pose / rotate the rider upright.
-6. Bail recovery: proper bail animation/ragdoll-lite and a quicker way back into flow.
-7. Real combo HUD in ui/ (the stacked flashes still live in the debug overlay).
-8. Riding into a wall on the ground at an angle kills nearly all speed (pre-existing ground_move clamp); make it a glancing slide.
+1. Playtest v0.6 (game.tscn) with gamepad: collapse pressure (leash 180 m, speeds), stage length (~1.5-2 km, ~25 s), the gully at 50+ m/s (camera, carving at speed), the auto-orient in the air, upgrade picks.
+2. More chunks and variety (the pool is 5 middle chunks); bigger kickers (airs are short at 55 m/s, the autopilot rarely gets time for a trick); a chunk with a tabletop or a gap.
+3. The collapse is only visible looking back; consider a rear-view glance / rumble audio / debris flying past when it's close.
+4. Stalling straight up a wall rolls you back down backwards and the bike visual flips 180° (no fakie / turn-around yet).
+5. Camera: rider sits off-centre and small during lip airs; at the halfpipe exit the spring arm can dip into the transition wall.
+6. Lip-air pose: bike side-on with wheels to the ramp reads like "lying on the deck" from the chase cam; add a proper vert pose / rotate the rider upright.
+7. Bail recovery: proper bail animation/ragdoll-lite and a quicker way back into flow.
+8. Real combo HUD in ui/ (the stacked flashes still live in the debug overlay).
+9. Riding into a wall on the ground at an angle kills nearly all speed (pre-existing ground_move clamp); make it a glancing slide.

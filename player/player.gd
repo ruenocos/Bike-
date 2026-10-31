@@ -13,6 +13,9 @@ extends CharacterBody3D
 ## While grounded, CharacterBody3D.up_direction follows the ground normal, so
 ## floor detection and floor snapping keep working on curved walls.
 
+## Fell below kill_y or pressed debug reset (only when auto_respawn is off).
+signal fell
+
 @export var tuning: PlayerTuning = preload("res://player/player_tuning.tres")
 
 @onready var visual: Node3D = $Visual
@@ -33,8 +36,12 @@ var ground_normal: Vector3 = Vector3.UP
 ## Horizontal normal of the transition you're riding or launched off (points
 ## into the pipe), or Vector3.ZERO. The camera reads it.
 var transition_normal: Vector3 = Vector3.ZERO
-## Pitch of the bike while airborne (radians, + is nose up). Visual only for now.
-var air_pitch: float = 0.0
+## Below this height you've fallen off the world. The game lowers it as the
+## stage descends; the test track keeps the default.
+var kill_y: float = -40.0
+## Falling below kill_y (or debug reset) respawns at the spawn point. The game
+## turns this off and handles `fell` itself.
+var auto_respawn: bool = true
 
 # Hop input: hold to charge, release to hop. The release is buffered so a
 # release just before touchdown still hops on landing.
@@ -42,6 +49,9 @@ var hop_charge: float = 0.0
 var hop_release_charge: float = 0.0
 var jump_buffer_timer: float = 0.0
 var coyote_timer: float = 0.0
+## A release only hops after a press we saw. place() clears it, so the A
+## that confirmed a menu (also the hop button) doesn't hop you at the start.
+var _hop_armed: bool = false
 
 # Grind input: a press is buffered briefly; after leaving a rail there is a
 # short cooldown so riding off its end doesn't snap straight back on.
@@ -123,8 +133,11 @@ func _physics_process(delta: float) -> void:
 	tricks.poll_gesture(delta)
 	state_machine.physics_update(delta)
 	_update_rail_highlight()
-	if global_position.y < -40.0 or Input.is_action_just_pressed(&"debug_reset"):
-		respawn()
+	if global_position.y < kill_y or Input.is_action_just_pressed(&"debug_reset"):
+		if auto_respawn:
+			respawn()
+		else:
+			fell.emit()
 
 
 # --- Input ------------------------------------------------------------------
@@ -143,9 +156,13 @@ func _update_hop_input(delta: float) -> void:
 	coyote_timer = maxf(coyote_timer - delta, 0.0)
 	if Input.is_action_just_pressed(&"hop"):
 		hop_charge = 0.0
+		_hop_armed = true
+	if not _hop_armed:
+		return
 	if Input.is_action_pressed(&"hop"):
 		hop_charge = minf(hop_charge + delta, tuning.hop_full_charge)
 	if Input.is_action_just_released(&"hop"):
+		_hop_armed = false
 		hop_release_charge = hop_charge / tuning.hop_full_charge
 		hop_charge = 0.0
 		jump_buffer_timer = tuning.jump_buffer
@@ -225,8 +242,9 @@ func _update_rail_highlight() -> void:
 
 
 func _on_trick_completed(trick: TrickData) -> void:
-	combo.add_action(trick.score)
-	Events.trick_completed.emit(trick.display_name, trick.score)
+	var score: int = roundi(trick.score * tuning.trick_score_scale)
+	combo.add_action(score)
+	Events.trick_completed.emit(trick.display_name, score)
 
 
 # --- Directions ---------------------------------------------------------------
@@ -348,7 +366,7 @@ func ground_move(delta: float, input_enabled: bool) -> void:
 	_update_heading(ground_dir)
 	_update_transition()
 	_slope_trend = lerpf(_slope_trend, ground_dir.y, 1.0 - exp(-delta / 0.2))
-	update_visual(delta, steer, 0.0, ground_normal, ground_dir)
+	update_visual(delta, steer, ground_normal, ground_dir)
 
 
 ## Floor snapping would let the sphere roll over any edge and ride down the
@@ -462,12 +480,35 @@ func try_pump(delta: float) -> void:
 		pump_count += 1
 
 
+## Where the current air trajectory meets the ground within `max_time`
+## seconds: {"time": s, "normal": Vector3, "position": Vector3}, or {} when
+## nothing is hit. Steps the ballistic path (gravity only) and raycasts each step.
+func predict_landing(max_time: float, step: float = 1.0 / 30.0) -> Dictionary:
+	var space: PhysicsDirectSpaceState3D = get_world_3d().direct_space_state
+	var pos: Vector3 = global_position
+	var vel: Vector3 = velocity
+	var time: float = 0.0
+	while time < max_time:
+		var next_vel: Vector3 = vel + Vector3.DOWN * tuning.gravity * step
+		var next_pos: Vector3 = pos + (vel + next_vel) * 0.5 * step
+		var query: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(pos, next_pos)
+		query.exclude = [get_rid()]
+		var hit: Dictionary = space.intersect_ray(query)
+		if not hit.is_empty():
+			var part: float = pos.distance_to(hit["position"]) / maxf(pos.distance_to(next_pos), 0.0001)
+			return {"time": time + step * part, "normal": hit["normal"], "position": hit["position"]}
+		pos = next_pos
+		vel = next_vel
+		time += step
+	return {}
+
+
 # --- Feel -----------------------------------------------------------------------
 
-## Tilts the Visual child to the ground, banks into turns, applies air pitch.
+## Tilts the Visual child to the ground and banks into turns.
 ## `forward` is where the nose points (flattened onto the up plane); zero
 ## means the heading.
-func update_visual(delta: float, steer: float, pitch: float, up_target: Vector3, forward: Vector3 = Vector3.ZERO) -> void:
+func update_visual(delta: float, steer: float, up_target: Vector3, forward: Vector3 = Vector3.ZERO) -> void:
 	# lerp, not slerp: slerp errors on float noise when both vectors are almost equal.
 	_visual_up = _visual_up.lerp(up_target, 1.0 - exp(-delta / 0.06)).normalized()
 	if forward.length_squared() < 0.0001:
@@ -477,11 +518,9 @@ func update_visual(delta: float, steer: float, pitch: float, up_target: Vector3,
 		forward = tangent_dir(get_heading_dir(), _visual_up)
 	var back: Vector3 = -forward.normalized()
 	var target: Basis = Basis(_visual_up.cross(back), _visual_up, back).orthonormalized()
-	# Roll into the turn (negative angle around the back axis banks right),
-	# then pitch around the side axis (positive is nose up).
+	# Roll into the turn (negative angle around the back axis banks right).
 	var lean_deg: float = tuning.lean_into_turn_deg + tuning.lean_speed_extra_deg * clampf(speed / tuning.max_speed, 0.0, 1.0)
 	target = target * Basis(Vector3.BACK, -steer * deg_to_rad(lean_deg))
-	target = target * Basis(Vector3.RIGHT, pitch)
 	_visual_rotation = _visual_rotation.slerp(Quaternion(target), 1.0 - exp(-delta / 0.05))
 	# The trick spin goes on top of the smoothed pose, unsmoothed, so a full
 	# 360 doesn't get "shortest-path" blended back to zero.
@@ -522,11 +561,15 @@ func place(at: Vector3, new_heading: float, new_speed: float) -> void:
 	up_direction = Vector3.UP
 	ground_dir = get_heading_dir()
 	velocity = ground_dir * speed
-	air_pitch = 0.0
 	bail_immunity_timer = 0.0
+	hop_charge = 0.0
+	jump_buffer_timer = 0.0
+	coyote_timer = 0.0
+	_hop_armed = false
 	transition_normal = Vector3.ZERO
 	_on_transition_body = false
 	_lip_timer = 0.0
 	_carving = false
 	tricks.cancel()
 	reset_physics_interpolation()
+	camera_rig.snap()

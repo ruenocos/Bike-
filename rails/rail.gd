@@ -1,18 +1,26 @@
+@tool
 class_name Rail
 extends Path3D
 ## A grindable rail. Put it in the "rails" group (RailSnap looks there) and give
 ## it a CSGPolygon3D child named RailMesh in PATH mode for the bar itself.
+## rails/rail.tscn has both: instance it and edit its curve in the editor.
 ##
-## On _ready it adds simple support posts every `post_spacing` metres. The
-## Player calls set_highlighted() while the rail is within snap reach, which
-## brightens the bar's glow: "you can grind this now".
+## Support posts live under a "Posts" child: press "Rebuild posts" in the
+## inspector after editing the curve (they're saved with the scene). A rail
+## without a Posts node builds them when the game starts (the test track).
+## The Player calls set_highlighted() while the rail is within snap reach,
+## which brightens the bar's glow: "you can grind this now".
 ##
 ## Godot note: the material is duplicated per rail so lighting up one rail
 ## doesn't light up every rail that shares the material resource.
+## @tool runs this script in the editor too (for the button); _ready skips
+## the gameplay setup there.
 
-@export var post_spacing: float = 5.0
-## How far the posts reach down from the rail (m). Match the rail's height above ground.
-@export var post_length: float = 0.6
+@export_tool_button("Rebuild posts") var rebuild_posts_button: Callable = rebuild_posts
+
+@export_range(1.0, 20.0, 0.5, "suffix:m") var post_spacing: float = 5.0
+## How far the posts reach down from the rail. Match the rail's height above ground.
+@export_range(0.1, 5.0, 0.05, "suffix:m") var post_length: float = 0.6
 @export var post_color: Color = Color(0.2, 0.22, 0.26)
 ## Glow strength when idle and when in snap reach.
 @export var glow_idle: float = 0.6
@@ -27,10 +35,13 @@ var _glow_tween: Tween
 
 
 func _ready() -> void:
+	if Engine.is_editor_hint():
+		return
 	_material = (rail_mesh.material as StandardMaterial3D).duplicate() as StandardMaterial3D
 	_material.emission_energy_multiplier = glow_idle
 	rail_mesh.material = _material
-	_build_posts()
+	if get_node_or_null(^"Posts") == null:
+		_build_posts(null)
 
 
 func set_highlighted(on: bool) -> void:
@@ -40,10 +51,29 @@ func set_highlighted(on: bool) -> void:
 	_glow_tween.tween_property(_material, "emission_energy_multiplier", glow_highlight if on else glow_idle, glow_fade_time)
 
 
-func _build_posts() -> void:
+## Replaces the Posts node with fresh posts along the curve. In the editor
+## they're owned by the edited scene, so they get saved.
+func rebuild_posts() -> void:
+	var old: Node = get_node_or_null(^"Posts")
+	if old != null:
+		old.free()
+	var scene_root: Node = owner if owner != null else self
+	if Engine.is_editor_hint() and get_tree() != null and get_tree().edited_scene_root != null:
+		scene_root = get_tree().edited_scene_root
+	_build_posts(scene_root)
+
+
+func _build_posts(scene_owner: Node) -> void:
+	if curve == null:
+		return
 	var length: float = curve.get_baked_length()
 	if length <= 0.0 or post_spacing <= 0.0:
 		return
+	var posts: Node3D = Node3D.new()
+	posts.name = "Posts"
+	add_child(posts)
+	if scene_owner != null:
+		posts.owner = scene_owner
 	var mesh: BoxMesh = BoxMesh.new()
 	mesh.size = Vector3(0.08, post_length, 0.08)
 	var material: StandardMaterial3D = StandardMaterial3D.new()
@@ -53,6 +83,9 @@ func _build_posts() -> void:
 	var count: int = maxi(ceili(length / post_spacing), 1)
 	for i: int in count + 1:
 		var post: MeshInstance3D = MeshInstance3D.new()
+		post.name = "Post%d" % i
 		post.mesh = mesh
 		post.position = curve.sample_baked(length * i / count) + Vector3.DOWN * post_length * 0.5
-		add_child(post)
+		posts.add_child(post)
+		if scene_owner != null:
+			post.owner = scene_owner

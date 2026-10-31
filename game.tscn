@@ -1,0 +1,93 @@
+[gd_scene load_steps=26 format=3]
+
+[ext_resource type="Script" path="res://game.gd" id="1_game"]
+[ext_resource type="Script" path="res://chunks/stage_builder.gd" id="2_builder"]
+[ext_resource type="PackedScene" path="res://hazards/collapse.tscn" id="3_collapse"]
+[ext_resource type="PackedScene" path="res://player/player.tscn" id="4_player"]
+[ext_resource type="Script" path="res://scoring/stage_stats.gd" id="5_stats"]
+[ext_resource type="PackedScene" path="res://ui/run_hud.tscn" id="6_hud"]
+[ext_resource type="PackedScene" path="res://debug/debug_overlay.tscn" id="7_overlay"]
+[ext_resource type="PackedScene" path="res://ui/menus/stage_summary.tscn" id="8_summary"]
+[ext_resource type="PackedScene" path="res://ui/menus/upgrade_picker.tscn" id="9_picker"]
+[ext_resource type="PackedScene" path="res://ui/menus/run_over.tscn" id="10_run_over"]
+[ext_resource type="Shader" path="res://debug/grid.gdshader" id="11_grid"]
+[ext_resource type="Script" path="res://scoring/upgrade_data.gd" id="12_upgrade"]
+[ext_resource type="Resource" path="res://scoring/upgrades/clean_landings.tres" id="13_u1"]
+[ext_resource type="Resource" path="res://scoring/upgrades/long_fuse.tres" id="14_u2"]
+[ext_resource type="Resource" path="res://scoring/upgrades/pump_legs.tres" id="15_u3"]
+[ext_resource type="Resource" path="res://scoring/upgrades/air_control.tres" id="16_u4"]
+[ext_resource type="Resource" path="res://scoring/upgrades/spring_hop.tres" id="17_u5"]
+[ext_resource type="Resource" path="res://scoring/upgrades/slick_pegs.tres" id="18_u6"]
+[ext_resource type="Resource" path="res://scoring/upgrades/slow_collapse.tres" id="19_u7"]
+[ext_resource type="Resource" path="res://scoring/upgrades/showboat.tres" id="20_u8"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
+sky_top_color = Color(0.32, 0.5, 0.78, 1)
+sky_horizon_color = Color(0.78, 0.8, 0.84, 1)
+ground_bottom_color = Color(0.2, 0.2, 0.24, 1)
+ground_horizon_color = Color(0.78, 0.8, 0.84, 1)
+
+[sub_resource type="Sky" id="Sky_main"]
+sky_material = SubResource("ProceduralSkyMaterial_sky")
+
+[sub_resource type="Environment" id="Environment_main"]
+background_mode = 2
+sky = SubResource("Sky_main")
+ambient_light_source = 3
+tonemap_mode = 4
+glow_enabled = true
+fog_enabled = true
+fog_light_color = Color(0.78, 0.8, 0.84, 1)
+fog_density = 0.003
+
+[sub_resource type="ShaderMaterial" id="Mat_far"]
+render_priority = 0
+shader = ExtResource("11_grid")
+shader_parameter/base_color = Color(0.42, 0.45, 0.5, 1)
+shader_parameter/line_color = Color(0.36, 0.39, 0.44, 1)
+shader_parameter/major_color = Color(0.3, 0.33, 0.38, 1)
+shader_parameter/cell = 10.0
+shader_parameter/major_every = 5.0
+shader_parameter/line_width = 0.15
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_far"]
+material = SubResource("Mat_far")
+size = Vector2(4000, 4000)
+
+[node name="Game" type="Node3D"]
+script = ExtResource("1_game")
+upgrade_pool = Array[ExtResource("12_upgrade")]([ExtResource("13_u1"), ExtResource("14_u2"), ExtResource("15_u3"), ExtResource("16_u4"), ExtResource("17_u5"), ExtResource("18_u6"), ExtResource("19_u7"), ExtResource("20_u8")])
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_main")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.86603, -0.38302, 0.32139, 0, 0.64279, 0.76604, -0.5, -0.66341, 0.55667, 0, 0, 0)
+shadow_enabled = true
+directional_shadow_max_distance = 150.0
+
+[node name="StageBuilder" type="Node3D" parent="."]
+script = ExtResource("2_builder")
+
+[node name="Collapse" parent="." instance=ExtResource("3_collapse")]
+
+[node name="Player" parent="." instance=ExtResource("4_player")]
+
+[node name="FarGround" type="MeshInstance3D" parent="."]
+mesh = SubResource("PlaneMesh_far")
+
+[node name="StageStats" type="Node" parent="."]
+script = ExtResource("5_stats")
+
+[node name="RunHud" parent="." instance=ExtResource("6_hud")]
+
+[node name="DebugOverlay" parent="." instance=ExtResource("7_overlay")]
+
+[node name="Menus" type="CanvasLayer" parent="."]
+layer = 20
+
+[node name="StageSummary" parent="Menus" instance=ExtResource("8_summary")]
+
+[node name="UpgradePicker" parent="Menus" instance=ExtResource("9_picker")]
+
+[node name="RunOver" parent="Menus" instance=ExtResource("10_run_over")]

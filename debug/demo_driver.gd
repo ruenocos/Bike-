@@ -1,7 +1,7 @@
 extends Node
 ## Plays a fixed input script so the test track can be recorded hands-free.
 ## Lives in debug/test_track.tscn. Does nothing unless the game is launched with
-##   godot --path . -- --demo
+##   godot --path . res://debug/test_track.tscn -- --demo
 ## Extra user args:
 ##   --demo-trace          print position / state / speed every 0.1 s
 ##   --demo-shots=<dir>    save PNG stills at the SHOTS cues into <dir>

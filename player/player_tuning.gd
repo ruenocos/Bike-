@@ -52,8 +52,9 @@ extends Resource
 @export_range(0.0, 1.0) var hop_normal_blend: float = 0.7
 
 @export_group("Air")
-## Pitch rate when leaning in the air (deg/s). Visual only for now.
-@export var air_pitch_rate: float = 180.0
+## No manual balance: the bike's nose follows the flight path, then settles
+## onto the predicted landing surface over this long before touchdown (s).
+@export var air_land_blend_time: float = 0.3
 
 @export_group("Landing")
 ## Grades by the angle between the velocity and the ground at touchdown (deg).
@@ -122,6 +123,8 @@ extends Resource
 @export var grind_resnap_cooldown: float = 0.35
 ## Small upward pop when riding off the end of a rail (m/s).
 @export var grind_exit_pop: float = 2.0
+## Push along the rail while grinding (m/s^2). 0 by default; upgrades raise it.
+@export var grind_accel: float = 0.0
 
 @export_group("Transitions")
 ## Ground normal smoothing while riding (s). Hides the facets of curved CSG
@@ -166,6 +169,12 @@ extends Resource
 @export var carve_score_per_second: float = 25.0
 ## Points for an air off a quarter-pipe lip (points only, not a combo action).
 @export var lip_air_score: int = 100
+## Multiplies every trick's score (upgrades raise it).
+@export var trick_score_scale: float = 1.0
+
+@export_group("Run")
+## Multiplies the collapse's speed (upgrades lower it).
+@export var collapse_speed_scale: float = 1.0
 
 @export_group("Camera")
 @export var fov_base: float = 75.0

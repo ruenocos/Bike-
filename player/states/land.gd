@@ -19,7 +19,6 @@ var _timer: float = 0.0
 func enter(msg: Dictionary) -> void:
 	var t: PlayerTuning = player.tuning
 	_timer = t.land_duration
-	player.air_pitch = 0.0
 	# Air passes "normal" when it touched down on a steep transition face.
 	if msg.has("normal"):
 		player.ground_normal = msg["normal"]

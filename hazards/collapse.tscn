@@ -1,0 +1,93 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://hazards/collapse.gd" id="1_collapse"]
+[ext_resource type="Shader" path="res://hazards/collapse_wall.gdshader" id="2_wall"]
+
+[sub_resource type="ShaderMaterial" id="Mat_wall"]
+render_priority = 0
+shader = ExtResource("2_wall")
+shader_parameter/hot_color = Color(1, 0.45, 0.12, 1)
+shader_parameter/dark_color = Color(0.16, 0.03, 0.03, 1)
+shader_parameter/speed = 0.6
+
+[sub_resource type="QuadMesh" id="Mesh_wall"]
+material = SubResource("Mat_wall")
+size = Vector2(80, 70)
+
+[sub_resource type="StandardMaterial3D" id="Mat_debris"]
+albedo_color = Color(0.12, 0.08, 0.08, 1)
+emission_enabled = true
+emission = Color(1, 0.3, 0.1, 1)
+emission_energy_multiplier = 0.6
+
+[sub_resource type="BoxMesh" id="Mesh_debris0"]
+material = SubResource("Mat_debris")
+size = Vector3(1.0, 1.0, 1.0)
+
+[sub_resource type="BoxMesh" id="Mesh_debris1"]
+material = SubResource("Mat_debris")
+size = Vector3(1.8, 1.8, 1.8)
+
+[sub_resource type="BoxMesh" id="Mesh_debris2"]
+material = SubResource("Mat_debris")
+size = Vector3(2.6, 2.6, 2.6)
+
+[sub_resource type="BoxMesh" id="Mesh_debris3"]
+material = SubResource("Mat_debris")
+size = Vector3(3.4, 3.4, 3.4)
+
+[node name="Collapse" type="Node3D"]
+script = ExtResource("1_collapse")
+
+[node name="Wall" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 20, 0)
+cast_shadow = 0
+mesh = SubResource("Mesh_wall")
+
+[node name="Debris" type="Node3D" parent="."]
+
+[node name="Piece1" type="MeshInstance3D" parent="Debris"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 8, -2)
+mesh = SubResource("Mesh_debris0")
+
+[node name="Piece2" type="MeshInstance3D" parent="Debris"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 15, -2)
+mesh = SubResource("Mesh_debris1")
+
+[node name="Piece3" type="MeshInstance3D" parent="Debris"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 22, -2)
+mesh = SubResource("Mesh_debris2")
+
+[node name="Piece4" type="MeshInstance3D" parent="Debris"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 29, -2)
+mesh = SubResource("Mesh_debris3")
+
+[node name="Piece5" type="MeshInstance3D" parent="Debris"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 11, -2)
+mesh = SubResource("Mesh_debris0")
+
+[node name="Piece6" type="MeshInstance3D" parent="Debris"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 18, -2)
+mesh = SubResource("Mesh_debris1")
+
+[node name="Piece7" type="MeshInstance3D" parent="Debris"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 25, -2)
+mesh = SubResource("Mesh_debris2")
+
+[node name="Piece8" type="MeshInstance3D" parent="Debris"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 32, -2)
+mesh = SubResource("Mesh_debris3")
+
+[node name="Piece9" type="MeshInstance3D" parent="Debris"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27, 14, -2)
+mesh = SubResource("Mesh_debris0")
+
+[node name="Piece10" type="MeshInstance3D" parent="Debris"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33, 21, -2)
+mesh = SubResource("Mesh_debris1")
+
+[node name="Glow" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10, -6)
+light_color = Color(1, 0.35, 0.15, 1)
+light_energy = 6.0
+omni_range = 70.0

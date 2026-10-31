@@ -2,7 +2,7 @@ extends Node
 ## Headless landing check. Drops the Player into common situations on the
 ## test track, plays a few inputs, and prints the grade and angle of every
 ## landing. Added by DemoDriver when the game is launched with
-##   godot --headless --path . --fixed-fps 60 -- --landing-test
+##   godot --headless --path . --fixed-fps 60 res://debug/test_track.tscn -- --landing-test
 ## and quits when done. Re-run it after changing landing tuning or the track.
 ## Add --landing-trace to print the player every 0.1 s, and
 ## --landing-only=<text> to run only scenarios whose name contains <text>.

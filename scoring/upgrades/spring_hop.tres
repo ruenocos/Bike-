@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="UpgradeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scoring/upgrade_data.gd" id="1_upgrade"]
+
+[resource]
+script = ExtResource("1_upgrade")
+display_name = "Spring Hop"
+description = "Full hops pop 1.5 m/s higher."
+stat = &"hop_max_velocity"
+mode = 0
+amount = 1.5
