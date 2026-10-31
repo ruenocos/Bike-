@@ -28,8 +28,10 @@ const MAX_ANGLE_DEG: float = 0.5
 const LATERAL: Array[float] = [-55.0, -35.0, -20.0, -7.0, -4.0, 0.0, 4.0, 7.0, 20.0, 35.0, 55.0]
 
 var _failures: PackedStringArray = PackedStringArray()
-## Share of the probed width that was free in the last gap sweep.
+## Share of the probed width that was free in the last gap sweep, and in
+## its tightest row (a chokepoint).
 var _free_share: float = 0.0
+var _tightest_row: float = 1.0
 
 
 func _ready() -> void:
@@ -41,6 +43,7 @@ func _run() -> void:
 	add_child(builder)
 	var scenes: Array[PackedScene] = [builder.start_chunk, builder.finish_chunk]
 	scenes.append_array(builder.middle_chunks)
+	scenes.append_array(builder.set_pieces)
 	for scene: PackedScene in scenes:
 		await _check_lines(scene)
 	var joins: int = 0
@@ -188,8 +191,8 @@ func _check_lines(scene: PackedScene) -> void:
 					if blocked <= 5:
 						_failures.append("%s %s: %s within %.1f m of the line at (%.0f, %.0f)" % [name_of, line.name, collider.name, line.clearance, p.x, p.z])
 	var gaps: Vector3i = _sweep_gaps(chunk, name_of)
-	print("%-26s %d paths, %d on paths | %d rows: %d%% of the width free, %d%% rows with 2+ gaps, %d%% with 3+" % [
-		name_of, lines.size(), blocked, gaps.x, roundi(_free_share * 100.0), roundi(100.0 * gaps.y / maxf(gaps.x, 1.0)), roundi(100.0 * gaps.z / maxf(gaps.x, 1.0))])
+	print("%-26s %d paths, %d on paths | %d rows: %d%% of the width free (tightest row %d%%), %d%% rows with 2+ gaps, %d%% with 3+" % [
+		name_of, lines.size(), blocked, gaps.x, roundi(_free_share * 100.0), roundi(_tightest_row * 100.0), roundi(100.0 * gaps.y / maxf(gaps.x, 1.0)), roundi(100.0 * gaps.z / maxf(gaps.x, 1.0))])
 	chunk.free()
 
 
@@ -210,11 +213,14 @@ func _sweep_gaps(chunk: Chunk, name_of: String) -> Vector3i:
 	var failed: int = 0
 	var free_total: float = 0.0
 	var probed: float = 0.0
+	_tightest_row = 1.0
 	var d: float = 30.0
 	while d < terrain.length - 30.0:
 		var half: float = terrain.half_play_at(d) - 3.0
 		var run: float = 0.0
 		var gaps: int = 0
+		var row_free: float = 0.0
+		var row_probed: float = 0.0
 		var x: float = -half
 		while x <= half + 0.01:
 			var p: Vector3 = terrain.to_global(terrain.valley_to_local(x, terrain.surface_height(x, -d) + GAP_PROBE + 0.3, d))
@@ -226,8 +232,10 @@ func _sweep_gaps(chunk: Chunk, name_of: String) -> Vector3i:
 					blocked = true
 					break
 			probed += 1.0
+			row_probed += 1.0
 			if not blocked:
 				free_total += 1.0
+				row_free += 1.0
 			if blocked:
 				if run >= MIN_GAP:
 					gaps += 1
@@ -237,6 +245,7 @@ func _sweep_gaps(chunk: Chunk, name_of: String) -> Vector3i:
 			x += 1.0
 		if run >= MIN_GAP:
 			gaps += 1
+		_tightest_row = minf(_tightest_row, row_free / maxf(row_probed, 1.0))
 		result.x += 1
 		if gaps >= 2:
 			result.y += 1

@@ -69,3 +69,10 @@ custom_minimum_size = Vector2(400, 280)
 layout_mode = 2
 text = "UPGRADE\n\nDescription"
 autowrap_mode = 3
+
+[node name="Reroll" type="Button" parent="Center/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(400, 64)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "REROLL  (1 left)"

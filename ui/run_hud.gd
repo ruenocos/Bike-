@@ -80,6 +80,13 @@ func flash_start(grade: StringName) -> void:
 	_start_flash_timer = flash_time
 
 
+## "BOOST +300" when riding through a boost gate.
+func flash_gate(score: int) -> void:
+	start_flash.text = "BOOST  +%d" % score
+	start_flash.modulate = Color(1.0, 0.8, 0.3)
+	_start_flash_timer = flash_time * 0.7
+
+
 ## Seconds left before an out-of-bounds respawn; < 0 hides the warning.
 func show_out_of_bounds(seconds_left: float) -> void:
 	oob_label.visible = seconds_left >= 0.0

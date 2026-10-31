@@ -1,6 +1,7 @@
 class_name StageSummary
 extends Control
-## Shown when you cross the finish: time, best combo, stage score, run score.
+## Shown when you cross the finish: time, best combo, stage score, run score,
+## boost gates collected and the upgrade rerolls they (and the score) earned.
 ## Continue (A) goes on to the upgrade picker.
 
 signal continued
@@ -19,10 +20,11 @@ func _ready() -> void:
 	continue_button.pressed.connect(_on_continue)
 
 
-func open(stage: int, time: float, best_combo: int, stage_score: int, run_score: int) -> void:
+func open(stage: int, time: float, best_combo: int, stage_score: int, run_score: int,
+		gates: int = 0, gates_total: int = 0, rerolls_earned: int = 0, rerolls: int = 0) -> void:
 	title_label.text = "STAGE %d CLEAR" % stage
-	stats_label.text = "Time            %d:%05.2f\nBest combo      %d\nStage score     %d\nRun score       %d" % [
-		floori(time / 60.0), fmod(time, 60.0), best_combo, stage_score, run_score]
+	stats_label.text = "Time            %d:%05.2f\nBest combo      %d\nStage score     %d\nRun score       %d\nBoost gates     %d / %d\nRerolls         +%d  (%d)" % [
+		floori(time / 60.0), fmod(time, 60.0), best_combo, stage_score, run_score, gates, gates_total, rerolls_earned, rerolls]
 	show()
 	await MenuInput.delay_focus(self, continue_button, input_delay)
 

@@ -31,13 +31,16 @@ signal caught
 ## Speed when it starts moving (m/s)...
 @export var start_speed_by_stage: Array[float] = [24.0, 28.0, 30.0, 32.0, 34.0, 36.0, 37.0, 38.0]
 ## ...gaining this much per second (m/s²)...
-@export var accel_by_stage: Array[float] = [0.8, 1.1, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8]
-## ...up to this (m/s). Clean riding on the 23 deg slope cruises at ~50-55.
-@export var max_speed_by_stage: Array[float] = [44.0, 48.0, 51.0, 53.0, 55.0, 56.0, 57.0, 58.0]
+@export var accel_by_stage: Array[float] = [0.6, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4]
+## ...up to this (m/s). Clean riding cruises at ~50-55 on the 23 deg slope,
+## ~40-45 in the slow technical sections (v0.9; a clean stage averages ~50),
+## so even stage 1 creeps up on you there and falls back on the fast drops.
+## From stage ~6 it is as fast as a clean average: then the leash decides.
+@export var max_speed_by_stage: Array[float] = [44.0, 45.0, 46.0, 47.5, 49.0, 50.0, 51.0, 52.5]
 ## The leash: never more than this far behind the rider (m). Stage 1 is
 ## loose, so only real mistakes (several bails, falling off, stalling) let
 ## it catch up; later stages keep it close.
-@export var leash_by_stage: Array[float] = [260.0, 220.0, 180.0, 150.0, 130.0, 110.0, 100.0, 90.0]
+@export var leash_by_stage: Array[float] = [170.0, 160.0, 150.0, 135.0, 120.0, 110.0, 100.0, 95.0]
 
 @export_group("Penalties")
 ## A time penalty (crash, out-of-bounds respawn) moves the collapse forward

@@ -33,6 +33,15 @@ signal finished
 	preload("res://chunks/landscape/land_switchback_right.tscn"),
 ]
 @export var finish_chunk: PackedScene = preload("res://chunks/landscape/land_finish.tscn")
+## Set pieces (v0.9): one big moment each (cliff drop, ravine gap, bend
+## kicker). Every stage gets this many of them (x min, y max), in middle
+## slots that aren't next to each other.
+@export var set_pieces: Array[PackedScene] = [
+	preload("res://chunks/landscape/set_cliff.tscn"),
+	preload("res://chunks/landscape/set_ravine.tscn"),
+	preload("res://chunks/landscape/set_bend_kicker.tscn"),
+]
+@export var set_pieces_per_stage: Vector2i = Vector2i(1, 2)
 @export_range(0, 20) var middle_count: int = 8
 ## Later stages lean toward harder chunks: a chunk's pick weight is
 ## 1 + tier_bias * stage_index * (difficulty - 1). 0 = every chunk equally likely.
@@ -102,7 +111,33 @@ func build(stage_seed: int, middle: int = -1, stage_index: int = 0) -> void:
 	var at: Transform3D = _place(start_chunk, global_transform)
 	var last: int = -1
 	var heading: float = 0.0
-	for i: int in (middle_count if middle < 0 else middle):
+	var count: int = middle_count if middle < 0 else middle
+	var set_slots: Array[int] = _pick_set_slots(rng, count)
+	var used_sets: Array[int] = []
+	for i: int in count:
+		# A set piece slot tries the set pieces first (each once per stage).
+		if set_slots.has(i) and not set_pieces.is_empty():
+			var options: Array[int] = []
+			for k: int in set_pieces.size():
+				if not used_sets.has(k):
+					options.append(k)
+			var placed_set: bool = false
+			while not options.is_empty():
+				var pick: int = options.pop_at(rng.randi_range(0, options.size() - 1))
+				var turn_s: float = float(_chunk_property(set_pieces[pick], &"exit_heading_deg", 0.0))
+				if absf(heading + turn_s) > max_stage_heading_deg:
+					continue
+				var next_s: Transform3D = _place(set_pieces[pick], at)
+				if next_s == Transform3D():
+					continue
+				at = next_s
+				heading += turn_s
+				used_sets.append(pick)
+				last = -1
+				placed_set = true
+				break
+			if placed_set:
+				continue
 		# Never the same chunk twice in a row; never turning past the limit
 		# or back over earlier chunks (rejected picks are dropped for this slot).
 		var allowed: PackedFloat32Array = weights.duplicate()
@@ -132,6 +167,26 @@ func build(stage_seed: int, middle: int = -1, stage_index: int = 0) -> void:
 	length = line_distance[-1]
 	var gate: FinishGate = chunks[-1].get_finish_gate()
 	finish_distance = nearest_distance(gate.global_position) if gate != null else length
+
+
+## Middle slots for this stage's set pieces: set_pieces_per_stage of them,
+## never in the first slot (the drop-in sets the pace) and never adjacent.
+func _pick_set_slots(rng: RandomNumberGenerator, count: int) -> Array[int]:
+	var slots: Array[int] = []
+	if count < 2 or set_pieces.is_empty():
+		return slots
+	var want: int = rng.randi_range(set_pieces_per_stage.x, set_pieces_per_stage.y)
+	for attempt: int in 40:
+		if slots.size() >= want:
+			break
+		var s: int = rng.randi_range(1, count - 1)
+		var ok: bool = true
+		for other: int in slots:
+			if absi(other - s) < 2:
+				ok = false
+		if ok:
+			slots.append(s)
+	return slots
 
 
 ## Instances `scene` with its Entry on `at` and appends it to the stage.

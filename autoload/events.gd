@@ -17,4 +17,7 @@ signal grind_started
 signal carve_started
 @warning_ignore("unused_signal")
 signal lip_air
+## Rode through a BoostGate (its score).
+@warning_ignore("unused_signal")
+signal gate_collected(score: int)
 

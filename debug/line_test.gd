@@ -22,6 +22,7 @@ const LANDING_GRACE: float = 1.5
 
 var _failures: PackedStringArray = PackedStringArray()
 var _bails: PackedStringArray = PackedStringArray()
+var _gates: int = 0
 var _player: Player
 var _trace: bool = false
 var _only: String = ""
@@ -39,6 +40,7 @@ func _ready() -> void:
 func _run() -> void:
 	var builder: StageBuilder = StageBuilder.new()
 	var scenes: Array[PackedScene] = builder.middle_chunks.duplicate()
+	scenes.append_array(builder.set_pieces)
 	scenes.append(builder.finish_chunk)
 	builder.free()
 	_player = PLAYER.instantiate() as Player
@@ -46,6 +48,7 @@ func _run() -> void:
 	_player.kill_y = -100000.0
 	_player.auto_respawn = false
 	Events.bailed.connect(func() -> void: _bails.append(_player.last_bail_reason))
+	Events.gate_collected.connect(func(_s: int) -> void: _gates += 1)
 	var rides: int = 0
 	for scene: PackedScene in scenes:
 		var chunk: Chunk = scene.instantiate() as Chunk
@@ -83,6 +86,8 @@ func _ride(chunk: Chunk, line: RideLine, label: String) -> void:
 	_player.combo.drop()
 	_player.state_machine.transition_to(&"Air", {})
 	_bails.clear()
+	_gates = 0
+	var slowest: float = INF
 	var worst_off: float = 0.0
 	var top: float = 0.0
 	var airtime: float = 0.0
@@ -104,6 +109,8 @@ func _ride(chunk: Chunk, line: RideLine, label: String) -> void:
 		time += 1.0 / Engine.physics_ticks_per_second
 		var pos: Vector3 = _player.global_position
 		top = maxf(top, _player.speed)
+		if time > 1.0 and state == &"Ride":
+			slowest = minf(slowest, _player.speed)
 		if state == &"Air":
 			airtime += 1.0 / Engine.physics_ticks_per_second
 		if state == &"Grind" and not was_grind:
@@ -126,8 +133,8 @@ func _ride(chunk: Chunk, line: RideLine, label: String) -> void:
 		if line.nearest_index(pos) >= pts.size() - 3:
 			reached = true
 			break
-	print("%-32s %s  %4.1f s  top %4.1f m/s  air %3.1f s  grinds %d  off %4.1f m  bails %d %s" % [
-		label, "end" if reached else "STUCK", time, top, airtime, grinds, worst_off, _bails.size(), str(_bails) if not _bails.is_empty() else ""])
+	print("%-32s %s  %4.1f s  speed %4.1f-%4.1f m/s  air %3.1f s  grinds %d  gates %d  off %4.1f m  bails %d %s" % [
+		label, "end" if reached else "STUCK", time, slowest, top, airtime, grinds, _gates, worst_off, _bails.size(), str(_bails) if not _bails.is_empty() else ""])
 	if not reached:
 		_failures.append("%s: didn't reach the end" % label)
 	if not _bails.is_empty():

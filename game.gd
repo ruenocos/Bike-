@@ -15,6 +15,8 @@ extends Node3D
 ## --autopilot rides by itself (debug/autopilot.gd, for recordings).
 
 @export var base_tuning: PlayerTuning = preload("res://player/player_tuning.tres")
+## What boost gates and score earn between stages (upgrade rerolls).
+@export var rules: RunRules = preload("res://scoring/run_rules.tres")
 @export var upgrade_pool: Array[UpgradeData] = []
 ## Middle chunks per stage. The same every stage: later stages get harder
 ## through harder chunks (StageBuilder.tier_bias) and a faster collapse,
@@ -58,6 +60,9 @@ var player_progress: float = 0.0
 var in_stage: bool = false
 ## Time spent past the crests (s); 0 when in bounds.
 var oob_timer: float = 0.0
+## Upgrade rerolls in hand (earned with boost gates and score, RunRules).
+var rerolls: int = 0
+var _choices: Array[UpgradeData] = []
 
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 ## Stage distance of the start pad's drop-in edge.
@@ -74,6 +79,8 @@ func _ready() -> void:
 	run_over.restart.connect(start_run)
 	start_sprint.launched.connect(_on_launched)
 	Events.bailed.connect(_on_bailed)
+	Events.gate_collected.connect(func(score: int) -> void: hud.flash_gate(score))
+	picker.reroll_requested.connect(_on_reroll)
 	var seed_arg: int = -1
 	var args: PackedStringArray = OS.get_cmdline_user_args()
 	for arg: String in args:
@@ -94,6 +101,7 @@ func start_run(new_seed: int = -1) -> void:
 	run_tuning = base_tuning.duplicate() as PlayerTuning
 	player.tuning = run_tuning
 	upgrades_taken.clear()
+	rerolls = rules.start_rerolls
 	player.combo.drop()
 	player.combo.run_total = 0
 	start_stage()
@@ -119,7 +127,7 @@ func start_stage() -> void:
 	_drop_in_distance = builder.nearest_distance(drop_in.global_position) if drop_in != null else player_progress + 30.0
 	collapse.reset(builder, player_progress, stage_index, run_tuning.collapse_speed_scale)
 	start_sprint.begin(player)
-	stats.start()
+	stats.start(get_tree().get_nodes_in_group(&"boost_gates").size())
 	oob_timer = 0.0
 	in_stage = true
 
@@ -197,11 +205,35 @@ func _on_finished() -> void:
 	stats.stop()
 	collapse.stop()
 	_freeze_player()
-	summary.open(stage_index + 1, stats.time, stats.best_combo, stats.score, player.combo.run_total)
+	var earned: int = rules.earned(stats.gates, stats.score)
+	rerolls = mini(rerolls + earned, rules.max_rerolls)
+	summary.open(stage_index + 1, stats.time, stats.best_combo, stats.score, player.combo.run_total,
+			stats.gates, stats.gates_total, earned, rerolls)
 
 
 func _on_summary_continued() -> void:
-	picker.open(_pick_choices(3))
+	_choices = _pick_choices(3)
+	picker.open(_choices, rerolls)
+
+
+## Spend a reroll: three new cards (different from the ones shown, when the
+## pool allows).
+func _on_reroll() -> void:
+	if rerolls <= 0:
+		return
+	rerolls -= 1
+	var old: Array[UpgradeData] = _choices
+	var fresh: Array[UpgradeData] = []
+	for i: int in 8:
+		fresh = _pick_choices(3)
+		var overlap: bool = false
+		for u: UpgradeData in fresh:
+			if old.has(u):
+				overlap = true
+		if not overlap:
+			break
+	_choices = fresh
+	picker.open(_choices, rerolls)
 
 
 ## `count` different upgrades from the pool, picked with the run's RNG.
