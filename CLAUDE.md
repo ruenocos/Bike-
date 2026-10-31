@@ -13,6 +13,7 @@ Goal right now: a playable demo built from the vertical slice. No deadline. Game
 - Editor exe: `../Godot_v4.7.2-stable_win64.exe/Godot_v4.7.2-stable_win64_console.exe`
   - Headless check: `<exe> --headless --path . --quit` (reimports and surfaces script errors)
   - Script check: `<exe> --headless --path . --check-only --script res://path.gd`
+  - After adding a new class_name file run `<exe> --headless --path . --import` once before checking. Use `--quit` / `--quit-after N` for checks; `--check-only --script` gives false 'Identifier not found: Events' errors because autoloads aren't loaded.
 - Forward+ (D3D12 on Windows), Jolt physics, 60 Hz physics ticks.
 - Player = CharacterBody3D with hand-written velocity math. Never a RigidBody.
 - Rails = Path3D/Curve3D, snap via closest-point lookup (~1.5 m radius).
@@ -44,14 +45,13 @@ Goal right now: a playable demo built from the vertical slice. No deadline. Game
 steer_left/right: left stick X · lean_back/forward: left stick Y · pedal: RT · brake: LT · hop: South (hold to charge) · grind: West · trick_left/right/up/down: right stick · pause: Start
 
 ## Status (2026-10-31)
-Done: Godot 4.7.2, Blender, Git + LFS installed. Project created (Forward+, Jolt, stretch canvas_items/expand). .gitattributes with LFS rules, .gitignore with /builds/, feature folders, autoload stubs, PlayerTuning script.
+Done (v0.1): tasks 1-7 of the original plan.
+- Project settings, input map (+ debug_reset on Back/R), player/player_tuning.tres.
+- debug/test_track.tscn: slope, pump bumps, kicker, tabletop, rail, wall. Grid greybox shader in debug/grid.gdshader.
+- Player scene; Ride/Air/Land/Bail states; landing grades; debug overlay.
+- Physics interpolation on.
 
 ## Next tasks, in order
-1. `git init`, `git lfs install`, first commit, tag v0.0.
-2. Project settings: window 1920×1080, MSAA 3D 4×, GDScript warning "Untyped Declaration" = Error, register the three autoloads, disable Emulate Touch From Mouse.
-3. Input map from the table above (deadzone 0.2 on sticks).
-4. Create player/player_tuning.tres from PlayerTuning.
-5. debug/test_track.tscn: WorldEnvironment, DirectionalLight3D, CSG slopes/ramps/bumps, one Path3D rail. Set as main scene.
-6. Player scene: CharacterBody3D, capsule collider, placeholder mesh, ShapeCast3D ground probe, SpringArm3D + Camera3D.
-7. State machine with Ride, Air, Land first; then landing grades; then debug overlay (speed, state, last landing angle + grade, combo timer).
-8. Commit, tag v0.1. Gate for phase 2: does a perfect landing feel good with cubes only?
+1. Playtest v0.1 with gamepad. Gate: does a perfect landing feel good with cubes only?
+2. Tune PlayerTuning from playtest notes.
+3. Phase 2: trick flicks (right stick), Grind state on Path3D rails, WallRide, combo scoring, speed lines VFX.

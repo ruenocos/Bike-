@@ -1,0 +1,114 @@
+[gd_scene load_steps=18 format=3]
+
+[ext_resource type="Script" path="res://player/player.gd" id="1_player"]
+[ext_resource type="Script" path="res://player/state_machine.gd" id="2_machine"]
+[ext_resource type="Script" path="res://player/states/ride.gd" id="3_ride"]
+[ext_resource type="Script" path="res://player/states/air.gd" id="4_air"]
+[ext_resource type="Script" path="res://player/states/land.gd" id="5_land"]
+[ext_resource type="Script" path="res://player/states/bail.gd" id="6_bail"]
+[ext_resource type="Script" path="res://player/player_camera.gd" id="7_camera"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
+radius = 0.35
+height = 1.6
+
+[sub_resource type="StandardMaterial3D" id="Mat_bike"]
+albedo_color = Color(0.15, 0.16, 0.2, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_bike"]
+material = SubResource("Mat_bike")
+size = Vector3(0.18, 0.45, 1.5)
+
+[sub_resource type="StandardMaterial3D" id="Mat_wheel"]
+albedo_color = Color(0.08, 0.08, 0.1, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_wheel"]
+material = SubResource("Mat_wheel")
+top_radius = 0.3
+bottom_radius = 0.3
+height = 0.08
+
+[sub_resource type="StandardMaterial3D" id="Mat_rider"]
+albedo_color = Color(0.95, 0.35, 0.25, 1)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_rider"]
+material = SubResource("Mat_rider")
+radius = 0.25
+height = 1.0
+
+[sub_resource type="StandardMaterial3D" id="Mat_nose"]
+albedo_color = Color(1, 0.85, 0.2, 1)
+emission_enabled = true
+emission = Color(1, 0.75, 0.1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_nose"]
+material = SubResource("Mat_nose")
+size = Vector3(0.5, 0.06, 0.06)
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_probe"]
+radius = 0.3
+
+[node name="Player" type="CharacterBody3D" groups=["player"]]
+floor_max_angle = 0.872665
+floor_snap_length = 0.5
+script = ExtResource("1_player")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+shape = SubResource("CapsuleShape3D_body")
+
+[node name="Visual" type="Node3D" parent="."]
+
+[node name="Frame" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
+mesh = SubResource("BoxMesh_bike")
+
+[node name="FrontWheel" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0.3, -0.6)
+mesh = SubResource("CylinderMesh_wheel")
+
+[node name="RearWheel" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0.3, 0.6)
+mesh = SubResource("CylinderMesh_wheel")
+
+[node name="Rider" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15, 0.1)
+mesh = SubResource("CapsuleMesh_rider")
+
+[node name="Handlebar" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, -0.55)
+mesh = SubResource("BoxMesh_nose")
+
+[node name="GroundProbe" type="ShapeCast3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+shape = SubResource("SphereShape3D_probe")
+target_position = Vector3(0, -1.2, 0)
+
+[node name="StateMachine" type="Node" parent="." node_paths=PackedStringArray("initial_state")]
+script = ExtResource("2_machine")
+initial_state = NodePath("Air")
+
+[node name="Ride" type="Node" parent="StateMachine"]
+script = ExtResource("3_ride")
+
+[node name="Air" type="Node" parent="StateMachine"]
+script = ExtResource("4_air")
+
+[node name="Land" type="Node" parent="StateMachine"]
+script = ExtResource("5_land")
+
+[node name="Bail" type="Node" parent="StateMachine"]
+script = ExtResource("6_bail")
+
+[node name="CameraRig" type="Node3D" parent="."]
+top_level = true
+script = ExtResource("7_camera")
+
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraRig"]
+spring_length = 6.5
+margin = 0.2
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig/SpringArm3D"]
+current = true
+fov = 75.0
+far = 600.0

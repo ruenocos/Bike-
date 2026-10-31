@@ -1,0 +1,188 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Shader" path="res://debug/grid.gdshader" id="1_grid"]
+[ext_resource type="PackedScene" path="res://player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://debug/debug_overlay.tscn" id="3_overlay"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
+sky_top_color = Color(0.32, 0.5, 0.78, 1)
+sky_horizon_color = Color(0.78, 0.8, 0.84, 1)
+ground_bottom_color = Color(0.2, 0.2, 0.24, 1)
+ground_horizon_color = Color(0.78, 0.8, 0.84, 1)
+
+[sub_resource type="Sky" id="Sky_main"]
+sky_material = SubResource("ProceduralSkyMaterial_sky")
+
+[sub_resource type="Environment" id="Environment_main"]
+background_mode = 2
+sky = SubResource("Sky_main")
+ambient_light_source = 3
+tonemap_mode = 4
+glow_enabled = true
+fog_enabled = true
+fog_light_color = Color(0.78, 0.8, 0.84, 1)
+fog_density = 0.003
+
+[sub_resource type="ShaderMaterial" id="Mat_ground"]
+render_priority = 0
+shader = ExtResource("1_grid")
+shader_parameter/base_color = Color(0.56, 0.58, 0.62, 1)
+shader_parameter/line_color = Color(0.42, 0.44, 0.48, 1)
+shader_parameter/major_color = Color(0.3, 0.32, 0.36, 1)
+shader_parameter/cell = 1.0
+shader_parameter/major_every = 5.0
+shader_parameter/line_width = 0.03
+
+[sub_resource type="ShaderMaterial" id="Mat_feature"]
+render_priority = 0
+shader = ExtResource("1_grid")
+shader_parameter/base_color = Color(0.93, 0.6, 0.3, 1)
+shader_parameter/line_color = Color(0.8, 0.48, 0.22, 1)
+shader_parameter/major_color = Color(0.62, 0.34, 0.14, 1)
+shader_parameter/cell = 1.0
+shader_parameter/major_every = 5.0
+shader_parameter/line_width = 0.03
+
+[sub_resource type="Curve3D" id="Curve3D_rail"]
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -40),
+"tilts": PackedFloat32Array(0, 0)
+}
+point_count = 2
+
+[sub_resource type="StandardMaterial3D" id="Mat_rail"]
+albedo_color = Color(0.85, 0.87, 0.9, 1)
+metallic = 0.8
+roughness = 0.3
+
+[node name="TestTrack" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_main")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.86603, -0.38302, 0.32139, 0, 0.64279, 0.76604, -0.5, -0.66341, 0.55667, 0, 0, 0)
+shadow_enabled = true
+directional_shadow_max_distance = 150.0
+
+[node name="Track" type="CSGCombiner3D" parent="."]
+use_collision = true
+
+[node name="StartDeck" type="CSGBox3D" parent="Track"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 24.5, 1)
+size = Vector3(16, 1, 26)
+material = SubResource("Mat_ground")
+
+[node name="Slope" type="CSGBox3D" parent="Track"]
+transform = Transform3D(1, 0, 0, 0, 0.97898, 0.20395, 0, -0.20395, 0.97898, 0, 11.80655, -70.87698)
+size = Vector3(20, 1, 124.577)
+material = SubResource("Mat_ground")
+
+[node name="Bump1" type="CSGCylinder3D" parent="Track/Slope"]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, -1.55, 45)
+radius = 2.5
+height = 14
+sides = 32
+smooth_faces = true
+material = SubResource("Mat_feature")
+
+[node name="Bump2" type="CSGCylinder3D" parent="Track/Slope"]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, -1.55, 37)
+radius = 2.5
+height = 14
+sides = 32
+smooth_faces = true
+material = SubResource("Mat_feature")
+
+[node name="Bump3" type="CSGCylinder3D" parent="Track/Slope"]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, -1.55, 29)
+radius = 2.5
+height = 14
+sides = 32
+smooth_faces = true
+material = SubResource("Mat_feature")
+
+[node name="Bump4" type="CSGCylinder3D" parent="Track/Slope"]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, -1.55, 21)
+radius = 2.5
+height = 14
+sides = 32
+smooth_faces = true
+material = SubResource("Mat_feature")
+
+[node name="Kicker" type="CSGCombiner3D" parent="Track/Slope"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 5)
+
+[node name="Block" type="CSGBox3D" parent="Track/Slope/Kicker"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.20968, -1.64315)
+size = Vector3(6, 1.21937, 3.2863)
+material = SubResource("Mat_feature")
+
+[node name="Cut" type="CSGCylinder3D" parent="Track/Slope/Kicker"]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 7, 0)
+operation = 2
+radius = 7
+height = 7
+sides = 64
+material = SubResource("Mat_feature")
+
+[node name="Runout" type="CSGBox3D" parent="Track"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -214)
+size = Vector3(24, 1, 172)
+material = SubResource("Mat_ground")
+
+[node name="RunoutKicker" type="CSGCombiner3D" parent="Track"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -160)
+
+[node name="Block" type="CSGBox3D" parent="Track/RunoutKicker"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.12767, -1.68573)
+size = Vector3(6, 1.05535, 3.37146)
+material = SubResource("Mat_feature")
+
+[node name="Cut" type="CSGCylinder3D" parent="Track/RunoutKicker"]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 9, 0)
+operation = 2
+radius = 9
+height = 7
+sides = 64
+material = SubResource("Mat_feature")
+
+[node name="TableFront" type="CSGBox3D" parent="Track"]
+transform = Transform3D(1, 0, 0, 0, 0.92308, -0.38462, 0, 0.38462, 0.92308, 0, -0.13462, -167.577)
+size = Vector3(8, 3, 6.7)
+material = SubResource("Mat_feature")
+
+[node name="TableDeck" type="CSGBox3D" parent="Track"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, -175)
+size = Vector3(8, 2.5, 10.2)
+material = SubResource("Mat_feature")
+
+[node name="TableLanding" type="CSGBox3D" parent="Track"]
+transform = Transform3D(1, 0, 0, 0, 0.99049, 0.13757, 0, -0.13757, 0.99049, 0, -0.23574, -188.794)
+size = Vector3(8, 3, 18.3728)
+material = SubResource("Mat_feature")
+
+[node name="Wall" type="CSGBox3D" parent="Track"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.5, 2, -232)
+size = Vector3(1, 4, 40)
+material = SubResource("Mat_feature")
+
+[node name="Rails" type="Node3D" parent="."]
+
+[node name="Rail1" type="Path3D" parent="Rails" groups=["rails"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0.6, -205)
+curve = SubResource("Curve3D_rail")
+
+[node name="RailMesh" type="CSGPolygon3D" parent="Rails/Rail1"]
+polygon = PackedVector2Array(-0.05, -0.05, -0.05, 0.05, 0.05, 0.05, 0.05, -0.05)
+mode = 2
+path_node = NodePath("..")
+path_interval_type = 0
+path_interval = 0.5
+path_local = true
+material = SubResource("Mat_rail")
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 25.05, 8)
+
+[node name="DebugOverlay" parent="." instance=ExtResource("3_overlay")]
