@@ -33,6 +33,22 @@ extends Resource
 @export var lean_into_turn_deg: float = 22.0
 ## Extra bank at max speed, so fast turns look committed (deg at full steer).
 @export var lean_speed_extra_deg: float = 14.0
+## Time for the steer to follow the stick (s). Small = snappy, 0 = instant.
+@export_range(0.0, 0.3, 0.005) var steer_response_time: float = 0.0
+## Stick response curve: 1 = linear, >1 = finer near the middle, full lock unchanged.
+@export_range(1.0, 3.0, 0.05) var steer_curve: float = 1.0
+## Hard carving at speed costs a little speed: this much per second at full
+## steer (m/s^2)...
+@export_range(0.0, 20.0, 0.1) var carve_drag: float = 0.0
+## ...fading in from this fraction of max_speed.
+@export_range(0.0, 1.0, 0.05) var carve_drag_from: float = 0.5
+
+@export_group("Crashes")
+## Hitting an obstacle (group "obstacles": trees, rocks, fences, boulders)
+## faster than this into it is a crash (Bail). Slower = you glance off (m/s).
+@export_range(1.0, 60.0, 0.5) var crash_min_impact: float = 10.0
+## Speed lost in a crash (0.5 = keep half).
+@export_range(0.0, 1.0, 0.05) var crash_penalty: float = 0.5
 
 @export_group("Pump")
 ## Speed multiplier added per clean pump (0.04 = +4%).
@@ -182,6 +198,10 @@ extends Resource
 @export var lip_air_score: int = 100
 ## Multiplies every trick's score (upgrades raise it).
 @export var trick_score_scale: float = 1.0
+## Landing (not bailing) after tricks adds this much speed per trick (m/s)...
+@export_range(0.0, 20.0, 0.1) var trick_land_boost: float = 0.0
+## ...up to this much per landing (m/s).
+@export_range(0.0, 30.0, 0.1) var trick_land_boost_max: float = 0.0
 
 @export_group("Run")
 ## Multiplies the collapse's speed (upgrades lower it).
@@ -239,6 +259,21 @@ extends Resource
 @export var cam_speed_shake_rotation_deg: float = 0.3
 ## ...at about this many wobbles per second. Only while on the ground.
 @export var cam_speed_shake_frequency: float = 14.0
+## Open-valley framing: at speed and outside TightZones the camera pulls this
+## much further back (m)...
+@export var cam_open_distance: float = 0.0
+## ...and this much higher (m), to read the lines ahead...
+@export var cam_open_height: float = 0.0
+## ...looking this much further down (deg)...
+@export var cam_open_pitch_deg: float = 0.0
+## ...fading in from this fraction of max_speed.
+@export_range(0.0, 1.0, 0.05) var cam_open_from: float = 0.4
+## Inside a TightZone it tucks in this much closer than the normal framing (m)...
+@export var cam_tight_distance: float = 0.0
+## ...and this much lower (m).
+@export var cam_tight_height: float = 0.0
+## Time to blend between open and tight framing (s).
+@export var cam_open_blend_time: float = 0.8
 
 @export_group("Speed lines")
 ## Speed lines start fading in above this fraction of max_speed (0.7 = 70%).

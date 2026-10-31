@@ -7,8 +7,13 @@ extends Node
 ##   --autopilot-lose         from stage 2 on, brake after a while so the
 ##                            collapse catches up (shows the warning and RUN OVER)
 ##   --autopilot-trace        print progress / speed / gap every second
+##   --autopilot-oob          in stage 1, steer gently left from 8 s to 14 s (rides
+##                            over the crest: out-of-bounds countdown + respawn)
 ## Like the demo driver it only presses InputMap actions (Input.action_press),
 ## so the player code can't tell it from a pad. Menus get ui_accept events.
+## v0.8: does the sprint start (releases in the sweet zone) and follows one
+## ride line per landscape chunk (a different style each chunk), with
+## LineFollower; chunks without lines fall back to the centerline.
 
 ## Steer toward the line this far ahead (m).
 const LOOK_AHEAD: float = 14.0
@@ -49,6 +54,9 @@ var _shot_dir: String = ""
 var _shots_taken: Dictionary[String, bool] = {}
 var _shooting: bool = false
 var _rail_cache: Dictionary[int, Vector3] = {}
+var _sprint: StartSprint
+var _oob: bool = false
+var _was_oob: bool = false
 
 
 func _ready() -> void:
@@ -58,9 +66,11 @@ func _ready() -> void:
 	_builder = _game.get_node(^"StageBuilder") as StageBuilder
 	_collapse = _game.get_node(^"Collapse") as Collapse
 	_menus = _game.get_node(^"Menus")
+	_sprint = _game.get_node(^"StartSprint") as StartSprint
 	var args: PackedStringArray = OS.get_cmdline_user_args()
 	_lose = args.has("--autopilot-lose")
 	_trace = args.has("--autopilot-trace")
+	_oob = args.has("--autopilot-oob")
 	for arg: String in args:
 		if arg.begins_with("--autopilot-shots="):
 			_shot_dir = arg.trim_prefix("--autopilot-shots=")
@@ -83,9 +93,23 @@ func _physics_process(delta: float) -> void:
 		return
 	_stage_time += delta
 	_menu_timer = 0.0
-	Input.action_press(&"pedal")
 	var progress: float = _game.get("player_progress")
+	if _sprint.active:
+		# Sprint start: pedal, let go in the middle of the sweet zone.
+		if _sprint.meter < (_sprint.sweet_from + _sprint.sweet_to) * 0.5:
+			Input.action_press(&"pedal")
+		else:
+			Input.action_release(&"pedal")
+		return
+	Input.action_press(&"pedal")
 	_steer(progress)
+	if _oob and int(_game.get("stage_index")) == 0 and _stage_time > 8.0 and _stage_time < 14.0:
+		Input.action_release(&"steer_right")
+		Input.action_press(&"steer_left", 0.35)
+	var oob_timer: float = _game.get("oob_timer")
+	if _trace and (oob_timer > 0.0) != _was_oob:
+		print("t=%6.2f %s" % [_time, "OUT OF BOUNDS" if oob_timer > 0.0 else "back in bounds / respawned at x %.1f, %.1f m/s" % [_player.global_position.x, _player.speed]])
+	_was_oob = oob_timer > 0.0
 	_ride(delta)
 	if _lose and int(_game.get("stage_index")) >= 1 and _stage_time > LOSE_AFTER:
 		Input.action_press(&"brake")
@@ -95,13 +119,23 @@ func _physics_process(delta: float) -> void:
 		_trace_timer -= delta
 		if _trace_timer <= 0.0:
 			_trace_timer = 1.0
-			print("t=%6.2f stage %d  %5.0f / %5.0f m  v=%5.1f  %-5s  gap %5.0f m  collapse %4.1f m/s  run=%d" % [
+			print("t=%6.2f stage %d  %5.0f / %5.0f m  v=%5.1f  %-5s  gap %5.0f m  collapse %4.1f m/s  run=%d  fps %d" % [
 				_time, int(_game.get("stage_index")) + 1, progress, _builder.length, _player.speed,
-				_player.state_machine.get_state_name(), progress - _collapse.distance, _collapse.speed, _player.combo.run_total])
+				_player.state_machine.get_state_name(), progress - _collapse.distance, _collapse.speed, _player.combo.run_total,
+				Engine.get_frames_per_second()])
 
 
-## Follows the stage centerline, or a rail's line when one is coming up.
+## Follows one ride line of the chunk you're in (a different one per chunk),
+## else the stage centerline / a rail's line when one is coming up.
 func _steer(progress: float) -> void:
+	var index: int = _builder.chunk_index_at(progress)
+	var chunk: Chunk = _builder.chunks[index]
+	if is_instance_valid(chunk):
+		var lines: Array[RideLine] = chunk.get_ride_lines()
+		if lines.size() > 0:
+			var line: RideLine = lines[(index + int(_game.get("stage_index"))) % lines.size()]
+			LineFollower.steer(_player, line, LineFollower.look_ahead(_player.speed))
+			return
 	var ahead: Transform3D = _builder.transform_at_distance(progress + LOOK_AHEAD)
 	var target: Vector3 = ahead.origin + ahead.basis.x * _rail_aim(progress)
 	var to_target: Vector3 = target - _player.global_position
@@ -233,31 +267,56 @@ func _process(_delta: float) -> void:
 	if _shot_dir.is_empty() or _shooting:
 		return
 	if (_menus.get_node(^"StageSummary") as Control).visible and _menu_timer > 1.0:
-		_shot("v0.7_stage_summary.png", null)
+		_shot("v0.8_stage_summary.png", null)
 	elif (_menus.get_node(^"UpgradePicker") as Control).visible and _menu_timer > 1.0:
-		_shot("v0.7_upgrade_picker.png", null)
+		_shot("v0.8_upgrade_picker.png", null)
 	elif (_menus.get_node(^"RunOver") as Control).visible and _menu_timer > 1.0:
-		_shot("v0.7_run_over.png", null)
+		_shot("v0.8_run_over.png", null)
 	if not bool(_game.get("in_stage")) or _builder.chunks.size() < 3:
 		return
 	var progress: float = _game.get("player_progress")
+	if _sprint.active and _sprint.meter > 0.55:
+		_shot("v0.8_sprint_start.png", null)
+	_landscape_shots(progress)
 	# The join between the 2nd and 3rd chunk, from above, as you ride up to it.
 	var join: float = _builder.chunk_start_distance[2]
-	if progress > join - 60.0 and progress < join - 40.0 and not _shots_taken.has("v0.7_chunk_join.png"):
+	if progress > join - 60.0 and progress < join - 40.0 and not _shots_taken.has("v0.8_chunk_join.png"):
 		var at: Transform3D = _builder.transform_at_distance(join)
 		var eye: Vector3 = at.origin + Vector3.UP * 45.0 + at.basis.x * 40.0 + at.basis.z * 35.0
-		_shot("v0.7_chunk_join.png", _make_camera(eye, at.origin - at.basis.z * 25.0))
+		_shot("v0.8_chunk_join.png", _make_camera(eye, at.origin - at.basis.z * 25.0))
 	# Looking back up the track at you and the collapse behind you.
 	var gap: float = progress - _collapse.distance
-	if _stage_time > 5.0 and gap < 45.0 and gap > 15.0 and not _shots_taken.has("v0.7_collapse_chasing.png"):
+	if _stage_time > 5.0 and gap < 45.0 and gap > 15.0 and not _shots_taken.has("v0.8_collapse_chasing.png"):
 		var me: Transform3D = _builder.transform_at_distance(progress)
 		var eye2: Vector3 = _player.global_position - me.basis.z * 18.0 + Vector3.UP * 7.0 + me.basis.x * 6.0
 		var look: Vector3 = _builder.transform_at_distance(progress - 20.0).origin + Vector3.UP * 4.0
-		_shot("v0.7_collapse_chasing.png", _make_camera(eye2, look))
+		_shot("v0.8_collapse_chasing.png", _make_camera(eye2, look))
 	if _player.catchable_rail != null and _player.state_machine.get_state_name() != &"Grind":
-		_shot("v0.7_grind_prompt.png", null)
+		_shot("v0.8_grind_prompt.png", null)
 	if _player.tricks.is_mid_trick() and _player.tricks.get_progress() > 0.45:
-		_shot("v0.7_trick_air.png", null)
+		_shot("v0.8_trick_air.png", null)
+
+
+## v0.8 stills: an aerial of the 2nd chunk's split lines, and the rider's
+## view (plus an aerial) in the canyon S-turn and the slalom forest.
+func _landscape_shots(progress: float) -> void:
+	var start2: float = _builder.chunk_start_distance[1]
+	if progress > start2 - 40.0 and progress < start2 - 20.0:
+		var at: Transform3D = _builder.transform_at_distance(start2 + 150.0)
+		var eye: Vector3 = _builder.transform_at_distance(start2 - 10.0).origin + Vector3.UP * 70.0 + Vector3(40.0, 0.0, 0.0)
+		_shot("v0.8_overview_lines.png", _make_camera(eye, at.origin))
+	var index: int = _builder.chunk_index_at(progress)
+	var file: String = _builder.chunk_paths[index].get_file().get_basename()
+	var into: float = progress - _builder.chunk_start_distance[index]
+	for kind: String in ["canyon", "slalom"]:
+		if not file.ends_with(kind):
+			continue
+		if into > 150.0 and into < 170.0:
+			_shot("v0.8_%s_ride.png" % kind, null)
+		if into > 40.0 and into < 60.0:
+			var mid: Transform3D = _builder.transform_at_distance(_builder.chunk_start_distance[index] + 190.0)
+			var eye2: Vector3 = _builder.transform_at_distance(_builder.chunk_start_distance[index] + 30.0).origin + Vector3.UP * 75.0 + Vector3(-50.0, 0.0, 0.0)
+			_shot("v0.8_%s_aerial.png" % kind, _make_camera(eye2, mid.origin))
 
 
 func _make_camera(eye: Vector3, target: Vector3) -> Camera3D:
@@ -278,8 +337,10 @@ func _shot(file_name: String, camera: Camera3D) -> void:
 	_shots_taken[file_name] = true
 	_shooting = true
 	var previous: Camera3D = get_viewport().get_camera_3d()
+	var speed_lines: CanvasLayer = _player.get_node(^"SpeedLines") as CanvasLayer
 	if camera != null:
 		camera.current = true
+		speed_lines.visible = false
 	await RenderingServer.frame_post_draw
 	await RenderingServer.frame_post_draw
 	var image: Image = get_viewport().get_texture().get_image()
@@ -287,6 +348,7 @@ func _shot(file_name: String, camera: Camera3D) -> void:
 	print("shot %s" % file_name)
 	if camera != null:
 		camera.queue_free()
+		speed_lines.visible = true
 		if previous != null:
 			previous.current = true
 	_shooting = false

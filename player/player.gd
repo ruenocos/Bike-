@@ -107,9 +107,22 @@ var _highlighted_rail: Rail
 ## The rail you could catch right now (in snap reach, not grinding), or null.
 ## The HUD shows a grind prompt while it's set.
 var catchable_rail: Rail
+## TightZones you're inside (they count themselves in and out). The camera
+## tucks in while > 0.
+var tight_zones: int = 0
+## Tricks completed since leaving the ground; landing them adds speed.
+var air_tricks: int = 0
+## Set by ground_move / check_air_crash when this tick hit an obstacle hard.
+var crashed: bool = false
+## Steer after steer_response_time smoothing and the steer_curve.
+var _steer_smoothed: float = 0.0
+## After a crash, obstacles only glance you off for this long (s), so staying
+## in contact with the tree doesn't crash again every tick.
+var _crash_cooldown: float = 0.0
 
 
 func _ready() -> void:
+	add_to_group(&"player")
 	# Rotate the Player node in the editor to choose the start direction.
 	heading = rotation.y
 	rotation = Vector3.ZERO
@@ -132,6 +145,7 @@ func _physics_process(delta: float) -> void:
 	_update_hop_input(delta)
 	_update_grind_input(delta)
 	bail_immunity_timer = maxf(bail_immunity_timer - delta, 0.0)
+	_crash_cooldown = maxf(_crash_cooldown - delta, 0.0)
 	_lip_timer = maxf(_lip_timer - delta, 0.0)
 	tricks.poll_gesture(delta)
 	state_machine.physics_update(delta)
@@ -147,6 +161,17 @@ func _physics_process(delta: float) -> void:
 
 func get_steer() -> float:
 	return Input.get_axis(&"steer_left", &"steer_right")
+
+
+## The stick through steer_curve, eased by steer_response_time. Ground steering uses this.
+func get_shaped_steer(delta: float) -> float:
+	var raw: float = get_steer()
+	var shaped: float = signf(raw) * pow(absf(raw), tuning.steer_curve)
+	if tuning.steer_response_time <= 0.0 or delta <= 0.0:
+		_steer_smoothed = shaped
+	else:
+		_steer_smoothed = lerpf(_steer_smoothed, shaped, 1.0 - exp(-delta / tuning.steer_response_time))
+	return _steer_smoothed
 
 
 ## +1 = leaning forward (stick up), -1 = leaning back (stick down).
@@ -293,6 +318,7 @@ func _update_rail_highlight() -> void:
 
 
 func _on_trick_completed(trick: TrickData) -> void:
+	air_tricks += 1
 	var score: int = roundi(trick.score * tuning.trick_score_scale)
 	combo.add_action(score)
 	Events.trick_completed.emit(trick.display_name, score)
@@ -370,7 +396,7 @@ func ground_move(delta: float, input_enabled: bool) -> void:
 	update_ground_normal(delta)
 	up_direction = ground_normal
 
-	var steer: float = get_steer() if input_enabled else 0.0
+	var steer: float = get_shaped_steer(delta) if input_enabled else 0.0
 	var speed_ratio: float = clampf(speed / t.max_speed, 0.0, 1.0)
 	var steer_rate: float = deg_to_rad(lerpf(t.steer_rate_low, t.steer_rate_high, speed_ratio))
 	# Keep the direction on the surface, then steer around its normal.
@@ -393,10 +419,15 @@ func ground_move(delta: float, input_enabled: bool) -> void:
 			accel += t.pedal_accel * Input.get_action_strength(&"pedal")
 		accel -= t.brake_decel * Input.get_action_strength(&"brake")
 	accel -= t.rolling_drag * speed + t.air_drag * speed * speed
+	# Hard carving at speed scrubs a little speed.
+	accel -= t.carve_drag * absf(steer) * smoothstep(t.carve_drag_from, 1.0, speed_ratio)
 	speed = clampf(speed + accel * delta, 0.0, t.max_speed)
 
 	velocity = ground_dir * speed - ground_normal * t.ground_stick_velocity
+	var approach: Vector3 = ground_dir * speed
 	move_and_slide()
+	var hit: Hit = _check_obstacle_hit(approach)
+	crashed = hit == Hit.CRASH
 
 	if is_on_wall():
 		var wall_normal: Vector3 = get_wall_normal()
@@ -407,7 +438,7 @@ func ground_move(delta: float, input_enabled: bool) -> void:
 			ground_normal = wall_normal
 			up_direction = wall_normal
 			ground_dir = tangent_dir(ground_dir, wall_normal)
-		elif delta > 0.0:
+		elif delta > 0.0 and hit == Hit.NONE:
 			# Hitting a wall eats speed. (Skipped during hit-stop: with delta 0
 			# the real velocity is a division by zero.)
 			speed = minf(speed, get_real_velocity().length())
@@ -447,6 +478,60 @@ func _check_convex_release() -> void:
 		# not the direction already tipped over it.
 		ground_dir = tangent_dir(ground_dir, _convex_ref_normal)
 		velocity = ground_dir * speed
+
+
+enum Hit { NONE, GLANCE, CRASH }
+
+
+## What this tick's move did to an obstacle (group "obstacles"). More than
+## crash_min_impact of speed into it is a CRASH: the speed drops by
+## crash_penalty, you're deflected off it and the state goes to Bail. Softer
+## hits (and any hit in the short cooldown after a crash) GLANCE off: same
+## deflection, speed kept.
+func _check_obstacle_hit(approach: Vector3) -> Hit:
+	for i: int in get_slide_collision_count():
+		var collision: KinematicCollision3D = get_slide_collision(i)
+		var collider: Node = collision.get_collider() as Node
+		if collider == null or not collider.is_in_group(&"obstacles"):
+			continue
+		var normal: Vector3 = collision.get_normal()
+		var impact: float = -approach.dot(normal)
+		# Slide along it, pushed a little away (head-on hits bounce off sideways).
+		var away: Vector3 = Vector3(normal.x, 0.0, normal.z).normalized()
+		var slide: Vector3 = approach - normal * approach.dot(normal) + away * approach.length() * 0.3
+		if impact <= 0.5:
+			continue
+		var result: Hit = Hit.GLANCE
+		var keep: float = approach.length()
+		if impact > tuning.crash_min_impact and _crash_cooldown <= 0.0:
+			result = Hit.CRASH
+			keep *= 1.0 - tuning.crash_penalty
+			last_bail_reason = "hit %s at %.0f m/s" % [_obstacle_name(collider), impact]
+			_crash_cooldown = 0.8
+		if slide.length_squared() > 0.0001:
+			ground_dir = tangent_dir(slide, ground_normal) if is_on_floor() else slide.normalized()
+		speed = keep
+		return result
+	return Hit.NONE
+
+
+## "Tree", "Rock", ... from the obstacle's scene file (or its node name).
+func _obstacle_name(collider: Node) -> String:
+	var node: Node = collider
+	if not node.scene_file_path.is_empty():
+		return node.scene_file_path.get_file().get_basename().capitalize()
+	if node.get_parent() != null and not node.get_parent().scene_file_path.is_empty():
+		return node.get_parent().scene_file_path.get_file().get_basename().capitalize()
+	return String(node.name)
+
+
+## Air version: call after the Air move with the velocity before it.
+func check_air_crash(approach: Vector3) -> bool:
+	var hit: Hit = _check_obstacle_hit(approach)
+	crashed = hit == Hit.CRASH
+	if hit != Hit.NONE:
+		velocity = ground_dir * speed
+	return crashed
 
 
 ## On the ground after this tick's ground_move? States use this, not
@@ -621,6 +706,10 @@ func place(at: Vector3, new_heading: float, new_speed: float) -> void:
 	_on_transition_body = false
 	_lip_timer = 0.0
 	_carving = false
+	crashed = false
+	_crash_cooldown = 0.0
+	air_tricks = 0
+	_steer_smoothed = 0.0
 	tricks.cancel()
 	reset_physics_interpolation()
 	camera_rig.snap()

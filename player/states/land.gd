@@ -71,6 +71,12 @@ func enter(msg: Dictionary) -> void:
 		grade = &"sketchy"
 	player.bail_immunity_timer = 0.0
 
+	# Landed tricks give a little speed back (tricks vs speed).
+	if grade != &"bail" and player.air_tricks > 0:
+		var boost: float = minf(player.air_tricks * t.trick_land_boost, t.trick_land_boost_max)
+		player.speed = minf(player.speed + boost, t.max_speed)
+	player.air_tricks = 0
+
 	player.last_landing_angle = angle
 	player.last_landing_grade = grade
 	if grade == &"bail":
@@ -102,6 +108,9 @@ func enter(msg: Dictionary) -> void:
 
 func physics_update(delta: float) -> void:
 	player.ground_move(delta, true)
+	if player.crashed:
+		machine.transition_to(&"Bail", {})
+		return
 	_timer -= delta
 	if not player.is_grounded():
 		machine.transition_to(&"Air", player.leave_ground_msg(true))

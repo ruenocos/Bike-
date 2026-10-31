@@ -17,6 +17,9 @@ func physics_update(delta: float) -> void:
 
 	player.apply_rail_magnet(delta)
 	player.ground_move(delta, true)
+	if player.crashed:
+		machine.transition_to(&"Bail", {})
+		return
 	player.try_pump(delta)
 	player.update_carve(delta)
 	player.combo.tick(delta)

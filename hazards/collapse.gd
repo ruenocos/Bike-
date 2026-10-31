@@ -13,6 +13,10 @@ extends Node3D
 ## arrays on the Collapse node: one entry per stage.
 ## The look (Wall, Debris pieces, Glow light) is plain nodes in the scene;
 ## this script only moves them.
+## v0.8: it waits on the start pad until the sprint start is judged
+## (release()), crashes and respawns push it forward (add_time_penalty), and
+## it's mostly felt rather than seen: proximity() drives camera shake and pad
+## rumble (the "Feel" group), plus the HUD meter.
 
 signal caught
 
@@ -25,15 +29,33 @@ signal caught
 @export_group("Difficulty curve")
 ## One entry per stage: stage 1 first, stages past the end use the last entry.
 ## Speed when it starts moving (m/s)...
-@export var start_speed_by_stage: Array[float] = [24.0, 30.0, 32.0, 34.0, 36.0]
+@export var start_speed_by_stage: Array[float] = [24.0, 28.0, 30.0, 32.0, 34.0, 36.0, 37.0, 38.0]
 ## ...gaining this much per second (m/s²)...
-@export var accel_by_stage: Array[float] = [0.8, 1.3, 1.4, 1.5, 1.6]
-## ...up to this (m/s). Clean riding on the 23 deg slope cruises at ~55.
-@export var max_speed_by_stage: Array[float] = [46.0, 52.0, 54.0, 56.0, 57.0]
+@export var accel_by_stage: Array[float] = [0.8, 1.1, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8]
+## ...up to this (m/s). Clean riding on the 23 deg slope cruises at ~50-55.
+@export var max_speed_by_stage: Array[float] = [44.0, 48.0, 51.0, 53.0, 55.0, 56.0, 57.0, 58.0]
 ## The leash: never more than this far behind the rider (m). Stage 1 is
 ## loose, so only real mistakes (several bails, falling off, stalling) let
 ## it catch up; later stages keep it close.
-@export var leash_by_stage: Array[float] = [240.0, 160.0, 140.0, 120.0, 100.0]
+@export var leash_by_stage: Array[float] = [260.0, 220.0, 180.0, 150.0, 130.0, 110.0, 100.0, 90.0]
+
+@export_group("Penalties")
+## A time penalty (crash, out-of-bounds respawn) moves the collapse forward
+## by seconds x its speed (at least this speed, m/s)...
+@export_range(0.0, 80.0, 1.0, "suffix:m/s") var penalty_min_speed: float = 30.0
+## ...but a penalty alone never brings it closer than this (m).
+@export_range(0.0, 100.0, 1.0, "suffix:m") var penalty_min_gap: float = 20.0
+
+@export_group("Feel")
+## It's felt from this far away (m): shake and rumble grow as it closes in.
+@export_range(10.0, 1000.0, 5.0, "suffix:m") var feel_distance: float = 200.0
+## Camera shake at point blank (m).
+@export_range(0.0, 2.0, 0.01) var shake_max: float = 0.3
+## Pad rumble at point blank (0-1, weak and strong motors).
+@export_range(0.0, 1.0, 0.05) var rumble_weak_max: float = 0.5
+@export_range(0.0, 1.0, 0.05) var rumble_strong_max: float = 0.8
+## Proximity curve: 1 = linear, >1 = mostly felt when it's really close.
+@export_range(0.5, 4.0, 0.1) var feel_curve: float = 1.6
 
 @export_group("Look")
 ## How fast the debris pieces tumble and drift.
@@ -45,6 +67,8 @@ signal caught
 var distance: float = 0.0
 var speed: float = 0.0
 var running: bool = false
+## True after reset() until release(): it sits behind the start pad.
+var waiting: bool = false
 
 @onready var debris: Node3D = $Debris
 @onready var glow: OmniLight3D = $Glow
@@ -73,6 +97,7 @@ func reset(builder: StageBuilder, spawn_distance: float, stage_index: int, speed
 	speed = 0.0
 	_time = 0.0
 	running = true
+	waiting = true
 	_place()
 	reset_physics_interpolation()
 
@@ -81,9 +106,34 @@ func stop() -> void:
 	running = false
 
 
+## Starts the chase (the sprint start was judged).
+func release() -> void:
+	waiting = false
+
+
+## A crash or respawn: the collapse gains `seconds` of its speed (never
+## closer than penalty_min_gap because of a penalty alone).
+func add_time_penalty(seconds: float, player_progress: float) -> void:
+	if not running:
+		return
+	var gain: float = seconds * maxf(speed, penalty_min_speed)
+	distance = maxf(distance, minf(distance + gain, player_progress - penalty_min_gap))
+
+
+## 0 (far or not running) .. 1 (right behind you), for shake / rumble / HUD.
+func proximity(player_progress: float) -> float:
+	if not running or waiting:
+		return 0.0
+	var gap: float = player_progress - distance
+	return pow(clampf(1.0 - gap / feel_distance, 0.0, 1.0), feel_curve)
+
+
 ## Called by the game each physics tick with the rider's stage progress.
 func advance(delta: float, player_progress: float) -> void:
 	if not running or _builder == null:
+		return
+	if waiting:
+		_place()
 		return
 	_time += delta
 	if _time > start_delay:

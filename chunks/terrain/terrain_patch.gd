@@ -6,7 +6,10 @@ extends Node3D
 ## editor: change a value or drag a shaping node and the terrain rebuilds.
 ##
 ## Space: the origin is the middle of the entry edge at height 0. Downhill is
-## -Z (the exit edge is at z = -length), X runs across (-width/2 .. width/2).
+## -Z (the exit edge is at z = -length), X runs across. The play area is
+## `width` wide (-width/2 .. width/2, edge walls included); past the wall
+## crests the ground falls away for `outside_width` more on each side. That
+## outside strip is rideable but out of bounds (the game counts it down).
 ##
 ## Height at a point, in order:
 ##   1. base slope (slope_deg, shaped along the length by slope_profile)
@@ -14,7 +17,8 @@ extends Node3D
 ##   3. + TerrainShape GULLY / RIDGE children (dig / raise along a curve)
 ##   4. blend toward TerrainShape LINE children (the ground follows the curve's
 ##      own height) and TerrainFlatten children (a flat pad for kickers, rails)
-##   5. + edge walls (soft cliffs up both sides) and invisible boundary walls
+##   5. + edge walls (soft banks up to the crests), the outside fall-away, and
+##      optional invisible boundary walls at the very edge
 ## Steps 2-4 fade out over `seam_blend` at the entry and exit, so every patch
 ## with the same width / slope / walls / cell size has exactly the same entry
 ## and exit edge: patches placed exit-to-entry meet without a step.
@@ -29,9 +33,12 @@ extends Node3D
 const BOUNDARY_SEGMENT: float = 20.0
 
 @export_tool_button("Rebuild terrain") var rebuild_button: Callable = rebuild
+## Puts every child of the "Props" node under this patch on the ground (keeps
+## x/z, sets the height). Press after reshaping the terrain.
+@export_tool_button("Snap props to ground") var snap_props_button: Callable = snap_props
 
 @export_group("Size")
-## Across, edge to edge (walls included).
+## Across the play area, crest to crest (edge walls included).
 @export_range(20.0, 400.0, 1.0, "suffix:m") var width: float = 150.0:
 	set(v):
 		width = v
@@ -108,9 +115,19 @@ const BOUNDARY_SEGMENT: float = 20.0
 	set(v):
 		wall_curve = v
 		queue_rebuild()
-## Invisible walls on both edges, this high above the ground there, so
-## nobody leaves the play area. 0 = none.
-@export_range(0.0, 200.0, 1.0, "suffix:m") var boundary_height: float = 60.0:
+## Out-of-bounds ground past each crest (m). 0 = the mesh ends at the crests.
+@export_range(0.0, 200.0, 1.0, "suffix:m") var outside_width: float = 50.0:
+	set(v):
+		outside_width = v
+		queue_rebuild()
+## How far the outside ground falls from the crest to the outer edge (m).
+@export_range(0.0, 200.0, 1.0, "suffix:m") var outside_drop: float = 30.0:
+	set(v):
+		outside_drop = v
+		queue_rebuild()
+## Invisible walls at the outer edges, this high above the ground there.
+## 0 = none (the game handles out of bounds instead).
+@export_range(0.0, 200.0, 1.0, "suffix:m") var boundary_height: float = 0.0:
 	set(v):
 		boundary_height = v
 		queue_rebuild()
@@ -175,9 +192,9 @@ func base_height(x: float, z: float) -> float:
 func surface_height(x: float, z: float) -> float:
 	if heights.is_empty():
 		return 0.0
-	var dx: float = width / float(columns - 1)
+	var dx: float = half_total_width() * 2.0 / float(columns - 1)
 	var dz: float = length / float(rows - 1)
-	var fx: float = clampf((x + width * 0.5) / dx, 0.0, float(columns - 1) - 0.0001)
+	var fx: float = clampf((x + half_total_width()) / dx, 0.0, float(columns - 1) - 0.0001)
 	var fz: float = clampf(-z / dz, 0.0, float(rows - 1) - 0.0001)
 	var c: int = int(fx)
 	var r: int = int(fz)
@@ -198,12 +215,33 @@ func exit_point() -> Vector3:
 	return Vector3(0.0, _slope_height(length), -length)
 
 
+## Half the mesh width: the play area plus the outside strip.
+func half_total_width() -> float:
+	return width * 0.5 + outside_width
+
+
+## Sets the height of every child of the "Props" node to the surface under it.
+func snap_props() -> void:
+	var props: Node = get_node_or_null(^"Props")
+	if props == null:
+		return
+	if heights.is_empty() or _rebuild_queued:
+		rebuild()
+	for child: Node in props.get_children():
+		var prop: Node3D = child as Node3D
+		if prop == null:
+			continue
+		var at: Vector3 = _to_patch(prop).origin
+		var offset: float = float(prop.get_meta(&"ground_offset", 0.0))
+		prop.position.y += surface_height(at.x, at.z) + offset - at.y
+
+
 # --- Heights ---------------------------------------------------------------
 
 func _compute_heights() -> void:
-	columns = maxi(2, int(round(width / cell_size)) + 1)
+	columns = maxi(2, int(round(half_total_width() * 2.0 / cell_size)) + 1)
 	rows = maxi(2, int(round(length / cell_size)) + 1)
-	var dx: float = width / float(columns - 1)
+	var dx: float = half_total_width() * 2.0 / float(columns - 1)
 	var dz: float = length / float(rows - 1)
 	_compute_row_base(dz)
 
@@ -220,7 +258,7 @@ func _compute_heights() -> void:
 	for r: int in rows:
 		var d: float = r * dz
 		for c: int in columns:
-			var x: float = -width * 0.5 + c * dx
+			var x: float = -half_total_width() + c * dx
 			detail[r * columns + c] = _noise.get_noise_2d(x, d) * noise_amplitude
 
 	var shapes: Array[Node3D] = []
@@ -240,7 +278,7 @@ func _compute_heights() -> void:
 		var d: float = r * dz
 		var fade: float = _seam_fade(d)
 		for c: int in columns:
-			var x: float = -width * 0.5 + c * dx
+			var x: float = -half_total_width() + c * dx
 			heights[r * columns + c] = _row_base[r] + detail[r * columns + c] * fade + _wall_height(x)
 
 
@@ -268,13 +306,16 @@ func _slope_height(d: float) -> float:
 	return lerpf(_row_base[r], _row_base[r + 1], f - r)
 
 
+## Edge profile across the valley: 0 in the middle, rising to wall_height at
+## the crests (|x| = width/2), then falling away by outside_drop.
 func _wall_height(x: float) -> float:
-	if wall_width <= 0.0:
-		return 0.0
 	var e: float = width * 0.5 - absf(x)
-	if e >= wall_width:
+	if e < 0.0:
+		var t: float = minf(-e / maxf(outside_width, 0.001), 1.0)
+		return wall_height - outside_drop * t * t
+	if wall_width <= 0.0 or e >= wall_width:
 		return 0.0
-	return wall_height * pow(1.0 - maxf(e, 0.0) / wall_width, wall_curve)
+	return wall_height * pow(1.0 - e / wall_width, wall_curve)
 
 
 func _seam_fade(d: float) -> float:
@@ -329,14 +370,14 @@ func _apply_shape(shape: TerrainShape, detail: PackedFloat32Array, dx: float, dz
 		var a2: Vector2 = Vector2(a.x, a.z)
 		var ab: Vector2 = Vector2(b.x, b.z) - a2
 		var ab_len2: float = ab.length_squared()
-		var c0: int = maxi(0, int(floor((minf(a.x, b.x) - half + width * 0.5) / dx)))
-		var c1: int = mini(columns - 1, int(ceil((maxf(a.x, b.x) + half + width * 0.5) / dx)))
+		var c0: int = maxi(0, int(floor((minf(a.x, b.x) - half + half_total_width()) / dx)))
+		var c1: int = mini(columns - 1, int(ceil((maxf(a.x, b.x) + half + half_total_width()) / dx)))
 		var r0: int = maxi(0, int(floor((-maxf(a.z, b.z) - half) / dz)))
 		var r1: int = mini(rows - 1, int(ceil((-minf(a.z, b.z) + half) / dz)))
 		for r: int in range(r0, r1 + 1):
 			var z: float = -r * dz
 			for c: int in range(c0, c1 + 1):
-				var p: Vector2 = Vector2(-width * 0.5 + c * dx, z)
+				var p: Vector2 = Vector2(-half_total_width() + c * dx, z)
 				var t: float = 0.0 if ab_len2 <= 0.0 else clampf((p - a2).dot(ab) / ab_len2, 0.0, 1.0)
 				var dist: float = p.distance_to(a2 + ab * t)
 				var idx: int = r * columns + c
@@ -371,14 +412,14 @@ func _apply_flatten(flat: TerrainFlatten, detail: PackedFloat32Array, dx: float,
 		return
 	var origin: Vector3 = xform.origin
 	var reach: float = flat.size.length() * 0.5 + flat.blend
-	var c0: int = maxi(0, int(floor((origin.x - reach + width * 0.5) / dx)))
-	var c1: int = mini(columns - 1, int(ceil((origin.x + reach + width * 0.5) / dx)))
+	var c0: int = maxi(0, int(floor((origin.x - reach + half_total_width()) / dx)))
+	var c1: int = mini(columns - 1, int(ceil((origin.x + reach + half_total_width()) / dx)))
 	var r0: int = maxi(0, int(floor((-origin.z - reach) / dz)))
 	var r1: int = mini(rows - 1, int(ceil((-origin.z + reach) / dz)))
 	for r: int in range(r0, r1 + 1):
 		var z: float = -r * dz
 		for c: int in range(c0, c1 + 1):
-			var x: float = -width * 0.5 + c * dx
+			var x: float = -half_total_width() + c * dx
 			# Height of the pad's plane at (x, z), then its footprint in pad space.
 			var plane_y: float = origin.y - (plane_n.x * (x - origin.x) + plane_n.z * (z - origin.z)) / plane_n.y
 			var local: Vector3 = inv * Vector3(x, plane_y, z)
@@ -396,7 +437,7 @@ func _apply_flatten(flat: TerrainFlatten, detail: PackedFloat32Array, dx: float,
 
 func _build_mesh() -> void:
 
-	var dx: float = width / float(columns - 1)
+	var dx: float = half_total_width() * 2.0 / float(columns - 1)
 	var dz: float = length / float(rows - 1)
 	var count: int = columns * rows
 	var verts: PackedVector3Array = PackedVector3Array()
@@ -406,7 +447,7 @@ func _build_mesh() -> void:
 	for r: int in rows:
 		for c: int in columns:
 			var idx: int = r * columns + c
-			verts[idx] = Vector3(-width * 0.5 + c * dx, heights[idx], -r * dz)
+			verts[idx] = Vector3(-half_total_width() + c * dx, heights[idx], -r * dz)
 			# Central differences (one-sided on the border).
 			var cl: int = maxi(c - 1, 0)
 			var cr: int = mini(c + 1, columns - 1)
@@ -462,7 +503,7 @@ func _build_collision() -> void:
 ## Upright boxes along one side edge, one per BOUNDARY_SEGMENT, from below the
 ## lowest edge point to boundary_height above the highest.
 func _build_boundary(side: float) -> void:
-	var x: float = side * (width * 0.5 + 0.5)
+	var x: float = side * (half_total_width() + 0.5)
 	var edge_c: int = 0 if side < 0.0 else columns - 1
 	var dz: float = length / float(rows - 1)
 	var steps: int = maxi(1, int(ceil(length / BOUNDARY_SEGMENT)))

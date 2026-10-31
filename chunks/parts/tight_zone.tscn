@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://chunks/parts/tight_zone.gd" id="1_zone"]
+
+[node name="TightZone" type="Area3D"]
+monitorable = false
+script = ExtResource("1_zone")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]

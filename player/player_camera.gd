@@ -9,6 +9,9 @@ extends Node3D
 ## Sense of speed: FOV widens, the camera drops lower and closer, and a
 ## smooth noise rumble fades in near max speed. The pitch follows the slope
 ## you ride (in the air: the ground under you), so it looks down the hill.
+## Open valley (v0.8): at speed it pulls up and back to read the lines ahead;
+## inside a TightZone (slaloms, gaps) it tucks in closer instead.
+## The collapse drives a continuous shake (set_collapse_shake) as it closes in.
 
 @onready var player: Player = get_parent() as Player
 @onready var spring_arm: SpringArm3D = $SpringArm3D
@@ -32,6 +35,12 @@ var _ground_blend: float = 0.0
 ## time makes a wobble that drifts instead of jittering frame to frame.
 var _noise: FastNoiseLite = FastNoiseLite.new()
 var _noise_time: float = 0.0
+## 0..1 blends toward the open-valley and tight framings.
+var _open_blend: float = 0.0
+var _tight_blend: float = 0.0
+## Continuous shake from the collapse (m), and its own noise clock.
+var _collapse_shake: float = 0.0
+var _collapse_time: float = 0.0
 
 
 func _ready() -> void:
@@ -102,10 +111,19 @@ func _process(delta: float) -> void:
 	_slope_pitch = lerpf(_slope_pitch, slope_target, _damp_weight(t.cam_slope_smoothing, delta))
 	spring_arm.rotation = Vector3(-deg_to_rad(t.cam_pitch_deg) - _slope_pitch * (1.0 - _transition_blend), 0.0, 0.0)
 
+	# Open valley vs tight section.
+	var tight: bool = player.tight_zones > 0
+	var open_target: float = 0.0 if tight else smoothstep(t.cam_open_from, 1.0, speed_ratio) * (1.0 - _transition_blend)
+	_open_blend = lerpf(_open_blend, open_target, _damp_weight(t.cam_open_blend_time, delta))
+	_tight_blend = lerpf(_tight_blend, 1.0 if tight else 0.0, _damp_weight(t.cam_open_blend_time, delta))
+	spring_arm.rotation.x -= deg_to_rad(t.cam_open_pitch_deg) * _open_blend
+
 	# Lower and closer at speed.
 	var fast: float = smoothstep(t.cam_fast_from, 1.0, speed_ratio)
-	spring_arm.position = Vector3(0.0, lerpf(t.cam_height, t.cam_height_fast, fast) + t.cam_transition_height * _transition_blend, 0.0)
-	spring_arm.spring_length = lerpf(t.cam_distance, t.cam_distance_fast, fast) + t.cam_transition_distance * _transition_blend
+	spring_arm.position = Vector3(0.0, lerpf(t.cam_height, t.cam_height_fast, fast) + t.cam_transition_height * _transition_blend
+			+ t.cam_open_height * _open_blend + t.cam_tight_height * _tight_blend, 0.0)
+	spring_arm.spring_length = lerpf(t.cam_distance, t.cam_distance_fast, fast) + t.cam_transition_distance * _transition_blend \
+			+ t.cam_open_distance * _open_blend + t.cam_tight_distance * _tight_blend
 
 	# FOV widens with speed. fov_smoothing is roughly the time to get there.
 	var target_fov: float = lerpf(t.fov_base, t.fov_max, pow(speed_ratio, t.fov_speed_curve))
@@ -126,6 +144,14 @@ func _process(delta: float) -> void:
 		camera.position += Vector3(nx, ny, 0.0) * t.cam_speed_shake_amount * rumble
 		var turn: float = deg_to_rad(t.cam_speed_shake_rotation_deg) * rumble
 		camera.rotation = Vector3(ny * turn, nx * turn, 0.0)
+
+	# Collapse shake: low, heavy wobble that grows as it closes in.
+	if _collapse_shake > 0.001:
+		_collapse_time += delta * 9.0
+		var cx: float = _noise.get_noise_2d(_collapse_time, 311.0)
+		var cy: float = _noise.get_noise_2d(-97.0, _collapse_time)
+		camera.position += Vector3(cx, cy, 0.0) * _collapse_shake
+		camera.rotation += Vector3(cy, 0.0, cx) * _collapse_shake * 0.04
 
 	# Shake: random offset that fades out linearly over the shake time.
 	if _shake_timer > 0.0:
@@ -156,6 +182,11 @@ func _update_slope_target(grounded: bool) -> void:
 ## Frame-rate independent smoothing. `time_constant` in seconds; smaller = snappier.
 func _damp_weight(time_constant: float, delta: float) -> float:
 	return 1.0 - exp(-delta / maxf(time_constant, 0.0001))
+
+
+## Continuous shake amount (m) while the collapse is near; 0 = none.
+func set_collapse_shake(amount: float) -> void:
+	_collapse_shake = amount
 
 
 func shake(strength: float, duration: float) -> void:

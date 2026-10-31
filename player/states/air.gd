@@ -24,6 +24,7 @@ func enter(msg: Dictionary) -> void:
 	else:
 		player.coyote_timer = 0.0
 	player.leave_surface()
+	player.air_tricks = 0
 	_lip_normal = msg.get("lip_normal", Vector3.ZERO)
 	_lip_position = msg.get("lip_position", Vector3.ZERO)
 	player.transition_normal = _lip_normal
@@ -66,6 +67,9 @@ func physics_update(delta: float) -> void:
 
 	_pre_move_velocity = player.velocity
 	player.move_and_slide()
+	if player.check_air_crash(_pre_move_velocity):
+		machine.transition_to(&"Bail", {})
+		return
 	if _lip_normal != Vector3.ZERO:
 		# Nose along the velocity, wheels toward the ramp.
 		player.update_visual(delta, steer * 0.5, _lip_normal, player.velocity)

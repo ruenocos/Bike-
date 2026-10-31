@@ -7,13 +7,15 @@ extends Node3D
 ##   - every chunk stays upright (it only turns around up to join)
 ##   - the stage is always descending after the start deck
 ##   - start first, finish last, no middle chunk twice in a row
+##   - landscape chunks (v0.8): every ride line stays inside the play area and
+##     no obstacle sits within its clearance (checked once per chunk scene)
 ## Run:  <exe> --headless --path . res://debug/stage_smoke_test.tscn
 ## Exits with code 1 on failure.
 
 const STAGES: int = 20
 const MAX_STEP: float = 0.05
 const MAX_ANGLE_DEG: float = 0.5
-const LATERAL: Array[float] = [-7.0, -4.0, 0.0, 4.0, 7.0]
+const LATERAL: Array[float] = [-55.0, -35.0, -20.0, -7.0, -4.0, 0.0, 4.0, 7.0, 20.0, 35.0, 55.0]
 
 var _failures: PackedStringArray = PackedStringArray()
 
@@ -25,6 +27,10 @@ func _ready() -> void:
 func _run() -> void:
 	var builder: StageBuilder = StageBuilder.new()
 	add_child(builder)
+	var scenes: Array[PackedScene] = [builder.start_chunk, builder.finish_chunk]
+	scenes.append_array(builder.middle_chunks)
+	for scene: PackedScene in scenes:
+		await _check_lines(scene)
 	var joins: int = 0
 	var lengths: PackedFloat32Array = PackedFloat32Array()
 	for stage_seed: int in STAGES:
@@ -114,3 +120,36 @@ func _check_surface(join: Transform3D, where: String) -> void:
 				_failures.append("%s: surface step %.3f m at along %.1f x %.0f" % [where, step, along, x])
 			if (hit["normal"] as Vector3).dot(up) < 0.99:
 				_failures.append("%s: bad normal %s at along %.1f x %.0f" % [where, hit["normal"], along, x])
+
+
+## One chunk scene on its own: its ride lines stay inside the play area and
+## keep their clearance from every obstacle (sphere query along the line, at
+## the rider's height).
+func _check_lines(scene: PackedScene) -> void:
+	var chunk: Chunk = scene.instantiate() as Chunk
+	add_child(chunk)
+	for i: int in 3:
+		await get_tree().physics_frame
+	var space: PhysicsDirectSpaceState3D = get_world_3d().direct_space_state
+	var half: float = chunk.get_play_half_width()
+	var lines: Array[RideLine] = chunk.get_ride_lines()
+	var name_of: String = scene.resource_path.get_file()
+	var blocked: int = 0
+	for line: RideLine in lines:
+		var sphere: SphereShape3D = SphereShape3D.new()
+		sphere.radius = line.clearance
+		var query: PhysicsShapeQueryParameters3D = PhysicsShapeQueryParameters3D.new()
+		query.shape = sphere
+		for p: Vector3 in line.get_global_points():
+			if absf(p.x) > half - 8.0:
+				_failures.append("%s %s: line at x %.1f, outside the play area" % [name_of, line.name, p.x])
+				break
+			query.transform = Transform3D(Basis.IDENTITY, p + Vector3.UP * (line.clearance + 0.3))
+			for hit: Dictionary in space.intersect_shape(query, 8):
+				var collider: Node = hit["collider"] as Node
+				if collider != null and collider.is_in_group(&"obstacles"):
+					blocked += 1
+					if blocked <= 5:
+						_failures.append("%s %s: %s within %.1f m of the line at (%.0f, %.0f)" % [name_of, line.name, collider.name, line.clearance, p.x, p.z])
+	print("%-20s %d lines, %d obstacles on lines" % [name_of, lines.size(), blocked])
+	chunk.free()

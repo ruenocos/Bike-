@@ -132,3 +132,129 @@ grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
 script = ExtResource("3_progress")
+
+[node name="CollapseMeter" type="ColorRect" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -352.0
+offset_top = 122.0
+offset_right = -32.0
+offset_bottom = 136.0
+grow_horizontal = 0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.35)
+
+[node name="Fill" type="ColorRect" parent="CollapseMeter"]
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_right = 0.0
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 0.35, 0.15, 0.9)
+
+[node name="PenaltyLabel" type="Label" parent="."]
+visible = false
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -200.0
+offset_top = 104.0
+offset_right = 200.0
+offset_bottom = 144.0
+grow_horizontal = 2
+theme = ExtResource("4_theme")
+theme_override_colors/font_color = Color(1, 0.45, 0.25, 1)
+theme_override_font_sizes/font_size = 30
+text = "+1.5 s"
+horizontal_alignment = 1
+
+[node name="OobLabel" type="Label" parent="."]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -400.0
+offset_top = -200.0
+offset_right = 400.0
+offset_bottom = -130.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("4_theme")
+theme_override_colors/font_color = Color(1, 0.75, 0.2, 1)
+theme_override_font_sizes/font_size = 48
+text = "OUT OF BOUNDS  3.0"
+horizontal_alignment = 1
+
+[node name="StartFlash" type="Label" parent="."]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -400.0
+offset_top = -200.0
+offset_right = 400.0
+offset_bottom = -130.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("4_theme")
+theme_override_colors/font_color = Color(0.5, 1, 0.55, 1)
+theme_override_font_sizes/font_size = 56
+text = "PERFECT START!"
+horizontal_alignment = 1
+
+[node name="StartPanel" type="Control" parent="."]
+visible = false
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -320.0
+offset_top = -330.0
+offset_right = 320.0
+offset_bottom = -200.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="Prompt" type="Label" parent="StartPanel"]
+layout_mode = 0
+offset_right = 640.0
+offset_bottom = 56.0
+theme = ExtResource("4_theme")
+theme_override_font_sizes/font_size = 40
+text = "Hold RT to pedal"
+horizontal_alignment = 1
+
+[node name="MeterBack" type="ColorRect" parent="StartPanel"]
+layout_mode = 0
+offset_top = 76.0
+offset_right = 640.0
+offset_bottom = 104.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.45)
+
+[node name="GoodZone" type="ColorRect" parent="StartPanel/MeterBack"]
+layout_mode = 0
+offset_bottom = 28.0
+mouse_filter = 2
+color = Color(0.95, 0.85, 0.3, 0.55)
+
+[node name="SweetZone" type="ColorRect" parent="StartPanel/MeterBack"]
+layout_mode = 0
+offset_bottom = 28.0
+mouse_filter = 2
+color = Color(0.4, 1, 0.5, 0.85)
+
+[node name="Needle" type="ColorRect" parent="StartPanel/MeterBack"]
+layout_mode = 0
+offset_left = -3.0
+offset_top = -8.0
+offset_right = 3.0
+offset_bottom = 36.0
+mouse_filter = 2

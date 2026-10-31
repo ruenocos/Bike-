@@ -89,6 +89,26 @@ func get_finish_gate() -> FinishGate:
 	return get_node_or_null(^"FinishGate") as FinishGate
 
 
+## Half the play area's width (crest to crest for a landscape chunk, the
+## ribbon's walls for a corridor chunk). Past it is out of bounds.
+func get_play_half_width() -> float:
+	var terrain: TerrainPatch = get_node_or_null(^"Terrain") as TerrainPatch
+	if terrain != null:
+		return terrain.width * 0.5
+	return PROFILE[0] + PROFILE[1] + 6.0
+
+
+## The chunk's ride lines (RideLine children of "Lines"), if any.
+func get_ride_lines() -> Array[RideLine]:
+	var lines: Array[RideLine] = []
+	var holder: Node = get_node_or_null(^"Lines")
+	if holder != null:
+		for child: Node in holder.get_children():
+			if child is RideLine:
+				lines.append(child as RideLine)
+	return lines
+
+
 func get_points() -> PackedVector3Array:
 	return _points
 

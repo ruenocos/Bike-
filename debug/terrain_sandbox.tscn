@@ -61,6 +61,7 @@ directional_shadow_max_distance = 200.0
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 400, 0)
 script = ExtResource("1_patch")
 length = 400.0
+boundary_height = 60.0
 
 [node name="Gully" type="Path3D" parent="PatchA"]
 curve = SubResource("Curve3D_gully")
@@ -88,6 +89,7 @@ blend = 10.0
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 230.21, -400)
 script = ExtResource("1_patch")
 noise_seed = 7
+boundary_height = 60.0
 
 [node name="CarvedLine" type="Path3D" parent="PatchB"]
 curve = SubResource("Curve3D_line")

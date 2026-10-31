@@ -7,9 +7,9 @@ extends Node3D
 ##   - a rebuild gives the same heights
 ##   - GULLY digs `depth`, RIDGE raises `depth`, Flatten makes its plane, LINE
 ##     follows its curve's height
-##   - boundary walls stop a horizontal ray at the edge
+##   - boundary walls (when on) stop a horizontal ray at the outer edge
 ##   Riding (debug/terrain_sandbox.tscn, no input):
-##   - never falls through the terrain, never leaves the play area, crosses
+##   - never falls through the terrain, never leaves the mesh (the sandbox has boundary walls on), crosses
 ##     the seam between the two patches, rides into both edge walls at 50 m/s
 ## Run:  <exe> --headless --path . --fixed-fps 60 res://debug/terrain_test.tscn
 ## Exits with code 1 on failure.
@@ -61,6 +61,7 @@ func _check_seam_and_collision() -> void:
 	var a: TerrainPatch = TerrainPatch.new()
 	a.length = 300.0
 	a.noise_seed = 3
+	a.boundary_height = 60.0
 	var gully: TerrainShape = TerrainShape.new()
 	gully.curve = Curve3D.new()
 	gully.curve.add_point(Vector3(10.0, 0.0, -150.0))
@@ -78,8 +79,8 @@ func _check_seam_and_collision() -> void:
 	await get_tree().physics_frame
 
 	var worst: float = 0.0
-	var x: float = -a.width * 0.5
-	while x <= a.width * 0.5:
+	var x: float = -a.half_total_width()
+	while x <= a.half_total_width():
 		var ha: float = a.position.y + a.surface_height(x, -a.length)
 		var hb: float = b.position.y + b.surface_height(x, 0.0)
 		worst = maxf(worst, absf(ha - hb))
@@ -114,7 +115,7 @@ func _check_seam_and_collision() -> void:
 	rng.seed = 5
 	var worst_hit: float = 0.0
 	for i: int in 400:
-		var px: float = rng.randf_range(-a.width * 0.5 + 1.0, a.width * 0.5 - 1.0)
+		var px: float = rng.randf_range(-a.half_total_width() + 1.0, a.half_total_width() - 1.0)
 		var pz: float = rng.randf_range(-a.length + 1.0, -1.0)
 		var hit: Dictionary = _ray_down(px, pz)
 		if hit.is_empty():
@@ -136,10 +137,11 @@ func _check_seam_and_collision() -> void:
 		_fail("rebuild changed the heights")
 
 	# Boundary wall: a horizontal ray along the ground hits the edge.
-	var gy: float = a.surface_height(60.0, -150.0) + 3.0
-	var q: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(Vector3(60.0, gy, -150.0), Vector3(120.0, gy + 20.0, -150.0))
+	var edge: float = a.half_total_width()
+	var gy: float = a.surface_height(edge - 5.0, -150.0) + 3.0
+	var q: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(Vector3(edge - 5.0, gy, -150.0), Vector3(edge + 20.0, gy + 5.0, -150.0))
 	var wall_hit: Dictionary = get_world_3d().direct_space_state.intersect_ray(q)
-	if wall_hit.is_empty() or (wall_hit["position"] as Vector3).x > a.width * 0.5 + 1.01:
+	if wall_hit.is_empty() or (wall_hit["position"] as Vector3).x > edge + 1.01:
 		_fail("boundary wall missing")
 	a.queue_free()
 	b.queue_free()
@@ -198,7 +200,7 @@ func _check_rides() -> void:
 	player.kill_y = -100000.0
 	player.auto_respawn = false
 	var origin: Vector3 = (sandbox.get_node(^"PatchA") as Node3D).position
-	var half_width: float = (sandbox.get_node(^"PatchA") as TerrainPatch).width * 0.5
+	var half_width: float = (sandbox.get_node(^"PatchA") as TerrainPatch).half_total_width()
 	await get_tree().physics_frame
 	await get_tree().physics_frame
 	for ride: Array in RIDES:

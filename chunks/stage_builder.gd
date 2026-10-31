@@ -18,17 +18,19 @@ extends Node3D
 
 signal finished
 
-@export var start_chunk: PackedScene = preload("res://chunks/chunk_start.tscn")
+## v0.8: the open-landscape chunks (chunks/landscape/). The v0.7 corridor
+## chunks (chunks/chunk_*.tscn) still work here; drag them in to mix.
+@export var start_chunk: PackedScene = preload("res://chunks/landscape/land_start.tscn")
 @export var middle_chunks: Array[PackedScene] = [
-	preload("res://chunks/chunk_rollers.tscn"),
-	preload("res://chunks/chunk_kickers.tscn"),
-	preload("res://chunks/chunk_big_air.tscn"),
-	preload("res://chunks/chunk_berms.tscn"),
-	preload("res://chunks/chunk_rail.tscn"),
-	preload("res://chunks/chunk_gully.tscn"),
+	preload("res://chunks/landscape/land_meadow.tscn"),
+	preload("res://chunks/landscape/land_ridge.tscn"),
+	preload("res://chunks/landscape/land_forest.tscn"),
+	preload("res://chunks/landscape/land_boulders.tscn"),
+	preload("res://chunks/landscape/land_canyon.tscn"),
+	preload("res://chunks/landscape/land_slalom.tscn"),
 ]
-@export var finish_chunk: PackedScene = preload("res://chunks/chunk_finish.tscn")
-@export_range(0, 20) var middle_count: int = 5
+@export var finish_chunk: PackedScene = preload("res://chunks/landscape/land_finish.tscn")
+@export_range(0, 20) var middle_count: int = 8
 ## Later stages lean toward harder chunks: a chunk's pick weight is
 ## 1 + tier_bias * stage_index * (difficulty - 1). 0 = every chunk equally likely.
 @export_range(0.0, 5.0, 0.05) var tier_bias: float = 0.5
@@ -201,6 +203,45 @@ func transform_at_distance(d: float) -> Transform3D:
 	var f: float = clampf((d - line_distance[i]) / span, 0.0, 1.0)
 	var basis: Basis = line_frames[i] if f < 0.5 else line_frames[i + 1]
 	return Transform3D(basis, line_points[i].lerp(line_points[i + 1], f))
+
+
+## Index of the chunk that contains stage distance `d`.
+func chunk_index_at(d: float) -> int:
+	for i: int in chunks.size():
+		if d <= chunk_end_distance[i]:
+			return i
+	return chunks.size() - 1
+
+
+## Half the play width at stage distance `d` (sideways from the centerline,
+## past it is out of bounds).
+func half_width_at(d: float) -> float:
+	var i: int = chunk_index_at(d)
+	if i < 0 or not is_instance_valid(chunks[i]):
+		return INF
+	return chunks[i].get_play_half_width()
+
+
+## The ride line nearest to `pos` in the chunks around `d`, or null.
+func nearest_ride_line(pos: Vector3, d: float) -> RideLine:
+	var best: RideLine = null
+	var best_dist: float = INF
+	var i: int = chunk_index_at(d)
+	for j: int in range(maxi(i - 1, 0), mini(i + 2, chunks.size())):
+		if _gone[j] or not is_instance_valid(chunks[j]):
+			continue
+		for line: RideLine in chunks[j].get_ride_lines():
+			var pts: PackedVector3Array = line.get_global_points()
+			var p: Vector3 = pts[line.nearest_index(pos)]
+			var dist: float = Vector2(p.x - pos.x, p.z - pos.z).length()
+			# Prefer the chunk you're in: lines in the next/previous one only
+			# win when clearly closer.
+			if j != i:
+				dist += 30.0
+			if dist < best_dist:
+				best_dist = dist
+				best = line
+	return best
 
 
 ## Frees chunks far behind `player_progress`.

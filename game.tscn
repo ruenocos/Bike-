@@ -1,4 +1,4 @@
-[gd_scene load_steps=26 format=3]
+[gd_scene load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://game.gd" id="1_game"]
 [ext_resource type="Script" path="res://chunks/stage_builder.gd" id="2_builder"]
@@ -20,6 +20,7 @@
 [ext_resource type="Resource" path="res://scoring/upgrades/slick_pegs.tres" id="18_u6"]
 [ext_resource type="Resource" path="res://scoring/upgrades/slow_collapse.tres" id="19_u7"]
 [ext_resource type="Resource" path="res://scoring/upgrades/showboat.tres" id="20_u8"]
+[ext_resource type="Script" path="res://player/start_sprint.gd" id="21_sprint"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.32, 0.5, 0.78, 1)
@@ -38,7 +39,7 @@ tonemap_mode = 4
 glow_enabled = true
 fog_enabled = true
 fog_light_color = Color(0.78, 0.8, 0.84, 1)
-fog_density = 0.003
+fog_density = 0.0015
 
 [sub_resource type="ShaderMaterial" id="Mat_far"]
 render_priority = 0
@@ -75,6 +76,9 @@ script = ExtResource("2_builder")
 
 [node name="FarGround" type="MeshInstance3D" parent="."]
 mesh = SubResource("PlaneMesh_far")
+
+[node name="StartSprint" type="Node" parent="."]
+script = ExtResource("21_sprint")
 
 [node name="StageStats" type="Node" parent="."]
 script = ExtResource("5_stats")
