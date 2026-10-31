@@ -36,6 +36,11 @@ const PROFILE: Array[float] = [8.0, 5.0, 40.0, 0.6, 4.0]
 
 @export_tool_button("Rebuild TrackLine from keys") var rebuild_button: Callable = rebuild_line
 
+## How hard this chunk is (1 = easy). Later stages pick higher tiers more
+## often (StageBuilder.tier_bias). Stages get harder through harder chunks,
+## never through more length.
+@export_range(1, 5) var difficulty: int = 1
+
 ## Length of the centerline the keys describe.
 @export_range(20.0, 1000.0, 1.0, "suffix:m") var length: float = 200.0
 

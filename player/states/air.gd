@@ -62,6 +62,7 @@ func physics_update(delta: float) -> void:
 
 	if _lip_normal != Vector3.ZERO:
 		_vert_assist(delta)
+	player.apply_rail_magnet(delta)
 
 	_pre_move_velocity = player.velocity
 	player.move_and_slide()

@@ -104,6 +104,9 @@ var _spawn_heading: float = 0.0
 var _ground_snap_length: float = 0.0
 ## Rail lit up because it is within snap reach (see _update_rail_highlight).
 var _highlighted_rail: Rail
+## The rail you could catch right now (in snap reach, not grinding), or null.
+## The HUD shows a grind prompt while it's set.
+var catchable_rail: Rail
 
 
 func _ready() -> void:
@@ -200,15 +203,62 @@ func _update_grind_input(delta: float) -> void:
 		grind_buffer_timer = tuning.grind_buffer
 
 
+## True while grind is pressed (buffered) or held.
+func wants_grind() -> bool:
+	return grind_buffer_timer > 0.0 or Input.is_action_pressed(&"grind")
+
+
+## Snap reach right now: rail_snap_radius at low speed up to
+## rail_snap_radius_fast at rail_snap_fast_speed.
+func get_rail_snap_radius() -> float:
+	var t: PlayerTuning = tuning
+	var ratio: float = clampf(velocity.length() / maxf(t.rail_snap_fast_speed, 0.001), 0.0, 1.0)
+	return lerpf(t.rail_snap_radius, t.rail_snap_radius_fast, ratio)
+
+
 ## Rail to snap onto right now, or null. Ride and Air call this each tick
-## and switch to Grind when it returns a rail.
+## and switch to Grind when it returns a rail. Holding grind counts too, so
+## you can hold it on the way in and catch the rail the moment it's in reach.
 func find_grind_rail() -> RailSnap:
-	if grind_buffer_timer <= 0.0 or grind_cooldown_timer > 0.0 or tricks.is_mid_trick():
+	if not wants_grind() or grind_cooldown_timer > 0.0 or tricks.is_mid_trick():
 		return null
-	var snap: RailSnap = RailSnap.find_closest(get_tree(), global_position, tuning.rail_snap_radius)
+	var snap: RailSnap = RailSnap.find_closest(get_tree(), global_position, get_rail_snap_radius())
 	if snap != null:
 		grind_buffer_timer = 0.0
 	return snap
+
+
+## The rail magnet: while grind is held within rail_magnet_radius of a rail,
+## steer sideways toward it (never along it, so speed is untouched). Ride and
+## Air call this before moving.
+func apply_rail_magnet(delta: float) -> void:
+	var t: PlayerTuning = tuning
+	if not wants_grind() or grind_cooldown_timer > 0.0 or tricks.is_mid_trick():
+		return
+	var snap: RailSnap = RailSnap.find_closest(get_tree(), global_position, t.rail_magnet_radius)
+	if snap == null:
+		return
+	var moving: Vector3 = ground_dir * speed if is_on_floor() else velocity
+	var along: Vector3 = Vector3(moving.x, 0.0, moving.z)
+	if along.length() < 1.0:
+		return
+	along = along.normalized()
+	var to_rail: Vector3 = RailSnap.point_at(snap.rail, snap.offset) - global_position
+	var side: Vector3 = to_rail - along * to_rail.dot(along)
+	side.y = 0.0
+	var gap: float = side.length()
+	if gap < 0.05:
+		return
+	side /= gap
+	var want: float = minf(gap / maxf(t.rail_magnet_time, 0.001), t.rail_magnet_speed)
+	var weight: float = 1.0 - exp(-delta / 0.08)
+	if is_on_floor():
+		var current: float = (ground_dir * speed).dot(side)
+		var pulled: Vector3 = ground_dir * speed + side * (want - current) * weight
+		ground_dir = tangent_dir(pulled, ground_normal)
+	else:
+		var current_air: float = velocity.dot(side)
+		velocity += side * (want - current_air) * weight
 
 
 ## Steep transition surface hit by an Air move_and_slide(), as its normal, or
@@ -230,8 +280,9 @@ func find_transition_contact(approach: Vector3) -> Vector3:
 
 ## Highlights the rail you could snap onto right now (or are grinding).
 func _update_rail_highlight() -> void:
-	var snap: RailSnap = RailSnap.find_closest(get_tree(), global_position, tuning.rail_snap_radius)
+	var snap: RailSnap = RailSnap.find_closest(get_tree(), global_position, get_rail_snap_radius())
 	var rail: Rail = snap.rail as Rail if snap != null else null
+	catchable_rail = rail if state_machine.get_state_name() != &"Grind" else null
 	if rail == _highlighted_rail:
 		return
 	if _highlighted_rail != null:

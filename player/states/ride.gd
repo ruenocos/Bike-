@@ -15,6 +15,7 @@ func physics_update(delta: float) -> void:
 		machine.transition_to(&"Grind", {"snap": snap})
 		return
 
+	player.apply_rail_magnet(delta)
 	player.ground_move(delta, true)
 	player.try_pump(delta)
 	player.update_carve(delta)

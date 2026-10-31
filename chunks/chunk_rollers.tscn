@@ -22,26 +22,26 @@ transform_format = 1
 instance_count = 18
 mesh = SubResource("BoxMesh_osk6l")
 
-[node name="ChunkRollers" type="Node3D" unique_id=1799011372]
+[node name="ChunkRollers" type="Node3D" unique_id=540043669]
 script = ExtResource("1_0nwh3")
 length = 220.0
 pitch_keys = PackedVector2Array(0, 23)
 heading_keys = PackedVector2Array(0, 0)
 bumps = PackedVector3Array(30, 24, 1.5, 54, 24, 1.5, 78, 24, 1.5, 102, 24, 1.5, 126, 24, 1.5)
 
-[node name="TrackLine" type="Path3D" parent="." unique_id=1959563490]
+[node name="TrackLine" type="Path3D" parent="." unique_id=815799232]
 curve = SubResource("Curve3D_m4eem")
 
-[node name="Entry" type="Marker3D" parent="." unique_id=1268324913]
+[node name="Entry" type="Marker3D" parent="." unique_id=1886085333]
 transform = Transform3D(1, 0, 0, 0, 0.92050487, 0.39073113, 0, -0.39073113, 0.92050487, 0, 0, 0)
 
-[node name="Exit" type="Marker3D" parent="." unique_id=215955246]
+[node name="Exit" type="Marker3D" parent="." unique_id=1662271362]
 transform = Transform3D(1, 0, 0, 0, 0.92050487, 0.39073113, 0, -0.39073113, 0.92050487, 0, -85.96097, -202.51064)
 
-[node name="Track" type="CSGCombiner3D" parent="." unique_id=570713440]
+[node name="Track" type="CSGCombiner3D" parent="." unique_id=810700098]
 use_collision = true
 
-[node name="Ribbon" type="CSGPolygon3D" parent="Track" unique_id=1757794686]
+[node name="Ribbon" type="CSGPolygon3D" parent="Track" unique_id=1037244887]
 polygon = PackedVector2Array(-11.813938, -4, 11.813938, -4, 11.813938, 1.1697778, 11.213938, 1.1697778, 10.985793, 0.98938406, 10.747545, 0.82256097, 10.5, 0.669873, 10.243996, 0.5318368, 9.980399, 0.40891945, 9.710101, 0.3015369, 9.434016, 0.21005245, 9.153079, 0.13477565, 8.868241, 0.07596123, 8.580464, 0.033808213, 8.290724, 0.0084592085, 8, 0, -8, 0, -8.290724, 0.0084592085, -8.580464, 0.033808213, -8.868241, 0.07596123, -9.153079, 0.13477565, -9.434016, 0.21005245, -9.710101, 0.3015369, -9.980399, 0.40891945, -10.243996, 0.5318368, -10.5, 0.669873, -10.747545, 0.82256097, -10.985793, 0.98938406, -11.213938, 1.1697778, -11.813938, 1.1697778)
 mode = 2
 path_node = NodePath("../../TrackLine")
@@ -56,5 +56,5 @@ path_u_distance = 1.0
 path_joined = false
 material = ExtResource("2_2hlfm")
 
-[node name="Pillars" type="MultiMeshInstance3D" parent="." unique_id=522785497]
+[node name="Pillars" type="MultiMeshInstance3D" parent="." unique_id=1046594764]
 multimesh = SubResource("MultiMesh_74dcn")

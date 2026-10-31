@@ -6,11 +6,11 @@ extends Node3D
 ## the rider's progress, `caught` fires (the game ends the run). Track it has
 ## passed crumbles away (StageBuilder.crumble_before).
 ##
-## Speed = start_speed + accel * time, capped at max_speed, plus a bit more of
-## each per stage, all times the run's collapse_speed_scale (an upgrade
-## lowers it). It also never falls more than max_gap behind you (the leash),
-## so clean fast riding keeps it at bay but every bail or slow line brings it
-## closer. Every number is an export: tune it on the Collapse node.
+## Speed = start speed + accel * time, capped at max speed, times the run's
+## collapse_speed_scale (an upgrade lowers it). It also never falls more than
+## the leash behind you, so clean fast riding keeps it at bay but every bail
+## or slow line brings it closer. All four come from the "Difficulty curve"
+## arrays on the Collapse node: one entry per stage.
 ## The look (Wall, Debris pieces, Glow light) is plain nodes in the scene;
 ## this script only moves them.
 
@@ -22,27 +22,18 @@ signal caught
 ## Starts this far behind the rider's spawn point.
 @export_range(0.0, 300.0, 1.0, "suffix:m") var start_gap: float = 40.0
 
-@export_group("Speed")
-## Speed when it starts moving...
-@export_range(0.0, 80.0, 0.5, "suffix:m/s") var start_speed: float = 28.0
-## ...gaining this much per second...
-@export_range(0.0, 10.0, 0.05, "suffix:m/s²") var accel: float = 1.2
-## ...up to this.
-@export_range(0.0, 100.0, 0.5, "suffix:m/s") var max_speed: float = 50.0
-
-@export_group("Leash")
-## Never more than this far behind the rider...
-@export_range(20.0, 1000.0, 5.0, "suffix:m") var max_gap: float = 180.0
-## ...this much shorter each stage after the first...
-@export_range(-100.0, 0.0, 1.0, "suffix:m") var per_stage_gap: float = -20.0
-## ...but never shorter than this.
-@export_range(10.0, 500.0, 5.0, "suffix:m") var min_max_gap: float = 90.0
-
-@export_group("Per stage")
-## Each stage after the first adds these to start_speed, accel and max_speed.
-@export_range(0.0, 20.0, 0.5, "suffix:m/s") var per_stage_speed: float = 2.0
-@export_range(0.0, 2.0, 0.01, "suffix:m/s²") var per_stage_accel: float = 0.1
-@export_range(0.0, 20.0, 0.5, "suffix:m/s") var per_stage_max_speed: float = 2.0
+@export_group("Difficulty curve")
+## One entry per stage: stage 1 first, stages past the end use the last entry.
+## Speed when it starts moving (m/s)...
+@export var start_speed_by_stage: Array[float] = [24.0, 30.0, 32.0, 34.0, 36.0]
+## ...gaining this much per second (m/s²)...
+@export var accel_by_stage: Array[float] = [0.8, 1.3, 1.4, 1.5, 1.6]
+## ...up to this (m/s). Clean riding on the 23 deg slope cruises at ~55.
+@export var max_speed_by_stage: Array[float] = [46.0, 52.0, 54.0, 56.0, 57.0]
+## The leash: never more than this far behind the rider (m). Stage 1 is
+## loose, so only real mistakes (several bails, falling off, stalling) let
+## it catch up; later stages keep it close.
+@export var leash_by_stage: Array[float] = [240.0, 160.0, 140.0, 120.0, 100.0]
 
 @export_group("Look")
 ## How fast the debris pieces tumble and drift.
@@ -96,18 +87,23 @@ func advance(delta: float, player_progress: float) -> void:
 		return
 	_time += delta
 	if _time > start_delay:
-		var extra: float = maxf(_stage_index, 0)
-		var top: float = max_speed + per_stage_max_speed * extra
-		speed = minf(start_speed + per_stage_speed * extra + (accel + per_stage_accel * extra) * (_time - start_delay), top)
+		var start: float = _for_stage(start_speed_by_stage)
+		speed = minf(start + _for_stage(accel_by_stage) * (_time - start_delay), _for_stage(max_speed_by_stage))
 		speed *= _speed_scale
 		distance += speed * delta
-		var leash: float = maxf(max_gap + per_stage_gap * extra, min_max_gap)
-		distance = maxf(distance, player_progress - leash)
+		distance = maxf(distance, player_progress - _for_stage(leash_by_stage))
 	_place()
 	_builder.crumble_before(distance - 20.0)
 	if distance >= player_progress:
 		running = false
 		caught.emit()
+
+
+## This stage's entry of a difficulty-curve array (the last one past its end).
+func _for_stage(values: Array[float]) -> float:
+	if values.is_empty():
+		return 0.0
+	return values[clampi(_stage_index, 0, values.size() - 1)]
 
 
 func _place() -> void:

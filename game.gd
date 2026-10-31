@@ -1,7 +1,7 @@
 extends Node3D
 ## The run: stage -> summary -> pick 1 of 3 upgrades -> next stage, until the
-## collapse catches you. Each stage is a new seed with one more chunk and a
-## faster collapse. Upgrades change the run's own copy of the tuning, so
+## collapse catches you. Each stage is a new seed, leans toward harder chunks
+## and has a faster collapse (same length every stage). Upgrades change the run's own copy of the tuning, so
 ## player_tuning.tres is never touched. (debug/test_track.tscn stays the
 ## sandbox for feel work.)
 ##
@@ -10,10 +10,10 @@ extends Node3D
 
 @export var base_tuning: PlayerTuning = preload("res://player/player_tuning.tres")
 @export var upgrade_pool: Array[UpgradeData] = []
-## Middle chunks in stage 1, plus this many per later stage, up to the max.
-@export_range(1, 20) var first_stage_chunks: int = 4
-@export_range(0, 5) var chunks_per_stage: int = 1
-@export_range(1, 20) var max_chunks: int = 8
+## Middle chunks per stage. The same every stage: later stages get harder
+## through harder chunks (StageBuilder.tier_bias) and a faster collapse,
+## never through more length.
+@export_range(1, 20) var middle_chunks: int = 4
 ## Falling this far below the track respawns you on it.
 @export_range(5.0, 200.0, 1.0, "suffix:m") var fall_margin: float = 40.0
 ## Respawning after a fall puts you this far back up the track...
@@ -77,9 +77,8 @@ func start_run(new_seed: int = -1) -> void:
 
 
 func start_stage() -> void:
-	var middle: int = mini(first_stage_chunks + chunks_per_stage * stage_index, max_chunks)
 	_freeze_player()
-	builder.build(_rng.randi(), middle)
+	builder.build(_rng.randi(), middle_chunks, stage_index)
 	# CSG builds its collision a frame or two after entering the tree.
 	for i: int in 3:
 		await get_tree().physics_frame
@@ -107,7 +106,8 @@ func _physics_process(delta: float) -> void:
 
 func _process(_delta: float) -> void:
 	hud.update_run(stage_index + 1, stats.time, player.combo.run_total, player_progress - collapse.distance,
-			player_progress, collapse.distance, builder.length, builder.finish_distance)
+			player_progress, collapse.distance, builder.length, builder.finish_distance,
+			player.catchable_rail != null)
 
 
 func _on_finished() -> void:

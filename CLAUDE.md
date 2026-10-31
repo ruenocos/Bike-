@@ -43,6 +43,7 @@ Prefer editor-visible setup: scenes, nodes, .tres, @export, @tool previews; code
 
 ## Design decisions
 - No manual balance (v0.6, Wons: "prob just remove the balance"): the left stick Y does nothing in the air. The bike's nose follows the flight path and settles onto the predicted landing surface in the last `air_land_blend_time`. Landing grade (angle you meet the ground at) stays. Difficulty comes from line choice, hop timing and trick greed. Left-stick-forward pump on the ground stays (timing, not balance).
+- Difficulty through mechanics, not length (v0.7, Wons: "I don't want to make levels more difficult through more length, but through harder mechanics, sharp turns, more obstacles, evading things etc."). Every stage has the same chunk count (Game `middle_chunks`); later stages pick higher-`difficulty` chunks more often (StageBuilder `tier_bias`) and get a faster collapse.
 
 ## Starting feel values (in PlayerTuning, tune live)
 - Landing grade by angle between velocity and ground plane: perfect ≤12° (+12% speed, juice), good ≤30° (0%), sketchy ≤55° (-15%, camera shake, combo kept), bail >55° (-50%, Bail). Steep touchdowns slower than 14 m/s into the ground (≈4 m drop) are sketchy, never bail.
@@ -57,7 +58,7 @@ Prefer editor-visible setup: scenes, nodes, .tres, @export, @tool previews; code
 ## Input map (to set up)
 steer_left/right: left stick X · lean_forward: left stick up = pump (ground only; lean_back unused since v0.6) · pedal: RT · brake: LT · hop: South (hold to charge) · grind: West · trick_left/right/up/down: right stick · pause: Start
 
-## Status (2026-10-31, v0.6)
+## Status (2026-10-31, v0.7)
 Done (v0.1): project settings, input map (+ debug_reset on Back/R), test track, Player with Ride/Air/Land/Bail, landing grades, debug overlay, physics interpolation. Feel gate approved by Wons.
 Done (v0.2, phase 2 batch A):
 - tricks/: TrickData resource + 4 starter tricks in tricks/data (up Frontloop, down Pocket, left/right Whirl). TrickRunner (child of Player) reads right-stick flicks (neutral -> >0.7 within 0.15 s), plays them on the Visual around the hips, chains a new flick in the last 30%.
@@ -115,9 +116,25 @@ Done (v0.6 "core loop", after Wons's v0.5 playtest "the first half is really gre
 - Stage smoke test: `<exe> --headless --path . res://debug/stage_smoke_test.tscn` builds 20 stages and checks every join (markers within 5 cm / 0.5°, raycast surface step < 5 cm across the width, upward normals), chunks upright, always descending after the start deck, start/finish order, no repeats. Exit 1 on failure.
 - Record: `<exe> --path . --write-movie <abs>/v0.6.avi --fixed-fps 30 --quit-after 1760 res://game.tscn -- --autopilot --autopilot-lose --seed=7` (stage 1, upgrade, stage 2 caught, run over).
 
+Done (v0.7 "feel pass", after Wons's v0.6 playtest "the initial game loop seems pretty fun" and "how do u get on the rails"):
+- Rails: snap reach grows with speed (`rail_snap_radius` 1.5 m → `rail_snap_radius_fast` 3.5 m at `rail_snap_fast_speed` 50 m/s). Holding grind counts as pressing it (hold on the way in, catch the rail the moment it's in reach). Rail magnet: holding grind within `rail_magnet_radius` 8 m pulls you sideways toward the rail (≤ `rail_magnet_speed` 7 m/s, `rail_magnet_time` 0.3 s), never along it. `Player.catchable_rail` drives the HUD's pulsing "[X] GRIND" prompt (ui/run_hud.tscn GrindPrompt); the rail still glows brighter in reach. Rail chunk: rail 2 now starts 50 m after rail 1 ends (170-240), so there's ~1 s to cross over.
+- Kickers: chunks/parts/kicker.tscn is now a 10° lip (R 46 m, 0.7 m tall, 8 m long). Each kicker is followed by a landing that steepens (the slope drops away), so air is long and the landing is still a natural perfect. Kickers chunk (500 m): two kickers (1.0× and 1.2×), landing steepens 23° → 32°: ~1.0 s air at 50 m/s, 1.2 s at 55, landings 4-8°. New chunk_big_air.tscn (430 m): 1.15× kicker over a 44° drop: 1.9 s at 50 m/s, 2.2 s at 55 (Frontloop + Whirl chain fits), landings 6-10°; below ~45 m/s you land on the knuckle (short, still clean). Designed with a 2D flight sim (lip angle, knuckle, landing pitch); in-game airtime is ~80% of the sim's.
+- Collapse difficulty curve: arrays on the Collapse node ("Difficulty curve" group), one entry per stage, the last entry repeats. Stage 1 is gentle (only real mistakes let it catch up):
+  | stage | start m/s | accel m/s² | max m/s | leash m |
+  |---|---|---|---|---|
+  | 1 | 24 | 0.8 | 46 | 240 |
+  | 2 | 30 | 1.3 | 52 | 160 |
+  | 3 | 32 | 1.4 | 54 | 140 |
+  | 4 | 34 | 1.5 | 56 | 120 |
+  | 5+ | 36 | 1.6 | 57 | 100 |
+  Clean riding cruises at ~55 m/s, so from stage 3 the collapse is as fast as you; the leash is what keeps it in reach.
+- Constant stage length: Game `middle_chunks` (4) every stage, no more +1 per stage. Chunk `difficulty` (1-5, all current chunks 1) + StageBuilder `tier_bias` (weight 1 + bias × stage × (difficulty − 1)): groundwork for harder chunk variants.
+- Feel test: `<exe> --headless --path . --fixed-fps 60 res://debug/feel_test.tscn` (16 checks on the real chunk scenes: rail catches at 50-56 m/s by holding grind or lining up + tapping, out-of-reach tap misses, kicker/big-air airtime + perfect landings at 30-55 m/s, two-trick chain on the big air). `-- --feel-trace`, `-- --feel-only=<text>`. Exit 1 on failure.
+- Record: `<exe> --path . --write-movie <abs>/v0.7.avi --fixed-fps 30 --quit-after 2250 res://game.tscn -- --autopilot --autopilot-lose --seed=1`.
+
 ## Next tasks, in order
-1. Playtest v0.6 (game.tscn) with gamepad: collapse pressure (leash 180 m, speeds), stage length (~1.5-2 km, ~25 s), the gully at 50+ m/s (camera, carving at speed), the auto-orient in the air, upgrade picks.
-2. More chunks and variety (the pool is 5 middle chunks); bigger kickers (airs are short at 55 m/s, the autopilot rarely gets time for a trick); a chunk with a tabletop or a gap.
+1. Playtest v0.7 with gamepad: rail catching (hold grind, magnet strength), the big air (scary or great?), collapse curve per stage, the gully at 50+ m/s, auto-orient in the air.
+2. Harder chunk variants (difficulty 2-3) instead of longer stages: sharp turns, obstacles to dodge, moving hazards, split lines (pick a route), gaps.
 3. The collapse is only visible looking back; consider a rear-view glance / rumble audio / debris flying past when it's close.
 4. Stalling straight up a wall rolls you back down backwards and the bike visual flips 180° (no fakie / turn-around yet).
 5. Camera: rider sits off-centre and small during lip airs; at the halfpipe exit the spring arm can dip into the transition wall.

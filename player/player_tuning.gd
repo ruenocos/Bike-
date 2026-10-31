@@ -107,8 +107,19 @@ extends Resource
 @export var trick_pivot_height: float = 0.7
 
 @export_group("Grind")
-## Press grind within this distance of a rail to snap on (m).
+## Press grind within this distance of a rail to snap on (m), at low speed...
 @export var rail_snap_radius: float = 1.5
+## ...growing to this at rail_snap_fast_speed and above (m). Lining up with
+## a 12 cm bar at 50 m/s is hard; the reach makes it a line choice instead.
+@export var rail_snap_radius_fast: float = 3.5
+@export var rail_snap_fast_speed: float = 50.0
+## Holding grind near a rail pulls you sideways toward it (the magnet):
+## from this far away (m)...
+@export var rail_magnet_radius: float = 8.0
+## ...at most this fast sideways (m/s)...
+@export var rail_magnet_speed: float = 7.0
+## ...closing the gap in about this long (s).
+@export var rail_magnet_time: float = 0.3
 ## A grind press is remembered this long, so pressing a hair early still snaps (s).
 @export var grind_buffer: float = 0.15
 ## Speed lost per second while grinding (m/s^2).

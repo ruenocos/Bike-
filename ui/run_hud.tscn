@@ -98,6 +98,26 @@ theme_override_font_sizes/font_size = 56
 text = "COLLAPSE!"
 horizontal_alignment = 1
 
+[node name="GrindPrompt" type="Label" parent="."]
+visible = false
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -300.0
+offset_top = -280.0
+offset_right = 300.0
+offset_bottom = -220.0
+grow_horizontal = 2
+grow_vertical = 0
+pivot_offset = Vector2(300, 30)
+theme = ExtResource("4_theme")
+theme_override_colors/font_color = Color(0.4, 0.95, 1, 1)
+theme_override_font_sizes/font_size = 44
+text = "[X]  GRIND"
+horizontal_alignment = 1
+
 [node name="Progress" type="Control" parent="."]
 anchors_preset = 7
 anchor_left = 0.5

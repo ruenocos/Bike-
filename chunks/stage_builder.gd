@@ -22,12 +22,16 @@ signal finished
 @export var middle_chunks: Array[PackedScene] = [
 	preload("res://chunks/chunk_rollers.tscn"),
 	preload("res://chunks/chunk_kickers.tscn"),
+	preload("res://chunks/chunk_big_air.tscn"),
 	preload("res://chunks/chunk_berms.tscn"),
 	preload("res://chunks/chunk_rail.tscn"),
 	preload("res://chunks/chunk_gully.tscn"),
 ]
 @export var finish_chunk: PackedScene = preload("res://chunks/chunk_finish.tscn")
 @export_range(0, 20) var middle_count: int = 5
+## Later stages lean toward harder chunks: a chunk's pick weight is
+## 1 + tier_bias * stage_index * (difficulty - 1). 0 = every chunk equally likely.
+@export_range(0.0, 5.0, 0.05) var tier_bias: float = 0.5
 ## Chunks that end this far behind the player are freed.
 @export_range(50.0, 2000.0, 10.0, "suffix:m") var free_behind_distance: float = 300.0
 ## Chunks the collapse has passed drop this far...
@@ -75,17 +79,23 @@ func clear() -> void:
 	_hint = 0
 
 
-## Picks and builds a stage. `middle` < 0 uses middle_count.
-func build(stage_seed: int, middle: int = -1) -> void:
+## Picks and builds a stage. `middle` < 0 uses middle_count. `stage_index`
+## (0 = first stage) tilts the picks toward higher-difficulty chunks.
+func build(stage_seed: int, middle: int = -1, stage_index: int = 0) -> void:
 	clear()
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.seed = hash(stage_seed)
+	var weights: PackedFloat32Array = PackedFloat32Array()
+	for scene: PackedScene in middle_chunks:
+		weights.append(1.0 + tier_bias * stage_index * (_difficulty_of(scene) - 1))
 	var picks: Array[PackedScene] = [start_chunk]
 	var last: int = -1
 	for i: int in (middle_count if middle < 0 else middle):
-		var index: int = rng.randi_range(0, middle_chunks.size() - 1)
-		while middle_chunks.size() > 1 and index == last:
-			index = rng.randi_range(0, middle_chunks.size() - 1)
+		# Never the same chunk twice in a row.
+		var allowed: PackedFloat32Array = weights.duplicate()
+		if last >= 0 and middle_chunks.size() > 1:
+			allowed[last] = 0.0
+		var index: int = rng.rand_weighted(allowed)
 		picks.append(middle_chunks[index])
 		last = index
 	picks.append(finish_chunk)
@@ -106,6 +116,16 @@ func build(stage_seed: int, middle: int = -1) -> void:
 	length = line_distance[-1]
 	var gate: FinishGate = chunks[-1].get_finish_gate()
 	finish_distance = nearest_distance(gate.global_position) if gate != null else length
+
+
+## A chunk scene's `difficulty` without instancing it (read from the scene's
+## saved properties; 1 when it was never changed from the default).
+static func _difficulty_of(scene: PackedScene) -> int:
+	var state: SceneState = scene.get_state()
+	for i: int in state.get_node_property_count(0):
+		if state.get_node_property_name(0, i) == &"difficulty":
+			return int(state.get_node_property_value(0, i))
+	return 1
 
 
 func _append_line(chunk: Chunk) -> void:

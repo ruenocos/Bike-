@@ -20,12 +20,22 @@ const SPECS: Array[Dictionary] = [
 		"spawn": 12.0},
 	{"name": "ChunkRollers", "file": "chunk_rollers.tscn", "length": 220.0,
 		"bumps": [Vector3(30, 24, 1.5), Vector3(54, 24, 1.5), Vector3(78, 24, 1.5), Vector3(102, 24, 1.5), Vector3(126, 24, 1.5)]},
-	{"name": "ChunkKickers", "file": "chunk_kickers.tscn", "length": 300.0,
-		"kickers": [Vector3(80, 0, 1.0), Vector3(210, 0, 1.4)]},
+	# Each kicker (10 deg lip) is followed by a landing that steepens to 32 deg:
+	# ~1.3 s of air at 50 m/s, landing ~9 deg (natural perfect) from 45-58 m/s.
+	{"name": "ChunkKickers", "file": "chunk_kickers.tscn", "length": 500.0,
+		"pitch": [Vector2(0, 23), Vector2(70, 23), Vector2(105, 32), Vector2(165, 32), Vector2(225, 23),
+			Vector2(300, 23), Vector2(335, 32), Vector2(395, 32), Vector2(455, 23), Vector2(500, 23)],
+		"kickers": [Vector3(60, 0, 1.0), Vector3(290, 0, 1.2)]},
+	# Big air: the slope drops away to 44 deg after the lip: ~1.8 s of air at
+	# 50 m/s, ~2 s at 55 m/s (time for a two-trick chain), still landing <12 deg.
+	{"name": "ChunkBigAir", "file": "chunk_big_air.tscn", "length": 430.0,
+		"pitch": [Vector2(0, 23), Vector2(75, 23), Vector2(130, 44), Vector2(270, 44), Vector2(390, 23), Vector2(430, 23)],
+		"kickers": [Vector3(60, 0, 1.15)]},
 	{"name": "ChunkBerms", "file": "chunk_berms.tscn", "length": 300.0,
 		"heading": [Vector2(0, 0), Vector2(40, 0), Vector2(100, 18), Vector2(180, -18), Vector2(260, 0), Vector2(300, 0)]},
-	{"name": "ChunkRail", "file": "chunk_rail.tscn", "length": 230.0,
-		"rails": [Vector4(40, 120, -5, 0.6), Vector4(140, 210, 5, 0.6)]},
+	# Rail 2 starts 50 m after rail 1 ends, on the other side: ~1 s to cross.
+	{"name": "ChunkRail", "file": "chunk_rail.tscn", "length": 270.0,
+		"rails": [Vector4(40, 120, -5, 0.6), Vector4(170, 240, 5, 0.6)]},
 	{"name": "ChunkGully", "file": "chunk_gully.tscn", "length": 300.0,
 		"pitch": [Vector2(0, 23), Vector2(30, 23), Vector2(60, 15), Vector2(240, 15), Vector2(270, 23), Vector2(300, 23)],
 		"halfpipe": 150.0},
