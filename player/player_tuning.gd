@@ -115,38 +115,36 @@ extends Resource
 ## Small upward pop when riding off the end of a rail (m/s).
 @export var grind_exit_pop: float = 2.0
 
-@export_group("Wall ride")
-## A wall counts when its normal's y is within +-this (0.3 = within ~17 deg of vertical).
-@export var wall_ride_max_normal_y: float = 0.3
-## Speed along the wall needed to start a wall ride (m/s).
-@export var wall_ride_min_speed: float = 8.0
-## Below this speed along the wall you drop off (m/s).
-@export var wall_ride_fall_off_speed: float = 5.0
-## Gravity while on the wall, as a fraction of normal gravity.
-@export var wall_ride_gravity_scale: float = 0.3
-## Speed lost per second along the wall (m/s^2).
-@export var wall_ride_drag: float = 2.0
-## Longest a wall ride can last (s).
-@export var wall_ride_max_time: float = 1.6
-## Upward speed kept from the approach when hitting the wall (0.4 = 40%).
-@export var wall_ride_keep_vertical: float = 0.4
-## Upward speed added when you stick to the wall from the air (m/s).
-@export var wall_ride_entry_lift: float = 3.0
-## Upward speed when you steer into a wall from the ground (m/s). Lifts you up the wall.
-@export var wall_ride_ground_lift: float = 4.0
-## Push into the wall each tick so contact holds (m/s).
-@export var wall_ride_stick_velocity: float = 1.0
-## Steering into a wall while riding on the ground at least this hard starts a wall ride (0-1).
-@export var wall_ride_steer_threshold: float = 0.5
-## How far the bike tilts to the wall: 0 = upright, 1 = wheels flat on the wall.
-@export var wall_ride_tilt: float = 0.7
-## Hop off the wall: speed away from the wall and upward (m/s).
-@export var wall_ride_hop_away: float = 5.0
-@export var wall_ride_hop_up: float = 4.0
-## Small push away from the wall when the ride ends without a hop (m/s).
-@export var wall_ride_exit_push: float = 2.0
-## No new wall ride for this long after leaving one (s).
-@export var wall_ride_cooldown: float = 0.4
+@export_group("Transitions")
+## Ground normal smoothing while riding (s). Hides the facets of curved CSG
+## surfaces; too high and the bike lags behind a quarter pipe's curve.
+@export var ground_normal_smoothing: float = 0.03
+## Length of the ground probe along the surface normal (m).
+@export var ground_probe_length: float = 1.2
+## Ground tilted more than this counts as a transition: camera mode, transition pump (deg).
+@export var transition_min_tilt_deg: float = 20.0
+## Leaving the ground going up a face steeper than this is a lip air (deg, 90 = vertical).
+@export var lip_min_angle_deg: float = 80.0
+## The face must have been that steep within this long before you leave it (s).
+@export var lip_memory_time: float = 0.15
+## Rolling over a convex edge lets go of the ground once the surface has
+## turned this far away under you (deg). Above the ~40 deg of a test-track
+## roller, so bumps stay rideable and pumpable.
+@export var convex_release_deg: float = 45.0
+## Same, rolling over the coping at the top of a steep face (deg).
+@export var lip_release_deg: float = 20.0
+## Vert assist in a lip air: aim this far out over the pipe from the lip line (m).
+@export var vert_assist_margin: float = 0.05
+## ...closing the gap in about this long (s)...
+@export var vert_assist_time: float = 0.35
+## ...reacting this fast (s, smaller = stronger)...
+@export var vert_assist_response: float = 0.12
+## ...and never moving you across the lip faster than this (m/s).
+@export var vert_assist_max_speed: float = 2.5
+## A transition pump counts on the way down when the ground points down at least this much (deg).
+@export var pump_transition_min_deg: float = 10.0
+## Riding a transition steeper than this scores carve points (deg).
+@export var carve_min_angle_deg: float = 45.0
 
 @export_group("Combo")
 ## Combo banks after this long of plain riding (s).
@@ -155,7 +153,9 @@ extends Resource
 @export var combo_multiplier_cap: int = 10
 @export var perfect_landing_score: int = 50
 @export var grind_score_per_second: float = 120.0
-@export var wall_ride_score_per_second: float = 150.0
+@export var carve_score_per_second: float = 100.0
+## Points for an air off a quarter-pipe lip (it is a combo action).
+@export var lip_air_score: int = 150
 
 @export_group("Camera")
 @export var fov_base: float = 75.0
@@ -172,6 +172,16 @@ extends Resource
 @export var cam_look_ahead: float = 3.0
 @export var cam_punch_distance: float = 0.35
 @export var cam_punch_time: float = 0.12
+## On transitions: extra spring arm length (m)...
+@export var cam_transition_distance: float = 2.0
+## ...extra height (m)...
+@export var cam_transition_height: float = 1.0
+## ...and how far the camera moves out over the pipe, away from the wall (m).
+@export var cam_transition_inset: float = 2.0
+## Time to blend into / out of transition framing (s).
+@export var cam_transition_blend_time: float = 0.3
+## Transition framing stays on this long after leaving the ramp (s).
+@export var cam_transition_hold: float = 0.8
 
 @export_group("Speed lines")
 ## Speed lines start fading in above this fraction of max_speed (0.7 = 70%).

@@ -23,7 +23,7 @@ func physics_update(delta: float) -> void:
 	# Wobble the visual so the bail reads on screen.
 	player.visual.rotate_object_local(Vector3.BACK, sin(_timer * 30.0) * 0.05)
 	_timer -= delta
-	if not player.is_on_floor():
-		machine.transition_to(&"Air", {})
+	if not player.is_grounded():
+		machine.transition_to(&"Air", player.leave_ground_msg(false))
 	elif _timer <= 0.0:
 		machine.transition_to(&"Ride", {})

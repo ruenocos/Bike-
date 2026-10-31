@@ -14,4 +14,6 @@ signal trick_completed(trick_name: String, score: int)
 @warning_ignore("unused_signal")
 signal grind_started
 @warning_ignore("unused_signal")
-signal wall_ride_started
+signal carve_started
+@warning_ignore("unused_signal")
+signal lip_air

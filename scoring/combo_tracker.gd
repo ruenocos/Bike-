@@ -2,7 +2,8 @@ class_name ComboTracker
 extends Node
 ## Combo scoring. Child of Player; states call these functions (call down).
 ##
-## A combo is a chain of actions (tricks, grinds, wall rides, perfect landings).
+## A combo is a chain of actions (tricks, grinds, lip airs, perfect landings).
+## Carving a transition adds points per second without being an action.
 ## Score = sum of action points x multiplier, multiplier = number of actions
 ## (capped). Plain riding for combo_drop_time banks it into the run total.
 ## A bail drops it and the points are lost.
@@ -35,7 +36,7 @@ func get_total() -> int:
 	return floori(points) * get_multiplier()
 
 
-## One action: a trick, a grind, a wall ride, a perfect landing.
+## One action: a trick, a grind, a lip air, a perfect landing.
 func add_action(score: int) -> void:
 	actions += 1
 	points += score
@@ -47,9 +48,9 @@ func add_grind_time(delta: float) -> void:
 	_add_timed_points(player.tuning.grind_score_per_second, delta)
 
 
-## Wall riding: same as grinding, its own rate.
-func add_wall_ride_time(delta: float) -> void:
-	_add_timed_points(player.tuning.wall_ride_score_per_second, delta)
+## Carving high on a transition: same as grinding, its own rate.
+func add_carve_time(delta: float) -> void:
+	_add_timed_points(player.tuning.carve_score_per_second, delta)
 
 
 func _add_timed_points(per_second: float, delta: float) -> void:

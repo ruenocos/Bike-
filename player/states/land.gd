@@ -8,6 +8,8 @@ extends PlayerState
 ## Touching down mid-trick: if the trick is nearly done it is completed for
 ## you and the landing is sketchy at best; otherwise it is a bail.
 ## Right after a bail (bail_immunity) a landing never bails, it is sketchy.
+## msg: "velocity" just before touchdown, "normal" when Air hit a steep
+## transition face, "lip_air" when coming back from a lip air.
 
 const GRADES: Array[StringName] = [&"perfect", &"good", &"sketchy", &"bail"]
 
@@ -18,7 +20,11 @@ func enter(msg: Dictionary) -> void:
 	var t: PlayerTuning = player.tuning
 	_timer = t.land_duration
 	player.air_pitch = 0.0
-	player.update_ground_normal()
+	# Air passes "normal" when it touched down on a steep transition face.
+	if msg.has("normal"):
+		player.ground_normal = msg["normal"]
+	else:
+		player.update_ground_normal(0.0)
 
 	var v: Vector3 = msg.get("velocity", player.velocity)
 	var n: Vector3 = player.ground_normal
@@ -26,11 +32,8 @@ func enter(msg: Dictionary) -> void:
 	var tangent: Vector3 = v - n * v.dot(n)
 
 	# Keep the momentum that runs along the ground.
-	if tangent.length() > 0.5:
-		var flat: Vector3 = Vector3(tangent.x, 0.0, tangent.z)
-		if flat.length() > 0.1:
-			player.heading = atan2(-flat.x, -flat.z)
-	player.speed = minf(tangent.length(), t.max_speed)
+	var dir: Vector3 = tangent if tangent.length() > 0.5 else player.get_heading_dir()
+	player.set_ground_motion(dir, tangent.length())
 
 	var mid_trick: bool = player.tricks.is_mid_trick()
 	var trick_progress: float = player.tricks.get_progress()
@@ -39,7 +42,9 @@ func enter(msg: Dictionary) -> void:
 		player.tricks.complete_current()
 	player.tricks.cancel()
 
-	if impact < t.land_min_impact and not mid_trick:
+	# Coming back into a quarter pipe from a lip air is nearly tangent, so it
+	# is always graded even though it's soft.
+	if impact < t.land_min_impact and not mid_trick and not msg.get("lip_air", false):
 		# Soft roll-in (small drop, respawn): no grade.
 		machine.transition_to(&"Ride", {})
 		return
@@ -93,8 +98,8 @@ func enter(msg: Dictionary) -> void:
 func physics_update(delta: float) -> void:
 	player.ground_move(delta, true)
 	_timer -= delta
-	if not player.is_on_floor():
-		machine.transition_to(&"Air", {"coyote": true})
+	if not player.is_grounded():
+		machine.transition_to(&"Air", player.leave_ground_msg(true))
 	elif _timer <= 0.0:
 		machine.transition_to(&"Ride", {})
 

@@ -1,7 +1,7 @@
 extends CanvasLayer
 ## Top-left readout for tuning feel: speed, state, last landing, trick, combo.
 ## Big centre text flashes three stacked lines, each with its own timing so
-## one never overwrites another: trick / grind / wall ride on top, the landing
+## one never overwrites another: trick / grind / carve / lip air on top, the landing
 ## grade under it, banked combos at the bottom.
 ## Finds the player through the "player" group, so it works in any scene.
 
@@ -24,7 +24,8 @@ func _ready() -> void:
 	Events.trick_completed.connect(_on_trick_completed)
 	Events.combo_banked.connect(_on_combo_banked)
 	Events.grind_started.connect(_on_grind_started)
-	Events.wall_ride_started.connect(_on_wall_ride_started)
+	Events.carve_started.connect(_on_carve_started)
+	Events.lip_air.connect(_on_lip_air)
 	for flash_label: Label in [trick_label, grade_label, bank_label]:
 		flash_label.modulate.a = 0.0
 
@@ -77,8 +78,15 @@ func _on_grind_started() -> void:
 	_flash(trick_label, "GRIND", Color(0.4, 0.95, 1.0))
 
 
-func _on_wall_ride_started() -> void:
-	_flash(trick_label, "WALL RIDE", Color(0.4, 0.95, 1.0))
+## Carve and lip air flashes don't cover a trick name that is still showing.
+func _on_carve_started() -> void:
+	if trick_label.modulate.a < 0.05:
+		_flash(trick_label, "CARVE", Color(0.4, 0.95, 1.0))
+
+
+func _on_lip_air() -> void:
+	if trick_label.modulate.a < 0.05:
+		_flash(trick_label, "LIP AIR", Color(0.4, 0.95, 1.0))
 
 
 func _on_combo_banked(score: int) -> void:

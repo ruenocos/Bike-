@@ -56,24 +56,39 @@ const TIMELINE: Array[Array] = [
 	[9.820, &"grind", 1.00],
 	[9.920, &"grind", 0.00],
 	[10.100, &"steer_right", 0.00],
-	# After the rail: swing right onto the WallKicker, wall ride, hop off.
-	[11.450, &"steer_right", 1.00],
-	[12.000, &"steer_right", 0.00],
+	# After the rail: line up with the halfpipe, drop in, carve.
+	[11.700, &"steer_right", 1.00],
+	[11.950, &"steer_right", 0.00],
 	[12.300, &"steer_left", 1.00],
-	[12.450, &"steer_left", 0.00],
-	[14.050, &"hop", 1.00],
-	[14.100, &"hop", 0.00],
-	[15.000, &"brake", 1.00],
-	[20.000, &"brake", 0.00],
+	[12.550, &"steer_left", 0.00],
+	[13.450, &"steer_right", 1.00],
+	[14.150, &"steer_right", 0.00],
+	[15.600, &"lean_forward", 1.00],
+	[15.680, &"lean_forward", 0.00],
+	[15.700, &"steer_left", 1.00],
+	[15.800, &"steer_left", 0.00],
+	[16.720, &"trick_left", 1.00],
+	[16.820, &"trick_left", 0.00],
+	[17.800, &"lean_forward", 1.00],
+	[17.880, &"lean_forward", 0.00],
+	[18.870, &"trick_up", 1.00],
+	[18.970, &"trick_up", 0.00],
+	# Out of the last carve: turn down the pipe and ride out the end.
+	[20.250, &"steer_right", 1.00],
+	[21.000, &"steer_right", 0.00],
+	[22.500, &"brake", 1.00],
+	[26.000, &"brake", 0.00],
 ]
 
 ## [time, file name] for --demo-shots.
 const SHOTS: Array[Array] = [
-	[5.400, "v0.3_hud_stacked_whirl.png"],
-	[9.000, "v0.3_hud_stacked_frontloop.png"],
-	[10.500, "v0.3_grind_rail_glow.png"],
-	[13.600, "v0.3_wall_ride.png"],
-	[14.300, "v0.3_wall_hop_off.png"],
+	[5.400, "v0.4_hud_stacked_whirl.png"],
+	[10.500, "v0.4_grind_rail_glow.png"],
+	[14.420, "v0.4_carve_up_wall.png"],
+	[15.000, "v0.4_air_above_lip.png"],
+	[17.000, "v0.4_halfpipe_whirl.png"],
+	[19.250, "v0.4_halfpipe_frontloop.png"],
+	[20.900, "v0.4_halfpipe_exit.png"],
 ]
 
 var _time: float = 0.0
@@ -105,7 +120,8 @@ func _ready() -> void:
 		Events.bailed.connect(func() -> void: print("t=%5.2f BAILED" % _time))
 		Events.trick_completed.connect(func(trick_name: String, score: int) -> void: print("t=%5.2f TRICK %s +%d" % [_time, trick_name, score]))
 		Events.grind_started.connect(func() -> void: print("t=%5.2f GRIND" % _time))
-		Events.wall_ride_started.connect(func() -> void: print("t=%5.2f WALL RIDE" % _time))
+		Events.carve_started.connect(func() -> void: print("t=%5.2f CARVE" % _time))
+		Events.lip_air.connect(func() -> void: print("t=%5.2f LIP AIR" % _time))
 		Events.combo_banked.connect(func(score: int) -> void: print("t=%5.2f BANKED %d" % [_time, score]))
 
 

@@ -45,6 +45,11 @@ shader_parameter/cell = 1.0
 shader_parameter/major_every = 5.0
 shader_parameter/line_width = 0.03
 
+[sub_resource type="StandardMaterial3D" id="Mat_coping"]
+albedo_color = Color(0.75, 0.78, 0.82, 1)
+metallic = 0.8
+roughness = 0.3
+
 [sub_resource type="Curve3D" id="Curve3D_rail"]
 _data = {
 "points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -40),
@@ -128,8 +133,8 @@ sides = 64
 material = SubResource("Mat_feature")
 
 [node name="Runout" type="CSGBox3D" parent="Track" unique_id=755039994]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -234)
-size = Vector3(24, 1, 212)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -274)
+size = Vector3(24, 1, 292)
 material = SubResource("Mat_ground")
 
 [node name="RunoutKicker" type="CSGCombiner3D" parent="Track" unique_id=997700364]
@@ -163,26 +168,78 @@ transform = Transform3D(1, 0, 0, 0, 0.99049, 0.13757, 0, -0.13757, 0.99049, 0, -
 size = Vector3(8, 3, 18.3728)
 material = SubResource("Mat_feature")
 
-[node name="Wall" type="CSGBox3D" parent="Track" unique_id=867872637]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.5, 2.5, -285)
-size = Vector3(1, 5, 40)
+[node name="Halfpipe" type="CSGCombiner3D" parent="." groups=["transitions"]]
+use_collision = true
+
+[node name="QuarterLeft" type="CSGCombiner3D" parent="Halfpipe"]
+
+[node name="Block" type="CSGBox3D" parent="Halfpipe/QuarterLeft"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 2.2, -317)
+size = Vector3(6, 4.4, 70)
 material = SubResource("Mat_feature")
 
-[node name="WallKicker" type="CSGCombiner3D" parent="Track"]
-transform = Transform3D(0.86603, 0, -0.5, 0, 1, 0, 0.5, 0, 0.86603, 6.8, 0, -272)
-
-[node name="Block" type="CSGBox3D" parent="Track/WallKicker"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.12767, -1.68573)
-size = Vector3(4, 1.05535, 3.37146)
-material = SubResource("Mat_feature")
-
-[node name="Cut" type="CSGCylinder3D" parent="Track/WallKicker"]
-transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 9, 0)
+[node name="Cut" type="CSGCylinder3D" parent="Halfpipe/QuarterLeft"]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, -4, 4, -317)
 operation = 2
-radius = 9.0
-height = 5.0
-sides = 64
+radius = 4.0
+height = 72.0
+sides = 96
 material = SubResource("Mat_feature")
+
+[node name="EntryRamp" type="CSGBox3D" parent="Halfpipe/QuarterLeft"]
+transform = Transform3D(1, 0, 0, 0, 0.93887, -0.34425, 0, 0.34425, 0.93887, -7, 6.894, -286.279)
+operation = 2
+size = Vector3(8, 10, 26)
+material = SubResource("Mat_feature")
+
+[node name="ExitRamp" type="CSGBox3D" parent="Halfpipe/QuarterLeft"]
+transform = Transform3D(1, 0, 0, 0, 0.93887, 0.34425, 0, -0.34425, 0.93887, -7, 6.894, -347.721)
+operation = 2
+size = Vector3(8, 10, 26)
+material = SubResource("Mat_feature")
+
+[node name="QuarterRight" type="CSGCombiner3D" parent="Halfpipe"]
+
+[node name="Block" type="CSGBox3D" parent="Halfpipe/QuarterRight"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 2.2, -317)
+size = Vector3(6, 4.4, 70)
+material = SubResource("Mat_feature")
+
+[node name="Cut" type="CSGCylinder3D" parent="Halfpipe/QuarterRight"]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 4, 4, -317)
+operation = 2
+radius = 4.0
+height = 72.0
+sides = 96
+material = SubResource("Mat_feature")
+
+[node name="EntryRamp" type="CSGBox3D" parent="Halfpipe/QuarterRight"]
+transform = Transform3D(1, 0, 0, 0, 0.93887, -0.34425, 0, 0.34425, 0.93887, 7, 6.894, -286.279)
+operation = 2
+size = Vector3(8, 10, 26)
+material = SubResource("Mat_feature")
+
+[node name="ExitRamp" type="CSGBox3D" parent="Halfpipe/QuarterRight"]
+transform = Transform3D(1, 0, 0, 0, 0.93887, 0.34425, 0, -0.34425, 0.93887, 7, 6.894, -347.721)
+operation = 2
+size = Vector3(8, 10, 26)
+material = SubResource("Mat_feature")
+
+[node name="Coping" type="Node3D" parent="."]
+
+[node name="Left" type="CSGCylinder3D" parent="Coping"]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, -8.0, 4.4, -317)
+radius = 0.06
+height = 46.0
+sides = 12
+material = SubResource("Mat_coping")
+
+[node name="Right" type="CSGCylinder3D" parent="Coping"]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 8.0, 4.4, -317)
+radius = 0.06
+height = 46.0
+sides = 12
+material = SubResource("Mat_coping")
 
 [node name="Rails" type="Node3D" parent="." unique_id=1491630680]
 

@@ -29,6 +29,7 @@ func enter(msg: Dictionary) -> void:
 
 	_snap_gap = player.global_position - RailSnap.point_at(_rail, _offset)
 	player.air_pitch = 0.0
+	player.leave_surface()
 	player.combo.add_action(0)
 	Events.grind_started.emit()
 

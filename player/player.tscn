@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=3]
+[gd_scene load_steps=28 format=3]
 
 [ext_resource type="Script" path="res://player/player.gd" id="1_player"]
 [ext_resource type="Script" path="res://player/state_machine.gd" id="2_machine"]
@@ -16,11 +16,9 @@
 [ext_resource type="Resource" path="res://tricks/data/whirl_right.tres" id="14_whirl_right"]
 [ext_resource type="Script" path="res://scoring/combo_tracker.gd" id="15_combo"]
 [ext_resource type="PackedScene" path="res://vfx/speed_lines.tscn" id="16_speed_lines"]
-[ext_resource type="Script" path="res://player/states/wall_ride.gd" id="17_wall_ride"]
 
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
+[sub_resource type="SphereShape3D" id="SphereShape3D_body"]
 radius = 0.35
-height = 1.6
 
 [sub_resource type="StandardMaterial3D" id="Mat_bike"]
 albedo_color = Color(0.15, 0.16, 0.2, 1)
@@ -64,8 +62,8 @@ floor_snap_length = 0.5
 script = ExtResource("1_player")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
-shape = SubResource("CapsuleShape3D_body")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, 0)
+shape = SubResource("SphereShape3D_body")
 
 [node name="Visual" type="Node3D" parent="."]
 
@@ -90,7 +88,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, -0.55)
 mesh = SubResource("BoxMesh_nose")
 
 [node name="GroundProbe" type="ShapeCast3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, 0)
 shape = SubResource("SphereShape3D_probe")
 target_position = Vector3(0, -1.2, 0)
 
@@ -109,9 +107,6 @@ script = ExtResource("5_land")
 
 [node name="Grind" type="Node" parent="StateMachine"]
 script = ExtResource("8_grind")
-
-[node name="WallRide" type="Node" parent="StateMachine"]
-script = ExtResource("17_wall_ride")
 
 [node name="Bail" type="Node" parent="StateMachine"]
 script = ExtResource("6_bail")
