@@ -71,6 +71,10 @@ var _convex_ref_normal: Vector3 = Vector3.UP
 var _ground_released: bool = false
 ## True while the floor falls away ahead of you (cresting, rolling over an edge).
 var _on_convex: bool = false
+## True when this tick's ground contact is a body in group "transitions".
+## Only those count as transitions (camera mode, carving, transition pump);
+## a steep drop-in or a berm wall on the track is just ground.
+var _on_transition_body: bool = false
 
 # Landing info, read by the debug overlay.
 var last_landing_angle: float = 0.0
@@ -338,6 +342,7 @@ func ground_move(delta: float, input_enabled: bool) -> void:
 			# Hitting a wall eats speed. (Skipped during hit-stop: with delta 0
 			# the real velocity is a division by zero.)
 			speed = minf(speed, get_real_velocity().length())
+	_on_transition_body = _touching_transition_body()
 	_check_convex_release()
 
 	_update_heading(ground_dir)
@@ -369,6 +374,9 @@ func _check_convex_release() -> void:
 	if rad_to_deg(raw.angle_to(_convex_ref_normal)) > limit:
 		_ground_released = true
 		floor_snap_length = 0.0
+		# Fly off along the surface before the edge (a kicker face, a deck),
+		# not the direction already tipped over it.
+		ground_dir = tangent_dir(ground_dir, _convex_ref_normal)
 		velocity = ground_dir * speed
 
 
@@ -378,11 +386,19 @@ func is_grounded() -> bool:
 	return is_on_floor() and not _ground_released
 
 
+func _touching_transition_body() -> bool:
+	for i: int in get_slide_collision_count():
+		var collider: Node = get_slide_collision(i).get_collider() as Node
+		if collider != null and collider.is_in_group(&"transitions"):
+			return true
+	return false
+
+
 ## Sets transition_normal and remembers the last steep face for the lip check.
 func _update_transition() -> void:
 	var t: PlayerTuning = tuning
 	var flat_normal: Vector3 = Vector3(ground_normal.x, 0.0, ground_normal.z)
-	if ground_normal.y < cos(deg_to_rad(t.transition_min_tilt_deg)) and flat_normal.length() > 0.01:
+	if _on_transition_body and ground_normal.y < cos(deg_to_rad(t.transition_min_tilt_deg)) and flat_normal.length() > 0.01:
 		transition_normal = flat_normal.normalized()
 	else:
 		transition_normal = Vector3.ZERO
@@ -412,11 +428,9 @@ func leave_ground_msg(coyote: bool) -> Dictionary:
 ## Carving: riding a transition steeper than carve_min_angle_deg scores
 ## points per second and keeps the combo alive. Called from Ride.
 func update_carve(delta: float) -> void:
-	if ground_normal.y < cos(deg_to_rad(tuning.carve_min_angle_deg)):
+	if transition_normal != Vector3.ZERO and ground_normal.y < cos(deg_to_rad(tuning.carve_min_angle_deg)):
 		if not _carving:
 			_carving = true
-			if not combo.is_active():
-				combo.add_action(0)
 			Events.carve_started.emit()
 		combo.add_carve_time(delta)
 	else:
@@ -438,7 +452,7 @@ func try_pump(delta: float) -> void:
 		return
 	var steepening: bool = ground_dir.y < _slope_trend - sin(deg_to_rad(tuning.pump_min_slope_deg))
 	var descending_transition: bool = _transition_pump_armed \
-			and ground_normal.y < cos(deg_to_rad(tuning.transition_min_tilt_deg)) \
+			and transition_normal != Vector3.ZERO \
 			and ground_dir.y < -sin(deg_to_rad(tuning.pump_transition_min_deg))
 	if steepening or descending_transition:
 		if descending_transition:
@@ -465,7 +479,8 @@ func update_visual(delta: float, steer: float, pitch: float, up_target: Vector3,
 	var target: Basis = Basis(_visual_up.cross(back), _visual_up, back).orthonormalized()
 	# Roll into the turn (negative angle around the back axis banks right),
 	# then pitch around the side axis (positive is nose up).
-	target = target * Basis(Vector3.BACK, -steer * deg_to_rad(tuning.lean_into_turn_deg))
+	var lean_deg: float = tuning.lean_into_turn_deg + tuning.lean_speed_extra_deg * clampf(speed / tuning.max_speed, 0.0, 1.0)
+	target = target * Basis(Vector3.BACK, -steer * deg_to_rad(lean_deg))
 	target = target * Basis(Vector3.RIGHT, pitch)
 	_visual_rotation = _visual_rotation.slerp(Quaternion(target), 1.0 - exp(-delta / 0.05))
 	# The trick spin goes on top of the smoothed pose, unsmoothed, so a full
@@ -510,6 +525,7 @@ func place(at: Vector3, new_heading: float, new_speed: float) -> void:
 	air_pitch = 0.0
 	bail_immunity_timer = 0.0
 	transition_normal = Vector3.ZERO
+	_on_transition_body = false
 	_lip_timer = 0.0
 	_carving = false
 	tricks.cancel()

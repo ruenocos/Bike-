@@ -39,7 +39,7 @@ Goal right now: a playable demo built from the vertical slice. No deadline. Game
 - Landing mid-trick: ≥70% done → trick auto-completes, landing is sketchy at best; <70% → Bail.
 - Bail: 0.6 s, keeps 50% speed, then 1.0 s immunity (the next landing in that window is sketchy instead of a bail).
 - Perfect landing juice: 40 ms hit-stop, camera punch 0.12 s ease-out expo, bright SFX.
-- FOV 75° → 95° with speed, ease-out over 0.25 s. Speed lines above 70% max speed.
+- FOV 75° → 105° with speed (v0.5), ease-out over 0.25 s. Speed lines above 70% max speed.
 - Coyote 0.10 s, jump buffer 0.12 s, hop full charge 0.25 s, pump +4% per clean pump.
 - Trick gesture recognized within 150 ms; combo drops after 1.5 s of plain riding.
 - Camera: spring arm, look-ahead on velocity, position damping 0.08 s, rotation 0.2 s; lower and further back than a runner cam.
@@ -47,7 +47,7 @@ Goal right now: a playable demo built from the vertical slice. No deadline. Game
 ## Input map (to set up)
 steer_left/right: left stick X · lean_back/forward: left stick Y · pedal: RT · brake: LT · hop: South (hold to charge) · grind: West · trick_left/right/up/down: right stick · pause: Start
 
-## Status (2026-10-31)
+## Status (2026-10-31, v0.5)
 Done (v0.1): project settings, input map (+ debug_reset on Back/R), test track, Player with Ride/Air/Land/Bail, landing grades, debug overlay, physics interpolation. Feel gate approved by Wons.
 Done (v0.2, phase 2 batch A):
 - tricks/: TrickData resource + 4 starter tricks in tricks/data (up Frontloop, down Pocket, left/right Whirl). TrickRunner (child of Player) reads right-stick flicks (neutral -> >0.7 within 0.15 s), plays them on the Visual around the hips, chains a new flick in the last 30%.
@@ -56,8 +56,8 @@ Done (v0.2, phase 2 batch A):
 - vfx/speed_lines.tscn (child of Player): radial streak shader, fades in from 70% to 90% of max_speed.
 - debug/demo_driver.gd (node in test_track.tscn): input timeline, only with `-- --demo`. `--demo-trace` prints state, `--demo-shots=<dir>` saves stills. Timeline is tuned for --fixed-fps 30; retune if track or tuning changes.
 - Test track fixes: bumps are now wide rollers (r 12 m, 0.7 m tall) so they can be pumped (the old ones launched you into the next bump at any speed above ~8 m/s); tabletop ramp/deck/landing made flush (old lip fired you up at 45 deg).
-- Landing check: `<exe> --headless --path . --fixed-fps 60 --quit-after 6000 -- --landing-test` runs debug/landing_test.gd (16 scenarios: hops, kickers, tabletop, drops, nose-dive bails), prints grade + angle per landing, exit 1 on failure. Run it after any landing/tuning/track change.
-- Record: `<exe> --path . --write-movie <abs path>/v0.x.avi --fixed-fps 30 --quit-after 750 -- --demo --demo-shots=<abs dir>` (the v0.4 timeline runs ~24 s)
+- Landing check: `<exe> --headless --path . --fixed-fps 60 --quit-after 12000 -- --landing-test` runs debug/landing_test.gd (42 scenarios in v0.5: hops, kickers, berms, tabletop, drops, nose-dive bails, halfpipe), prints grade + angle per landing, exit 1 on failure. Run it after any landing/tuning/track change.
+- Record: `<exe> --path . --write-movie <abs path>/v0.x.avi --fixed-fps 30 --quit-after 930 -- --demo --demo-shots=<abs dir>` (the v0.5 run is ~31 s)
 
 Done (v0.2.1, forgiving landings, after Wons's v0.2 playtest "kept getting bail"): sketchy grade (orange flash), trick land tolerance, shorter bail + immunity, bail_min_impact, landing test harness. Debug overlay shows the last bail reason (angle or unfinished trick %).
 
@@ -82,12 +82,22 @@ Done (v0.4, after Wons's v0.3 playtest "Wall feels clunky, maybe more halfpipe?"
 - Landing test: 25 scenarios (wall cases replaced by 9 halfpipe cases: straight-up and carved lip airs, slow carve, lip air + Whirl, transition pump, stall at the lip, shallow carve over the lip, runout entry, off-line entry ramp). New options `--landing-trace`, `--landing-only=<text>`.
 - Demo: after the rail, line up, drop in: right wall lip air (perfect), left wall lip air + Whirl Left (perfect), right wall lip air + Frontloop (perfect), pumps on the descents, turn down the pipe, exit, brake. Banks ~10.6k.
 
+Done (v0.5 "extreme pass", after Wons's v0.4 playtest "looks pretty good, only thing I think we need is a bit more 'extreme' feeling, in terms of angle downwards, speed"):
+- Track: the downhill is one CSGPolygon3D (Track/Ribbon) extruded along the Path3D `TrackLine` (Godot note: move TrackLine's curve points in the editor and the ribbon follows). Profile: 16 m flat + curved side walls (r 5 m, up to 40°), 4 m thick. Start deck at y 176 → convex drop-in to 35° (r 20) → 16 m at 35° → concave (r 50) → 385 m main descent at 23° → concave (r 100) → flat runout at y 0, z -128. On the descent: 3 rollers (24 m long, 1.5 m tall) built into the ribbon from u 10 m; Kicker1 / Kicker2 (CSG, 12° lip, r 36, 0.8 m tall) at u 100 / 285 so landing on the slope is the natural perfect (~10° from 30 m/s up; slower, the 0.8 m drop makes it good); banked S-turn (berms) u 155-275, 7 m sideways, apex radius 52 m, bank up to 14° via curve tilt. Runout features (tabletop, rail, halfpipe) shifted 60 m down (-Z), runout box z -120..-480. `Markers` (Marker3D) name the key spots; landing test and demo use them. `Scenery`: far ground at y -35 and two rows of tall pillars every 25 m (visual only): without a horizon or vertical references the downhill read like a ramp rising into the fog.
+- Speed: max_speed 60, air_drag 0.0028 + rolling_drag 0.015 (terminal ~55 m/s on the 23° descent, less drag at halfpipe speeds than v0.4), pedal cap stays 18. steer_rate_high 40, lean_speed_extra_deg 14 (more bank at speed).
+- Only bodies in group "transitions" count as transitions (camera mode, carving, transition pump); the steep drop-in and berm walls are plain ground.
+- Edge release flies off along the surface before the edge (kicker face, deck), not the direction already tipped over it.
+- Camera (all in PlayerTuning "Camera"): FOV 75 → 105 (`fov_speed_curve` 1.2); lower and closer at speed (`cam_*_fast` from 40% speed); pitch follows the slope (`cam_slope_follow` 0.55, smoothed 0.3 s; in the air it probes the ground under you; off in the halfpipe, which stays upright as before); smooth noise rumble on the ground above 70% speed (`cam_speed_shake_*`). Speed lines get denser toward max (`speed_lines_density_*`), max alpha 0.7.
+- Halfpipe fairness: `lip_air_perfect_bonus` 0 (no speed gain coming back from a lip air; test "wall to wall" checks speed never grows). Lip airs, their landings and carving add points but not combo actions (ComboTracker.add_points; multiplier min 1); carve 25 pts/s, lip air 100. Demo: pipe combo 1750 vs best downhill combo 1000.
+- Demo driver: steps hang off position cues (fire `dt` s after the rider passes a z) instead of absolute times; helpers `autosteer` (follows TrackLine, `aim_x` offset), `brake_to`. Run: drop-in, pump line, Whirl Right off kicker 1 (perfect), hop + Frontloop + Whirl Left off kicker 2, berms on autosteer, runout kicker, hop + Pocket off the tabletop, rail, halfpipe (3 lip airs, Whirl Left, Frontloop). Top speed 60 (cap, after kicker 2), ~55 through the berms.
+- Landing test: 42 scenarios, scenarios can start at a marker + offset; starts in Air with the velocity along the ground (a flat start velocity launched you off a slope, and the body kept the previous scenario's floor contact for a tick); waits for CSG collision before the first one. New: drop-in, 52 m/s slope hops, rollers at 45/50 m/s, kickers at 22-56 m/s (+ tricks, + full hop), berms at 50 m/s, bottom transition at 56 m/s, tabletop at 45 m/s, halfpipe speed-growth check.
+
 ## Next tasks, in order
-1. Playtest v0.4 with gamepad: carving feel (steering on the walls, gravity curving you back down), lip air height, vert assist strength (`vert_assist_*`), camera framing in the pipe.
-2. Halfpipe is a speed farm: PERFECT lip landings (+12%) + transition pumps grow speed every wall. Consider no perfect speed bonus on lip landings, or a cap.
+1. Playtest v0.5 with gamepad: does it feel extreme now (speed, steepness), is the speed rumble/FOV too much (nausea), steering through the berms at 50+ m/s, camera slope follow (`cam_slope_follow`).
+2. Kicker airs are only ~2-3 m over the slope at 45-55 m/s; bigger kickers (taller lip, same 12° angle) if they feel small. Speeds out of the descent are far above what the tabletop/halfpipe are built for (the demo brakes to ~37); consider a speed-check section or bigger runout features.
 3. Stalling straight up a wall rolls you back down backwards and the bike visual flips 180° (no fakie / turn-around yet).
 4. Camera: rider sits off-centre and small during lip airs; at the halfpipe exit the spring arm can dip into the transition wall.
 5. Lip-air pose: bike side-on with wheels to the ramp reads like "lying on the deck" from the chase cam; add a proper vert pose / rotate the rider upright.
 6. Bail recovery: proper bail animation/ragdoll-lite and a quicker way back into flow.
-7. Real combo HUD in ui/ (the stacked flashes still live in the debug overlay). Carve points with the multiplier make halfpipe combos very large (~10k vs ~2k elsewhere); rebalance scores.
+7. Real combo HUD in ui/ (the stacked flashes still live in the debug overlay).
 8. Riding into a wall on the ground at an angle kills nearly all speed (pre-existing ground_move clamp); make it a glancing slide.

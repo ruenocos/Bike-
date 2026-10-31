@@ -80,8 +80,14 @@ func enter(msg: Dictionary) -> void:
 
 	match grade:
 		&"perfect":
-			player.speed = minf(player.speed * (1.0 + t.perfect_bonus), t.max_speed)
-			player.combo.add_action(t.perfect_landing_score)
+			# No speed bonus coming back from a lip air: the halfpipe would grow every wall.
+			var bonus: float = t.lip_air_perfect_bonus if msg.get("lip_air", false) else t.perfect_bonus
+			player.speed = minf(player.speed * (1.0 + bonus), t.max_speed)
+			# Lip-air landings score but don't raise the multiplier (see ComboTracker).
+			if msg.get("lip_air", false):
+				player.combo.add_points(t.perfect_landing_score)
+			else:
+				player.combo.add_action(t.perfect_landing_score)
 			player.hit_stop(t.hit_stop_perfect)
 			player.camera_rig.punch()
 		&"good":

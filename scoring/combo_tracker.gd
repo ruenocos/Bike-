@@ -2,10 +2,12 @@ class_name ComboTracker
 extends Node
 ## Combo scoring. Child of Player; states call these functions (call down).
 ##
-## A combo is a chain of actions (tricks, grinds, lip airs, perfect landings).
-## Carving a transition adds points per second without being an action.
-## Score = sum of action points x multiplier, multiplier = number of actions
-## (capped). Plain riding for combo_drop_time banks it into the run total.
+## A combo is a chain of actions (tricks, grinds, perfect landings).
+## Some things only add points without raising the multiplier: carving a
+## transition (per second), lip airs and their landings. The halfpipe chains
+## those endlessly, so as actions they made pipe combos ~5x anything else.
+## Score = sum of points x multiplier, multiplier = number of actions
+## (at least 1, capped). Plain riding for combo_drop_time banks it into the run total.
 ## A bail drops it and the points are lost.
 
 var player: Player
@@ -25,20 +27,26 @@ func setup(owner_player: Player) -> void:
 
 
 func is_active() -> bool:
-	return actions > 0
+	return actions > 0 or points > 0.0
 
 
 func get_multiplier() -> int:
-	return mini(actions, player.tuning.combo_multiplier_cap)
+	return clampi(actions, 1, player.tuning.combo_multiplier_cap)
 
 
 func get_total() -> int:
 	return floori(points) * get_multiplier()
 
 
-## One action: a trick, a grind, a lip air, a perfect landing.
+## One action: a trick, a grind, a perfect landing.
 func add_action(score: int) -> void:
 	actions += 1
+	points += score
+	timer = player.tuning.combo_drop_time
+
+
+## Points that keep the combo going but don't raise the multiplier (lip airs).
+func add_points(score: int) -> void:
 	points += score
 	timer = player.tuning.combo_drop_time
 

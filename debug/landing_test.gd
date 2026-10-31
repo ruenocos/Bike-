@@ -7,7 +7,9 @@ extends Node
 ## Add --landing-trace to print the player every 0.1 s, and
 ## --landing-only=<text> to run only scenarios whose name contains <text>.
 ##
-## Each scenario: where to start, heading (0 = -Z, downhill), speed, inputs
+## Each scenario: where to start ("pos", or "marker" = a node under the
+## track's Markers plus an "offset" in its frame, +z = uphill, so scenarios
+## follow the track when it's edited), heading (0 = -Z, downhill), speed, inputs
 ## as [time, action, strength] (strength 0 releases), and whether a bail is
 ## the expected result. "hop_on_air" holds hop until the bike leaves the
 ## ground, then releases it: a perfectly timed coyote hop off a lip.
@@ -15,71 +17,116 @@ extends Node
 ## lands; "expect_no_landing" fails it if the bike leaves the ground at all.
 ## Halfpipe: "lip_min" lip airs needed, "carve_min" seconds of carving needed,
 ## "grades" lists the only grades allowed, "trick_on_lip" flicks that trick
-## the moment a lip air starts, "expect_trick" needs a completed trick,
+## the moment a lip air starts ("trick_on_air": the moment you leave the
+## ground), "expect_trick" needs a completed trick, "speed_max" fails if the
+## speed on the ground ever goes above it,
 ## "pump_min" needs that many pumps, "end_in_pipe" fails if the rider ends
 ## up on a deck or outside the pipe (|x| >= 8).
 
 const SCENARIOS: Array[Dictionary] = [
-	{"name": "flat deck hop, min charge", "pos": Vector3(0, 25.1, 12), "speed": 14.0,
-		"inputs": [[0.2, &"hop", 1.0], [0.21, &"hop", 0.0]], "time": 2.0},
-	{"name": "flat deck hop, full charge", "pos": Vector3(0, 25.1, 12), "speed": 14.0,
-		"inputs": [[0.2, &"hop", 1.0], [0.5, &"hop", 0.0]], "time": 2.0},
-	{"name": "flat deck hop, full charge, 18 m/s", "pos": Vector3(0, 25.1, 12), "speed": 18.0,
+	{"name": "flat deck hop, min charge", "marker": "Deck", "speed": 14.0,
+		"inputs": [[0.2, &"hop", 1.0], [0.21, &"hop", 0.0]], "time": 1.6},
+	{"name": "flat deck hop, full charge", "marker": "Deck", "speed": 14.0,
 		"inputs": [[0.2, &"hop", 1.0], [0.5, &"hop", 0.0]], "time": 1.6},
-	{"name": "flat deck hop, full charge, 3 m/s", "pos": Vector3(0, 25.1, 12), "speed": 3.0,
+	{"name": "flat deck hop, full charge, 18 m/s", "marker": "Deck", "speed": 18.0,
+		"inputs": [[0.2, &"hop", 1.0], [0.5, &"hop", 0.0]], "time": 1.4},
+	{"name": "flat deck hop, full charge, 3 m/s", "marker": "Deck", "speed": 3.0,
 		"inputs": [[0.2, &"hop", 1.0], [0.5, &"hop", 0.0]], "time": 2.0},
-	{"name": "slope hop, min charge", "pos": Vector3(0, 30, -90), "speed": 25.0,
+	# The drop-in (flat -> 35 deg -> 23 deg) is curved top and bottom: no air.
+	{"name": "drop-in roll-in, 18 m/s", "marker": "Deck", "speed": 18.0,
+		"inputs": [], "expect_no_landing": true, "time": 3.0},
+	{"name": "drop-in hop at the top, 16 m/s", "marker": "DropIn", "offset": Vector3(0, 0, 12), "speed": 16.0,
+		"inputs": [[0.1, &"hop", 1.0], [0.4, &"hop", 0.0]], "expect_landing": true, "time": 2.5},
+	# Main descent (23 deg). Offsets are in the marker frame: +z = uphill.
+	{"name": "slope hop, min charge, 25 m/s", "marker": "Kicker1", "offset": Vector3(0, 0, -15), "speed": 25.0,
 		"inputs": [[0.3, &"hop", 1.0], [0.31, &"hop", 0.0]], "time": 1.5, "expect_landing": true},
-	{"name": "slope hop, full charge", "pos": Vector3(0, 30, -90), "speed": 25.0,
+	{"name": "slope hop, full charge, 25 m/s", "marker": "Kicker1", "offset": Vector3(0, 0, -15), "speed": 25.0,
 		"inputs": [[0.3, &"hop", 1.0], [0.6, &"hop", 0.0]], "time": 2.0},
-	{"name": "slope kicker, no input, 22 m/s", "pos": Vector3(0, 30, -58), "speed": 22.0,
-		"inputs": [], "time": 2.5},
-	{"name": "slope kicker, no input, 26 m/s", "pos": Vector3(0, 30, -58), "speed": 26.0,
-		"inputs": [], "time": 2.5},
-	{"name": "slope kicker, full hop on lip", "pos": Vector3(0, 30, -58), "speed": 24.0,
-		"inputs": [[0.1, &"hop", 1.0]], "hop_on_air": true, "time": 2.5},
-	{"name": "runout kicker -> tabletop, 15 m/s", "pos": Vector3(0, 5, -145), "speed": 15.0,
+	{"name": "slope hop, min charge, 52 m/s", "marker": "Kicker2", "offset": Vector3(0, 0, -10), "speed": 52.0,
+		"inputs": [[0.2, &"hop", 1.0], [0.21, &"hop", 0.0]], "time": 1.2, "expect_landing": true},
+	{"name": "slope hop, full charge, 52 m/s", "marker": "Kicker2", "offset": Vector3(0, 0, -10), "speed": 52.0,
+		"inputs": [[0.2, &"hop", 1.0], [0.5, &"hop", 0.0]], "time": 1.6, "expect_landing": true},
+	{"name": "rollers, pumping, 45 m/s (no air)", "marker": "Rollers", "offset": Vector3(0, 0, 5), "speed": 45.0,
+		"inputs": [[0.10, &"lean_forward", 1.0], [0.17, &"lean_forward", 0.0], [0.25, &"lean_forward", 1.0], [0.32, &"lean_forward", 0.0], [0.40, &"lean_forward", 1.0], [0.47, &"lean_forward", 0.0], [0.55, &"lean_forward", 1.0], [0.62, &"lean_forward", 0.0], [0.70, &"lean_forward", 1.0], [0.77, &"lean_forward", 0.0], [0.85, &"lean_forward", 1.0], [0.92, &"lean_forward", 0.0], [1.00, &"lean_forward", 1.0], [1.07, &"lean_forward", 0.0], [1.15, &"lean_forward", 1.0], [1.22, &"lean_forward", 0.0], [1.30, &"lean_forward", 1.0], [1.37, &"lean_forward", 0.0], [1.45, &"lean_forward", 1.0], [1.52, &"lean_forward", 0.0]],
+		"pump_min": 2, "expect_no_landing": true, "time": 1.7},
+	{"name": "rollers, hop on a crest, 50 m/s", "marker": "Rollers", "offset": Vector3(0, 0, -16), "speed": 50.0,
+		"inputs": [[0.1, &"hop", 1.0], [0.4, &"hop", 0.0]], "expect_landing": true, "time": 1.6},
+	# Kickers: 12 deg lips, so landing back on the 23 deg slope is the natural perfect.
+	# Slow, the 0.8 m drop off the lip dominates (good); from ~30 m/s the slope catches you (perfect).
+	{"name": "kicker 1, no input, 22 m/s", "marker": "Kicker1", "offset": Vector3(0, 0, 15), "speed": 22.0,
+		"inputs": [], "grades": [&"perfect", &"good"], "expect_landing": true, "time": 1.8},
+	{"name": "kicker 1, no input, 32 m/s", "marker": "Kicker1", "offset": Vector3(0, 0, 20), "speed": 32.0,
+		"inputs": [], "grades": [&"perfect"], "expect_landing": true, "time": 1.8},
+	{"name": "kicker 1, no input, 40 m/s", "marker": "Kicker1", "offset": Vector3(0, 0, 25), "speed": 40.0,
+		"inputs": [], "grades": [&"perfect"], "expect_landing": true, "time": 2.0},
+	{"name": "kicker 1, no input, 50 m/s", "marker": "Kicker1", "offset": Vector3(0, 0, 25), "speed": 50.0,
+		"inputs": [], "grades": [&"perfect"], "expect_landing": true, "time": 2.0},
+	{"name": "kicker 2, no input, 56 m/s", "marker": "Kicker2", "offset": Vector3(0, 0, 25), "speed": 56.0,
+		"inputs": [], "grades": [&"perfect"], "expect_landing": true, "time": 2.0},
+	{"name": "kicker 1, Frontloop off the lip, 48 m/s", "marker": "Kicker1", "offset": Vector3(0, 0, 25), "speed": 48.0,
+		"inputs": [], "trick_on_air": &"trick_up", "expect_trick": true, "grades": [&"perfect", &"good"], "expect_landing": true, "time": 2.2},
+	{"name": "kicker 1, full hop on lip, 24 m/s", "marker": "Kicker1", "offset": Vector3(0, 0, 15), "speed": 24.0,
+		"inputs": [[0.1, &"hop", 1.0]], "hop_on_air": true, "grades": [&"perfect", &"good"], "time": 2.5},
+	{"name": "kicker 2, full hop on lip, 52 m/s", "marker": "Kicker2", "offset": Vector3(0, 0, 25), "speed": 52.0,
+		"inputs": [[0.1, &"hop", 1.0]], "hop_on_air": true, "grades": [&"perfect", &"good"], "expect_landing": true, "time": 2.6},
+	{"name": "kicker 2, hop + Frontloop + Whirl, 52 m/s", "marker": "Kicker2", "offset": Vector3(0, 0, 25), "speed": 52.0,
+		"inputs": [[0.1, &"hop", 1.0], [1.1, &"trick_left", 1.0], [1.2, &"trick_left", 0.0]], "hop_on_air": true,
+		"trick_on_air": &"trick_up", "expect_trick": true, "grades": [&"perfect", &"good"], "expect_landing": true, "time": 2.6},
+	# Berms: banked S-turn.
+	{"name": "berm S, no steering, 50 m/s", "marker": "Berm", "offset": Vector3(0, 0, 5), "speed": 50.0,
+		"inputs": [], "time": 2.6},
+	{"name": "berm S, hop into the apex, 50 m/s", "marker": "Berm", "offset": Vector3(0, 0, -25), "speed": 50.0,
+		"inputs": [[0.1, &"hop", 1.0], [0.4, &"hop", 0.0]], "expect_landing": true, "time": 1.8},
+	{"name": "bottom transition, 56 m/s (no air)", "marker": "Bottom", "offset": Vector3(0, 0, 45), "speed": 56.0,
+		"inputs": [], "expect_no_landing": true, "time": 1.4},
+	# Runout features (tabletop z -220..-258, rail x -8, halfpipe z -342..-412).
+	{"name": "runout kicker -> tabletop, 15 m/s", "pos": Vector3(0, 5, -205), "speed": 15.0,
 		"inputs": [], "time": 3.5},
-	{"name": "runout kicker -> tabletop, 30 m/s", "pos": Vector3(0, 5, -145), "speed": 30.0,
+	{"name": "runout kicker -> tabletop, 30 m/s", "pos": Vector3(0, 5, -205), "speed": 30.0,
 		"inputs": [], "time": 3.0},
-	{"name": "roll off tabletop side, 8 m/s", "pos": Vector3(1, 5, -175), "heading": -PI / 2.0, "speed": 8.0,
+	{"name": "runout kicker -> tabletop, 45 m/s", "pos": Vector3(0, 5, -195), "speed": 45.0,
+		"inputs": [], "time": 3.0},
+	{"name": "roll off tabletop side, 8 m/s", "pos": Vector3(1, 5, -235), "heading": -PI / 2.0, "speed": 8.0,
 		"inputs": [], "time": 1.5},
-	{"name": "roll off tabletop side diagonal, 20 m/s", "pos": Vector3(1, 5, -172), "heading": -PI / 4.0, "speed": 20.0,
+	{"name": "roll off tabletop side diagonal, 20 m/s", "pos": Vector3(1, 5, -232), "heading": -PI / 4.0, "speed": 20.0,
 		"inputs": [], "time": 1.5},
 	# Frontloop flicked late, ~85% done at touchdown: completed for you, sketchy.
-	{"name": "full hop + late Frontloop (auto-complete)", "pos": Vector3(0, 25.1, 12), "speed": 14.0,
+	{"name": "full hop + late Frontloop (auto-complete)", "marker": "Deck", "speed": 14.0,
 		"inputs": [[0.2, &"hop", 1.0], [0.5, &"hop", 0.0], [0.65, &"trick_up", 1.0], [0.75, &"trick_up", 0.0]],
 		"time": 1.8},
 	# Should bail: flick a 0.75 s Frontloop off a tiny hop (lands ~55% done).
-	{"name": "min hop + Frontloop (nose-dive)", "pos": Vector3(0, 25.1, 12), "speed": 14.0,
+	{"name": "min hop + Frontloop (nose-dive)", "marker": "Deck", "speed": 14.0,
 		"inputs": [[0.2, &"hop", 1.0], [0.21, &"hop", 0.0], [0.3, &"trick_up", 1.0], [0.4, &"trick_up", 0.0]],
 		"time": 1.2, "expect_bail": true},
 	# Bail, then the same mistake again inside bail_immunity: second one is sketchy.
-	{"name": "nose-dive, then again while immune", "pos": Vector3(0, 25.1, 12), "speed": 10.0,
+	{"name": "nose-dive, then again while immune", "marker": "Deck", "speed": 10.0,
 		"inputs": [[0.2, &"hop", 1.0], [0.21, &"hop", 0.0], [0.3, &"trick_up", 1.0], [0.4, &"trick_up", 0.0],
 			[1.35, &"hop", 1.0], [1.36, &"hop", 0.0], [1.45, &"trick_up", 1.0], [1.55, &"trick_up", 0.0]],
 		"time": 2.4, "expect_bail": true},
-	# Halfpipe (z -282..-352, flat bottom x -4..4, full height from z -294 to -340).
-	{"name": "halfpipe straight up -> lip air, 20 m/s", "pos": Vector3(0, 1, -317), "heading": -PI / 2.0, "speed": 20.0,
+	# Halfpipe (z -342..-412, flat bottom x -4..4, full height from z -354 to -400).
+	{"name": "halfpipe straight up -> lip air, 20 m/s", "pos": Vector3(0, 1, -377), "heading": -PI / 2.0, "speed": 20.0,
 		"inputs": [], "lip_min": 1, "grades": [&"perfect", &"good"], "expect_landing": true, "time": 2.0},
-	{"name": "halfpipe carve 45 deg -> lip air, 24 m/s", "pos": Vector3(0, 1, -298), "heading": -PI / 4.0, "speed": 24.0,
+	{"name": "halfpipe carve 45 deg -> lip air, 24 m/s", "pos": Vector3(0, 1, -358), "heading": -PI / 4.0, "speed": 24.0,
 		"inputs": [], "lip_min": 1, "grades": [&"perfect", &"good"], "expect_landing": true, "time": 2.2},
-	{"name": "halfpipe slow carve, no air, 13 m/s", "pos": Vector3(0, 1, -298), "heading": -PI / 4.0, "speed": 13.0,
+	{"name": "halfpipe slow carve, no air, 13 m/s", "pos": Vector3(0, 1, -358), "heading": -PI / 4.0, "speed": 13.0,
 		"inputs": [], "carve_min": 0.2, "expect_no_landing": true, "time": 2.0},
-	{"name": "halfpipe lip air + Whirl Left, 22 m/s", "pos": Vector3(0, 1, -317), "heading": -PI / 2.0, "speed": 22.0,
+	{"name": "halfpipe lip air + Whirl Left, 22 m/s", "pos": Vector3(0, 1, -377), "heading": -PI / 2.0, "speed": 22.0,
 		"inputs": [], "trick_on_lip": &"trick_left", "expect_trick": true, "lip_min": 1, "grades": [&"perfect", &"good"],
 		"expect_landing": true, "time": 2.0},
-	{"name": "halfpipe pump on the way down, 12 m/s", "pos": Vector3(0, 1, -317), "heading": -PI / 2.0, "speed": 12.0,
+	{"name": "halfpipe pump on the way down, 12 m/s", "pos": Vector3(0, 1, -377), "heading": -PI / 2.0, "speed": 12.0,
 		"inputs": [[0.9, &"lean_forward", 1.0], [1.0, &"lean_forward", 0.0], [1.2, &"lean_forward", 1.0], [1.3, &"lean_forward", 0.0]],
 		"pump_min": 1, "expect_no_landing": true, "time": 2.0},
 	# Barely reaching the coping must not roll over it onto the deck.
-	{"name": "halfpipe stall at the lip, 15.5 m/s", "pos": Vector3(0, 1, -317), "heading": -PI / 2.0, "speed": 15.5,
+	{"name": "halfpipe stall at the lip, 15.5 m/s", "pos": Vector3(0, 1, -377), "heading": -PI / 2.0, "speed": 15.5,
 		"inputs": [], "lip_min": 1, "grades": [&"perfect", &"good"], "end_in_pipe": true, "time": 2.0},
-	{"name": "halfpipe shallow carve over the lip, 18.6 m/s", "pos": Vector3(0, 1, -300), "heading": -0.95, "speed": 18.6,
+	{"name": "halfpipe shallow carve over the lip, 18.6 m/s", "pos": Vector3(0, 1, -360), "heading": -0.95, "speed": 18.6,
 		"inputs": [], "grades": [&"perfect", &"good"], "end_in_pipe": true, "time": 2.0},
-	{"name": "runout -> halfpipe entry, 20 m/s", "pos": Vector3(0, 1, -268), "heading": 0.0, "speed": 20.0,
+	# Lip airs must not grow the speed: no perfect bonus coming back in.
+	{"name": "halfpipe wall to wall, no speed gain, 20 m/s", "pos": Vector3(0, 1, -377), "heading": -PI / 2.0, "speed": 20.0,
+		"inputs": [], "lip_min": 3, "speed_max": 20.0, "time": 6.0},
+	{"name": "runout -> halfpipe entry, 20 m/s", "pos": Vector3(0, 1, -328), "heading": 0.0, "speed": 20.0,
 		"inputs": [], "expect_no_landing": true, "time": 2.5},
-	{"name": "halfpipe entry ramp off the line, 15 m/s", "pos": Vector3(7, 1, -272), "heading": 0.0, "speed": 15.0,
+	{"name": "halfpipe entry ramp off the line, 15 m/s", "pos": Vector3(7, 1, -332), "heading": 0.0, "speed": 15.0,
 		"inputs": [], "time": 2.0},
 ]
 
@@ -100,8 +147,10 @@ var _lip_airs: int = 0
 var _tricks: int = 0
 var _carve_time: float = 0.0
 var _pumps_at_start: int = 0
-## Ticks since the on-lip trick flick was pressed (-1 = not yet).
+## Ticks since the on-lip / on-air trick flick was pressed (-1 = not yet).
 var _flick_ticks: int = -1
+var _flick_action: StringName = &""
+var _max_ground_speed: float = 0.0
 var _rows: PackedStringArray = PackedStringArray()
 var _failed: int = 0
 var _trace: bool = false
@@ -123,6 +172,9 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	# CSG builds its collision a frame or two after the scene starts.
+	if _index < 0 and Engine.get_physics_frames() < 5:
+		return
 	if _index < 0 or _time >= float(SCENARIOS[_index]["time"]):
 		if _index >= 0:
 			_finish_scenario()
@@ -160,13 +212,17 @@ func _physics_process(delta: float) -> void:
 				_player.velocity.snappedf(0.1), _player.ground_normal.snappedf(0.01), state])
 	if _time > SETTLE_TIME and state == &"Air":
 		_left_ground_ever = true
+		if s.has("trick_on_air") and _flick_ticks < 0:
+			_flick(StringName(s["trick_on_air"]))
+	if _time > SETTLE_TIME and state == &"Ride":
+		_max_ground_speed = maxf(_max_ground_speed, _player.speed)
 	if (state == &"Ride" or state == &"Land") and _player.ground_normal.y < cos(deg_to_rad(_player.tuning.carve_min_angle_deg)):
 		_carve_time += delta
 	# The flick is a tap: release it two ticks later.
 	if _flick_ticks >= 0:
 		_flick_ticks += 1
 		if _flick_ticks == 2:
-			Input.action_release(StringName(s["trick_on_lip"]))
+			Input.action_release(_flick_action)
 
 
 func _on_lip_air() -> void:
@@ -175,8 +231,13 @@ func _on_lip_air() -> void:
 	_lip_airs += 1
 	var s: Dictionary = SCENARIOS[_index]
 	if s.has("trick_on_lip") and _flick_ticks < 0:
-		Input.action_press(StringName(s["trick_on_lip"]))
-		_flick_ticks = 0
+		_flick(StringName(s["trick_on_lip"]))
+
+
+func _flick(action: StringName) -> void:
+	_flick_action = action
+	Input.action_press(action)
+	_flick_ticks = 0
 
 
 func _start_scenario() -> void:
@@ -196,9 +257,15 @@ func _start_scenario() -> void:
 	_carve_time = 0.0
 	_pumps_at_start = _player.pump_count
 	_flick_ticks = -1
+	_max_ground_speed = 0.0
 
 	# Drop onto the ground under the start point.
-	var start: Vector3 = s["pos"]
+	var start: Vector3
+	if s.has("marker"):
+		var marker: Node3D = get_tree().current_scene.get_node("Markers/" + String(s["marker"])) as Node3D
+		start = marker.global_transform * (s.get("offset", Vector3.ZERO) as Vector3)
+	else:
+		start = s["pos"]
 	var query: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(start + Vector3.UP * 50.0, start + Vector3.DOWN * 100.0)
 	query.exclude = [_player.get_rid()]
 	var hit: Dictionary = _player.get_world_3d().direct_space_state.intersect_ray(query)
@@ -207,10 +274,17 @@ func _start_scenario() -> void:
 
 	var p: Player = _player
 	p.place(start, float(s.get("heading", 0.0)), float(s["speed"]))
+	if not hit.is_empty():
+		# Start moving along the ground (on a slope a flat start velocity would launch you).
+		p.ground_normal = hit["normal"]
+		p.set_ground_motion(p.get_heading_dir(), p.speed)
+		p.velocity = p.ground_dir * p.speed
 	p.hop_charge = 0.0
 	p.jump_buffer_timer = 0.0
 	p.combo.drop()
-	p.state_machine.transition_to(&"Ride", {})
+	# Air, not Ride: the body still has the previous scenario's floor contact
+	# for a tick. Touching down this close is a soft roll-in (no grade).
+	p.state_machine.transition_to(&"Air", {})
 	# After the transition: leaving Bail starts the immunity window.
 	p.bail_immunity_timer = 0.0
 
@@ -245,6 +319,8 @@ func _finish_scenario() -> void:
 		ok = false
 	if s.get("end_in_pipe", false) and absf(_player.global_position.x) >= 8.0:
 		ok = false
+	if s.has("speed_max") and _max_ground_speed > float(s["speed_max"]):
+		ok = false
 	if s.has("grades"):
 		var allowed: Array = s["grades"]
 		for grade: StringName in _grades:
@@ -255,6 +331,8 @@ func _finish_scenario() -> void:
 	var landings: String = ", ".join(_landings) if not _landings.is_empty() else "roll-in only"
 	if _lip_airs > 0 or _carve_time > 0.0:
 		landings = "lip airs %d, carve %.2fs, tricks %d, %s" % [_lip_airs, _carve_time, _tricks, landings]
+	if s.has("speed_max"):
+		landings = "max ground speed %.1f, %s" % [_max_ground_speed, landings]
 	if s.has("pump_min"):
 		landings = "pumps %d, %s" % [_player.pump_count - _pumps_at_start, landings]
 	_rows.append("%-4s | %-40s | %s" % ["ok" if ok else "FAIL", s["name"], landings])

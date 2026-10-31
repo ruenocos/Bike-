@@ -25,7 +25,7 @@ func enter(msg: Dictionary) -> void:
 	_lip_position = msg.get("lip_position", Vector3.ZERO)
 	player.transition_normal = _lip_normal
 	if _lip_normal != Vector3.ZERO:
-		player.combo.add_action(t.lip_air_score)
+		player.combo.add_points(t.lip_air_score)
 		Events.lip_air.emit()
 
 
