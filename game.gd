@@ -152,6 +152,15 @@ func _ready() -> void:
 	bike = _saved_bike()
 	if args.has("--autopilot"):
 		add_child(preload("res://debug/autopilot.gd").new())
+	# Look debugging: switch single parts of the scenery off.
+	if args.has("--debug-nofog"):
+		world_env_node().environment.fog_enabled = false
+	if args.has("--debug-nofar"):
+		far_ground.visible = false
+	if args.has("--debug-nomountains"):
+		mountains.visible = false
+	if args.has("--debug-shadow2x"):
+		($DirectionalLight3D as DirectionalLight3D).directional_shadow_max_distance *= 2.0
 	# Bots and quick looks (--seed, --biome, --skip-menu) skip the title screen.
 	if args.has("--autopilot") or args.has("--skip-menu") or seed_arg >= 0 or biome_offset != 0:
 		start_run(seed_arg)
@@ -346,6 +355,10 @@ func _on_finished() -> void:
 	rerolls = mini(rerolls + earned, rules.max_rerolls)
 	summary.open(stage_index + 1, stats.time, stats.best_combo, stats.score, player.combo.run_total,
 			stats.gates, stats.gates_total, earned, rerolls)
+
+
+func world_env_node() -> WorldEnvironment:
+	return $WorldEnvironment as WorldEnvironment
 
 
 func _add_stage_stats(distance: float) -> void:

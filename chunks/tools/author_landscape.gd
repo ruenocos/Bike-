@@ -262,11 +262,13 @@ static func set_pieces() -> Array[Dictionary]:
 		"paths": [[Vector2(-30, 0), Vector2(-30, 420)], [Vector2(0, 0), Vector2(0, 420)], [Vector2(30, 0), Vector2(30, 420)]],
 		"dense": [Vector3(150, 330, 3.0)], "chokes": 2, "gap_gates": 2, "clusters": 3.5, "mix": {"tree": 5, "rock": 3}})
 	# Ash Quarry: the bridge gap. Two raised ramps on the left with a gap
-	# between them (jump it for the gate) over a deep cut; or the low road.
+	# between them (jump it for the gate) over a cut; or the low road. The cut
+	# is wide with gentle sides (5 m deep over ~13 m): come up short and you
+	# ride out of it, slower.
 	out.append({"file": "set_bridge_gap", "length": 400.0, "difficulty": 2, "seed": 167, "noise": 1.2,
 		"lines_at": [{"name": "BridgeIn", "points": [Vector3(-26, 70, 0), Vector3(-26, 140, 5), Vector3(-26, 196, 6)], "width": 14.0, "flat": 0.45},
 			{"name": "BridgeOut", "points": [Vector3(-26, 236, 3), Vector3(-26, 290, 2), Vector3(-26, 330, 0)], "width": 14.0, "flat": 0.45}],
-		"gullies_at": [{"name": "Cut", "points": [Vector2(-70, 216), Vector2(0, 216)], "width": 26.0, "depth": 8.0, "flat": 0.25}],
+		"gullies_at": [{"name": "Cut", "points": [Vector2(-70, 216), Vector2(0, 216)], "width": 38.0, "depth": 5.0, "flat": 0.3}],
 		"gates_at": [Vector3(-26, 216, 9.0)],
 		"keep_out": [Vector3(-50, 216, 18), Vector3(-22, 216, 18)],
 		"paths": [[Vector2(0, 0), Vector2(-18, 50), Vector2(-26, 100), Vector2(-26, 320), Vector2(0, 400)],

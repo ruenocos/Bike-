@@ -37,6 +37,9 @@ func apply(b: Biome) -> void:
 				# The sky below the horizon = the fog, so nothing far reads
 				# as a band against it.
 				sky.ground_horizon_color = b.fog_color
+				# The sky's whole lower half too: beyond the valley there's no
+				# ground, and its old dark brown read as a flat band.
+				sky.ground_bottom_color = b.fog_color.darkened(0.08)
 		env.fog_light_color = b.fog_color
 		env.fog_density = b.fog_density
 		env.ambient_light_energy = b.ambient_energy

@@ -12,6 +12,8 @@ extends Node3D
 ##     trick; still held at touchdown it's a bail
 ##   - Gate Magnet pulls you through a gate 5 m off your line (without it
 ##     you miss it)
+##   - bridge gap (v0.24): launching short off the first ramp drops you into
+##     the cut, and you ride out of it (no crash, keep moving)
 ##   - meta (v0.14): a run that reaches stage 3 unlocks the Dart and reports
 ##     new bests; the save file isn't touched headless
 ## Run:  <exe> --headless --path . --fixed-fps 60 res://debug/powers_test.tscn
@@ -62,6 +64,7 @@ func _run() -> void:
 	await _no_hander_case(2)
 	await _gate_case("gate 5 m off the line, Gate Magnet: pulled through", 10.0, true)
 	await _gate_case("gate 5 m off the line, no magnet: missed", 0.0, false)
+	await _bridge_short_case()
 	_save_case()
 	if _failures.is_empty():
 		print("POWERS TEST PASSED")
@@ -294,3 +297,34 @@ func _no_hander_case(mode: int) -> void:
 	print("case | no hander, %s | tricks %s, bails %d" % [label, tricks, _bails])
 	for i: int in 90:
 		await get_tree().physics_frame
+
+
+func _bridge_short_case() -> void:
+	var chunk: Node3D = (load("res://chunks/landscape/set_bridge_gap.tscn") as PackedScene).instantiate() as Node3D
+	chunk.position = Vector3(1000.0, 0.0, 0.0)
+	add_child(chunk)
+	for i: int in 4:
+		await get_tree().physics_frame
+	var line: RideLine = chunk.get_node("Lines/Path1") as RideLine
+	var pts: PackedVector3Array = line.get_global_points()
+	var k: int = int(pts.size() * 0.4)
+	var dir: Vector3 = (pts[k + 2] - pts[k]).normalized()
+	_player.tuning = TUNING.duplicate() as PlayerTuning
+	_player.set_physics_process(true)
+	# Only 25 m/s at the end of the first ramp: far too slow to clear the gap.
+	_player.place(pts[k] + Vector3.UP * 0.3, atan2(-dir.x, -dir.z), 25.0)
+	_player.velocity = dir * 25.0
+	_player.state_machine.transition_to(&"Air", {})
+	_bails = 0
+	var end_d: float = 0.0
+	for i: int in 60 * 10:
+		await get_tree().physics_frame
+		LineFollower.steer(_player, line, 12.0)
+	var far: int = line.nearest_index(_player.global_position)
+	if far < int(pts.size() * 0.75) or _bails > 0:
+		_fail("bridge gap, short: stuck in the cut (reached %d%% of the way, bails %d, %s, speed %.1f)" % [roundi(100.0 * far / pts.size()), _bails, _player.last_bail_reason, _player.speed])
+	print("case | bridge gap, 25 m/s short launch | reached %d%% of the way, bails %d" % [roundi(100.0 * far / pts.size()), _bails])
+	Input.action_release(&"steer_left")
+	Input.action_release(&"steer_right")
+	chunk.queue_free()
+
