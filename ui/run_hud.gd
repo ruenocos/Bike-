@@ -38,6 +38,11 @@ extends CanvasLayer
 @onready var title_card: Control = $TitleCard
 @onready var shield_label: Label = $ShieldLabel
 @onready var fade: ColorRect = $Fade
+@onready var speed_value: Label = $SpeedPanel/Value
+@onready var speed_fill: ColorRect = $SpeedPanel/Bar/Fill
+@onready var combo_panel: Control = $ComboPanel
+@onready var combo_mult: Label = $ComboPanel/Mult
+@onready var combo_points: Label = $ComboPanel/Points
 @onready var title_stage: Label = $TitleCard/StageNo
 @onready var title_name: Label = $TitleCard/Name
 @onready var title_sub: Label = $TitleCard/Sub
@@ -60,6 +65,22 @@ func _process(delta: float) -> void:
 	penalty_label.modulate.a = clampf(_penalty_timer / 0.3, 0.0, 1.0)
 	if _penalty_timer <= 0.0:
 		_penalty_total = 0.0
+
+
+## Speed (km/h + a bar to max) and the running combo (v0.17).
+func update_rider(speed: float, max_speed: float, combo_active: bool, multiplier: int, points: int) -> void:
+	speed_value.text = "%d" % roundi(speed * 3.6)
+	var ratio: float = clampf(speed / maxf(max_speed, 1.0), 0.0, 1.0)
+	speed_fill.size.x = (speed_fill.get_parent() as Control).size.x * ratio
+	speed_fill.color = Color(0.45, 0.9, 1.0).lerp(Color(1.0, 0.82, 0.3), smoothstep(0.75, 1.0, ratio))
+	if combo_active and points > 0:
+		combo_panel.visible = true
+		combo_panel.modulate.a = 1.0
+		combo_mult.text = "x%d" % multiplier
+		combo_points.text = "%d" % points
+	elif combo_panel.visible:
+		combo_panel.modulate.a = maxf(combo_panel.modulate.a - get_process_delta_time() * 3.0, 0.0)
+		combo_panel.visible = combo_panel.modulate.a > 0.0
 
 
 ## Full black (the game draws it for a frame or two before a stage build).

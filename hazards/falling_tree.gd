@@ -29,6 +29,8 @@ extends Node3D
 		if is_node_ready():
 			_set_fall(v)
 
+## Length of the trunk lying down (m; matches the collision capsule).
+@export_range(1.0, 30.0, 0.1, "suffix:m") var trunk_length: float = 10.0
 ## Where the trunk crosses the rider's line (global; bots hop here).
 var crossing: Vector3 = Vector3.ZERO
 var falling: bool = false

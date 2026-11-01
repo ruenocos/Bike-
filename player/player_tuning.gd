@@ -235,6 +235,14 @@ extends Resource
 @export var collapse_speed_scale: float = 1.0
 
 @export_group("Camera")
+## Roll into carves at speed (deg at full steer and max speed, v0.17).
+@export_range(0.0, 15.0, 0.1) var cam_carve_roll_deg: float = 3.5
+## How fast the roll follows the steering (s).
+@export_range(0.01, 1.0, 0.01) var cam_carve_roll_time: float = 0.18
+## Looking down toward the landing while falling (deg at full fall speed).
+@export_range(0.0, 30.0, 0.5) var cam_air_look_down_deg: float = 7.0
+## Falling speed that gives the full look-down (m/s).
+@export_range(1.0, 60.0, 0.5) var cam_air_look_down_speed: float = 25.0
 @export var fov_base: float = 75.0
 @export var fov_max: float = 105.0
 ## FOV follows speed_ratio ^ this (>1 keeps the wide end for real speed).

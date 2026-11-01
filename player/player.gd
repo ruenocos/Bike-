@@ -199,6 +199,11 @@ func get_lean() -> float:
 	return Input.get_axis(&"lean_back", &"lean_forward")
 
 
+## Holding hop only charges after a fresh press (place() disarms it).
+func is_hop_armed() -> bool:
+	return _hop_armed
+
+
 func _update_hop_input(delta: float) -> void:
 	jump_buffer_timer = maxf(jump_buffer_timer - delta, 0.0)
 	coyote_timer = maxf(coyote_timer - delta, 0.0)

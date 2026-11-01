@@ -81,7 +81,7 @@ func _ready() -> void:
 		Events.trick_completed.connect(func(trick_name: String, score: int) -> void: print("t=%6.2f TRICK %s +%d" % [_time, trick_name, score]))
 		Events.grind_started.connect(func() -> void: print("t=%6.2f GRIND" % _time))
 		Events.combo_banked.connect(func(score: int) -> void: print("t=%6.2f BANKED %d" % [_time, score]))
-		Events.bailed.connect(func() -> void: print("t=%6.2f BAILED (%s)" % [_time, _player.last_bail_reason]))
+		Events.bailed.connect(_on_bailed_trace)
 		_builder.finished.connect(func() -> void:
 			var st: StageStats = _game.get_node(^"StageStats") as StageStats
 			print("t=%6.2f FINISH stage %d  gates %d/%d  score %d  rerolls %d" % [_time, int(_game.get("stage_index")) + 1, st.gates, st.gates_total, st.score, int(_game.get("rerolls"))]))
@@ -136,7 +136,7 @@ func _steer(progress: float) -> void:
 	for node: Node in get_tree().get_nodes_in_group(&"hop_hazards"):
 		var tree: FallingTree = node as FallingTree
 		if tree != null and tree.falling and not tree.down and tree.global_position.distance_to(_player.global_position) < 90.0:
-			_shot("v0.16_falling_tree.png", null)
+			_shot("v0.17_falling_tree.png", null)
 	var index: int = _builder.chunk_index_at(progress)
 	var chunk: Chunk = _builder.chunks[index]
 	if is_instance_valid(chunk):
@@ -207,7 +207,18 @@ func _ride(delta: float) -> void:
 	# coyote hop off every kicker lip (more air for tricks).
 	# Only above HOP_MIN_SPEED (not on the start deck), and only for a real
 	# launch: at speed the bike also leaves the ground for a tick here and there.
-	if state == &"Ride" and _player.speed > HOP_MIN_SPEED:
+	# Rails and fallen trunks ahead: inside the release window, don't press
+	# again (the release has to stand for a tick to fire the hop).
+	var hop_target: float = LineFollower.rail_ahead(_player)
+	var release_now: bool = state == &"Ride" and hop_target <= maxf(_player.speed, 1.0) * 0.3
+	if release_now:
+		if Input.is_action_pressed(&"hop"):
+			_release_hop_event()
+	elif state == &"Ride" and Input.is_action_pressed(&"hop") and not _player.is_hop_armed():
+		# Held since before the stage was placed: let go once so the next press
+		# arms it (a held hop from before doesn't count).
+		Input.action_release(&"hop")
+	elif state == &"Ride" and _player.speed > HOP_MIN_SPEED:
 		Input.action_press(&"hop")
 	elif air and not _was_air and Input.is_action_pressed(&"hop"):
 		if float(_player.predict_landing(1.0).get("time", 1.0)) > LAUNCH_AIRTIME:
@@ -216,9 +227,7 @@ func _ride(delta: float) -> void:
 		Input.action_release(&"hop")
 	# Rails are ledges: let go of the (held) hop just before one, and the
 	# rail catches you by itself.
-	if state == &"Ride" and LineFollower.rail_ahead(_player) <= maxf(_player.speed, 1.0) * 0.3:
-		Input.action_release(&"hop")
-	elif state == &"Ride" and LineFollower.rail_ahead(_player) < maxf(_player.speed, 1.0) * 0.6:
+	if not release_now and state == &"Ride" and hop_target < maxf(_player.speed, 1.0) * 0.6:
 		Input.action_press(&"hop")
 	# Tricks: on takeoff, flick one if the predicted airtime allows; queue a
 	# second when there's time for both.
@@ -284,34 +293,34 @@ func _process(_delta: float) -> void:
 	if _shot_dir.is_empty() or _shooting:
 		return
 	if (_menus.get_node(^"StageSummary") as Control).visible and _menu_timer > 1.0:
-		_shot("v0.16_stage_summary.png", null)
+		_shot("v0.17_stage_summary.png", null)
 	elif (_menus.get_node(^"UpgradePicker") as Control).visible and _menu_timer > 1.0:
-		_shot("v0.16_upgrade_picker.png", null)
+		_shot("v0.17_upgrade_picker.png", null)
 	elif (_menus.get_node(^"RunOver") as Control).visible and _menu_timer > 1.0:
-		_shot("v0.16_run_over.png", null)
+		_shot("v0.17_run_over.png", null)
 	if not bool(_game.get("in_stage")) or _builder.chunks.size() < 3:
 		return
 	var progress: float = _game.get("player_progress")
 	if _sprint.active and _sprint.meter > 0.55:
-		_shot("v0.16_sprint_start.png", null)
+		_shot("v0.17_sprint_start.png", null)
 	_landscape_shots(progress)
 	# The join between the 2nd and 3rd chunk, from above, as you ride up to it.
 	var join: float = _builder.chunk_start_distance[2]
-	if progress > join - 60.0 and progress < join - 40.0 and not _shots_taken.has("v0.16_chunk_join.png"):
+	if progress > join - 60.0 and progress < join - 40.0 and not _shots_taken.has("v0.17_chunk_join.png"):
 		var at: Transform3D = _builder.transform_at_distance(join)
 		var eye: Vector3 = at.origin + Vector3.UP * 45.0 + at.basis.x * 40.0 + at.basis.z * 35.0
-		_shot("v0.16_chunk_join.png", _make_camera(eye, at.origin - at.basis.z * 25.0))
+		_shot("v0.17_chunk_join.png", _make_camera(eye, at.origin - at.basis.z * 25.0))
 	# Looking back up the track at you and the collapse behind you.
 	var gap: float = progress - _collapse.distance
-	if _stage_time > 5.0 and gap < 45.0 and gap > 15.0 and not _shots_taken.has("v0.16_collapse_chasing.png"):
+	if _stage_time > 5.0 and gap < 45.0 and gap > 15.0 and not _shots_taken.has("v0.17_collapse_chasing.png"):
 		var me: Transform3D = _builder.transform_at_distance(progress)
 		var eye2: Vector3 = _player.global_position - me.basis.z * 18.0 + Vector3.UP * 7.0 + me.basis.x * 6.0
 		var look: Vector3 = _builder.transform_at_distance(progress - 20.0).origin + Vector3.UP * 4.0
-		_shot("v0.16_collapse_chasing.png", _make_camera(eye2, look))
+		_shot("v0.17_collapse_chasing.png", _make_camera(eye2, look))
 	if _player.catchable_rail != null and _player.state_machine.get_state_name() != &"Grind":
-		_shot("v0.16_grind_prompt.png", null)
+		_shot("v0.17_grind_prompt.png", null)
 	if _player.tricks.is_mid_trick() and _player.tricks.get_progress() > 0.45:
-		_shot("v0.16_trick_air.png", null)
+		_shot("v0.17_trick_air.png", null)
 
 
 ## v0.8 stills: an aerial of the 2nd chunk's split lines, and the rider's
@@ -321,7 +330,7 @@ func _landscape_shots(progress: float) -> void:
 	if progress > start2 - 40.0 and progress < start2 - 20.0:
 		var at: Transform3D = _builder.transform_at_distance(start2 + 150.0)
 		var eye: Vector3 = _builder.transform_at_distance(start2 - 10.0).origin + Vector3.UP * 70.0 + Vector3(40.0, 0.0, 0.0)
-		_shot("v0.16_overview_lines.png", _make_camera(eye, at.origin))
+		_shot("v0.17_overview_lines.png", _make_camera(eye, at.origin))
 	var index: int = _builder.chunk_index_at(progress)
 	var file: String = _builder.chunk_paths[index].get_file().get_basename()
 	var into: float = progress - _builder.chunk_start_distance[index]
@@ -335,12 +344,12 @@ func _landscape_shots(progress: float) -> void:
 		if not file.ends_with(kind):
 			continue
 		if into > moments[kind] and into < moments[kind] + 12.0:
-			_shot("v0.16_%s_ride.png" % kind, null)
+			_shot("v0.17_%s_ride.png" % kind, null)
 		if into > 20.0 and into < 40.0:
 			# High above the chunk's middle, looking down the bend.
 			var mid: Transform3D = _builder.transform_at_distance(_builder.chunk_start_distance[index] + 200.0)
 			var eye2: Vector3 = mid.origin + Vector3.UP * 190.0 + Vector3(mid.basis.z.x, 0.0, mid.basis.z.z).normalized() * 150.0
-			_shot("v0.16_%s_aerial.png" % kind, _make_camera(eye2, mid.origin))
+			_shot("v0.17_%s_aerial.png" % kind, _make_camera(eye2, mid.origin))
 
 
 func _make_camera(eye: Vector3, target: Vector3) -> Camera3D:
@@ -376,3 +385,27 @@ func _shot(file_name: String, camera: Camera3D) -> void:
 		if previous != null:
 			previous.current = true
 	_shooting = false
+
+
+## Trace line for a bail: the reason, the chunk, how far into it and the
+## heading against the stage line (where to look when the bot crashes).
+func _on_bailed_trace() -> void:
+	var progress: float = _builder.progress_at(_player.global_position)
+	var index: int = _builder.chunk_index_at(progress)
+	var into: float = progress - _builder.chunk_start_distance[index]
+	var along: Vector3 = -_builder.transform_at_distance(progress).basis.z
+	var going: Vector3 = Vector3(_player.velocity.x, 0.0, _player.velocity.z)
+	var angle: float = rad_to_deg(going.angle_to(Vector3(along.x, 0.0, along.z))) if going.length() > 0.5 else 0.0
+	print("t=%6.2f BAILED (%s) in %s at %.0f m, %.0f deg off the stage line" % [_time, _player.last_bail_reason,
+		_builder.chunk_paths[index].get_file().get_basename(), into, angle])
+
+
+## Lets go of hop through a real input event (like a pad): a plain
+## action_release from inside the physics tick doesn't always read as
+## "just released" to the player, so the hop didn't fire.
+func _release_hop_event() -> void:
+	var e: InputEventAction = InputEventAction.new()
+	e.action = &"hop"
+	e.pressed = false
+	Input.parse_input_event(e)
+

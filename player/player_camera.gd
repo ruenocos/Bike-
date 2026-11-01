@@ -47,6 +47,10 @@ var _yaw_rate: float = 0.0
 var _last_heading: float = 0.0
 
 
+## Carve roll and air look-down now (radians, v0.17).
+var _roll: float = 0.0
+var _look_down: float = 0.0
+
 func _ready() -> void:
 	# We move this node ourselves in _process, so physics interpolation must not fight us.
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
@@ -178,6 +182,9 @@ func _process(delta: float) -> void:
 		_shake_timer = maxf(_shake_timer - delta, 0.0)
 		var amount: float = _shake_strength * _shake_timer / _shake_time
 		camera.position += Vector3(randf_range(-amount, amount), randf_range(-amount, amount), 0.0)
+	_update_lean(delta, speed_ratio, grounded)
+	camera.rotation.z += _roll
+	camera.rotation.x -= _look_down
 
 
 ## Slope pitch to aim for: the direction you ride on the ground, or in the
@@ -200,6 +207,15 @@ func _update_slope_target(grounded: bool) -> void:
 
 
 ## Frame-rate independent smoothing. `time_constant` in seconds; smaller = snappier.
+## Carve roll and the look-down while falling (v0.17).
+func _update_lean(delta: float, speed_ratio: float, grounded: bool) -> void:
+	var t: PlayerTuning = player.tuning
+	var roll_target: float = -player.get_steer() * deg_to_rad(t.cam_carve_roll_deg) * speed_ratio if grounded else 0.0
+	_roll = lerpf(_roll, roll_target, _damp_weight(t.cam_carve_roll_time, delta))
+	var falling: float = clampf(-player.velocity.y / t.cam_air_look_down_speed, 0.0, 1.0) if not grounded else 0.0
+	_look_down = lerpf(_look_down, falling * deg_to_rad(t.cam_air_look_down_deg), _damp_weight(0.25, delta))
+
+
 func _damp_weight(time_constant: float, delta: float) -> float:
 	return 1.0 - exp(-delta / maxf(time_constant, 0.0001))
 

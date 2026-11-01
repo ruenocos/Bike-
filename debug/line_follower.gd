@@ -75,11 +75,20 @@ static func rail_ahead(player: Player, lane: float = 5.0) -> float:
 		var tree: FallingTree = node as FallingTree
 		if tree == null or not tree.is_inside_tree():
 			continue
-		var to_tree: Vector3 = tree.crossing - player.global_position
-		to_tree.y = 0.0
-		var along: float = to_tree.dot(going)
-		if along > 0.0 and (to_tree - going * along).length() < lane + 2.0:
-			best = minf(best, along)
+		# Where our straight-ahead path crosses the trunk (base to tip, 2D).
+		var base: Vector2 = Vector2(tree.global_position.x, tree.global_position.z)
+		var tip3: Vector3 = tree.global_position - tree.global_basis.z * tree.trunk_length
+		var span: Vector2 = Vector2(tip3.x, tip3.z) - base
+		var p: Vector2 = Vector2(player.global_position.x, player.global_position.z)
+		var dir: Vector2 = Vector2(going.x, going.z)
+		var denom: float = dir.x * span.y - dir.y * span.x
+		if absf(denom) < 0.0001:
+			continue
+		var w: Vector2 = base - p
+		var t: float = (w.x * span.y - w.y * span.x) / denom
+		var u: float = (w.x * dir.y - w.y * dir.x) / denom
+		if t > 0.0 and u > -0.15 and u < 1.15:
+			best = minf(best, t)
 	return best
 
 
