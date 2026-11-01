@@ -122,6 +122,10 @@ sun = NodePath("../DirectionalLight3D")
 far_ground = NodePath("../FarGround")
 mountains = NodePath("../Mountains")
 
+[node name="MenuCamera" type="Camera3D" parent="."]
+fov = 62.0
+far = 4500.0
+
 [node name="HazardDirector" type="Node" parent="."]
 script = ExtResource("35_hazards")
 

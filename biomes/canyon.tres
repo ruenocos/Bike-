@@ -23,6 +23,7 @@ trees = Array[PackedScene]([ExtResource("3_m"), ExtResource("4_m"), ExtResource(
 rocks = Array[PackedScene]([ExtResource("6_m"), ExtResource("7_m"), ExtResource("8_m")])
 tree_scale = 0.85
 outline_color = Color(0.2, 0.1, 0.07, 1)
+dust_tint = Color(1, 0.86, 0.74, 1)
 prop_tint = Color(1, 0.84, 0.74, 1)
 sky_top = Color(0.28, 0.42, 0.68, 1)
 sky_horizon = Color(0.95, 0.83, 0.68, 1)

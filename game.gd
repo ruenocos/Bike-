@@ -57,6 +57,7 @@ extends Node3D
 @onready var start_sprint: StartSprint = $StartSprint
 @onready var mountains: MountainRing = $Mountains
 @onready var biome_look: BiomeLook = $BiomeLook
+@onready var menu_camera: Camera3D = $MenuCamera
 @onready var hazards: HazardDirector = $HazardDirector
 
 ## The look of the current stage.
@@ -66,6 +67,9 @@ var bike: BikeData
 ## Boost gates collected this run, all stages (for the lifetime total).
 var run_gates: int = 0
 var _seed_arg: int = -1
+## Title screen flyover: metres along the backdrop stage.
+var _menu_flight: float = 0.0
+var _in_menu: bool = false
 ## `--biome=<n>`: start the biome order at n (look at one biome quickly).
 var biome_offset: int = 0
 
@@ -154,6 +158,8 @@ func start_stage() -> void:
 	if not biomes.is_empty():
 		apply_biome(biomes[(stage_index + biome_offset) % biomes.size()])
 	hud.visible = true
+	# A short fade hides the frame or two the stage build takes.
+	hud.fade_in(0.45)
 	var stage_seed: int = _rng.randi()
 	builder.build(stage_seed, middle_chunks, stage_index)
 	# Grass builds nearest the start first (the rider is parked far away).
@@ -210,7 +216,9 @@ func apply_biome(b: Biome) -> void:
 	biome = b
 	PropModel.biome = b
 	TerrainPatch.cover_override = b.ground_cover
+	builder.featured_set_pieces = b.set_pieces
 	biome_look.apply(b)
+	player.vfx.set_tint(b.dust_tint)
 
 
 ## Past the valley crests (sideways from the centerline): count down, then
@@ -234,7 +242,10 @@ func _update_collapse_feel() -> void:
 		Input.start_joy_vibration(0, near * collapse.rumble_weak_max, near * collapse.rumble_strong_max, 0.1)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	if _in_menu:
+		_fly_menu_camera(delta)
+		return
 	# While it waits behind the start pad it isn't a threat yet.
 	var gap: float = player_progress - collapse.distance
 	if collapse.waiting:
@@ -243,6 +254,22 @@ func _process(_delta: float) -> void:
 			player_progress, collapse.distance, builder.length, builder.finish_distance,
 			player.shields_left)
 	hud.show_start(start_sprint if in_stage else null)
+
+
+## Title screen: glide down the backdrop stage, high and to the side, looking
+## ahead down the valley; loops at the end.
+func _fly_menu_camera(delta: float) -> void:
+	if builder.length <= 0.0:
+		return
+	_menu_flight = fmod(_menu_flight + delta * 14.0, maxf(builder.length - 300.0, 100.0))
+	var at: Transform3D = builder.transform_at_distance(_menu_flight)
+	var ahead: Transform3D = builder.transform_at_distance(_menu_flight + 120.0)
+	var eye: Vector3 = at.origin + Vector3.UP * 28.0 + at.basis.x * 22.0
+	menu_camera.global_position = menu_camera.global_position.lerp(eye, 1.0 - exp(-delta / 0.5)) if _menu_flight > 1.0 else eye
+	menu_camera.look_at(ahead.origin + Vector3.UP * 4.0, Vector3.UP)
+	TerrainPatch.cover_focus = menu_camera.global_position
+	far_ground.global_position = Vector3(menu_camera.global_position.x, _far_ground_y, menu_camera.global_position.z)
+	mountains.global_position = Vector3(menu_camera.global_position.x, at.origin.y - 200.0, menu_camera.global_position.z)
 
 
 func _on_launched(grade: StringName, _boost: float) -> void:
@@ -270,6 +297,7 @@ func _on_finished() -> void:
 	in_stage = false
 	player.combo.bank()
 	stats.stop()
+	run_gates += stats.gates
 	collapse.stop()
 	_freeze_player()
 	var earned: int = rules.earned(stats.gates, stats.score)
@@ -283,12 +311,31 @@ func _open_main_menu() -> void:
 	in_stage = false
 	_freeze_player()
 	hud.visible = false
+	collapse.stop()
+	# A live backdrop: a random stage in a random biome, the rider waiting on
+	# the start pad, the camera flying slowly down the valley.
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	rng.randomize()
 	if not biomes.is_empty():
-		apply_biome(biomes[0])
+		apply_biome(biomes[rng.randi_range(0, biomes.size() - 1)])
+	builder.build(rng.randi(), middle_chunks, 0)
+	var spawn: Transform3D = builder.get_spawn_transform()
+	var forward: Vector3 = -spawn.basis.z
+	player.place(spawn.origin + Vector3.UP * 0.05, atan2(-forward.x, -forward.z), 0.0)
+	var lowest: float = INF
+	for p: Vector3 in builder.line_points:
+		lowest = minf(lowest, p.y)
+	_far_ground_y = lowest - 320.0
+	_menu_flight = 0.0
+	_in_menu = true
+	menu_camera.current = true
 	main_menu.open(bikes, maxi(bikes.find(bike), 0))
 
 
 func _on_ride(b: BikeData) -> void:
+	_in_menu = false
+	menu_camera.current = false
+	(player.camera_rig.get_node(^"SpringArm3D/Camera3D") as Camera3D).current = true
 	bike = b
 	start_run(_seed_arg)
 

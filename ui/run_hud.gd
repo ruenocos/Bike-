@@ -37,6 +37,7 @@ extends CanvasLayer
 @onready var needle: ColorRect = $StartPanel/MeterBack/Needle
 @onready var title_card: Control = $TitleCard
 @onready var shield_label: Label = $ShieldLabel
+@onready var fade: ColorRect = $Fade
 @onready var title_stage: Label = $TitleCard/StageNo
 @onready var title_name: Label = $TitleCard/Name
 @onready var title_sub: Label = $TitleCard/Sub
@@ -59,6 +60,16 @@ func _process(delta: float) -> void:
 	penalty_label.modulate.a = clampf(_penalty_timer / 0.3, 0.0, 1.0)
 	if _penalty_timer <= 0.0:
 		_penalty_total = 0.0
+
+
+## Black screen fading out over `seconds` (v0.15: covers the stage build).
+func fade_in(seconds: float) -> void:
+	fade.visible = true
+	fade.modulate.a = 1.0
+	var tween: Tween = create_tween()
+	tween.tween_interval(0.1)
+	tween.tween_property(fade, "modulate:a", 0.0, seconds)
+	tween.tween_callback(fade.hide)
 
 
 ## Stage title card (v0.12): stage number, biome name, a short line.

@@ -184,6 +184,51 @@ static func set_pieces() -> Array[Dictionary]:
 		"paths": [[Vector2(0, 0), Vector2(-15, 45), Vector2(-28, 90), Vector2(-28, 305), Vector2(-10, 350), Vector2(0, 400)],
 			[Vector2(0, 0), Vector2(20, 55), Vector2(30, 100), Vector2(30, 300), Vector2(10, 355), Vector2(0, 400)]],
 		"chokes": 2, "dense": [Vector3(130, 290, 3.0)], "clusters": 4.0, "mix": {"tree": 5, "rock": 3}})
+	# v0.16: one set piece per biome (featured in its stages, Biome set_pieces).
+	# Meadow: the river crossing. A shallow river right across the valley
+	# (ride through it, slowly) or jump it off one of two kickers.
+	out.append({"file": "set_river_logs", "length": 400.0, "difficulty": 2, "seed": 131, "noise": 1.4,
+		"gullies_at": [{"name": "River", "points": [Vector2(-72, 222), Vector2(72, 222)], "width": 22.0, "depth": 3.0, "flat": 0.5}],
+		"kickers_at": [{"name": "WestKickerPad", "at": Vector2(-30, 178), "aim": Vector2(-30, 262), "scale": Vector3(1.0, 1.4, 1.0), "gate_ahead": 30.0, "gate_up": 7.0},
+			{"name": "EastKickerPad", "at": Vector2(30, 182), "aim": Vector2(30, 262), "scale": Vector3(1.0, 1.4, 1.0), "gate_ahead": 30.0, "gate_up": 7.0}],
+		"paths": [[Vector2(0, 0), Vector2(-20, 80), Vector2(-30, 140), Vector2(-30, 300), Vector2(0, 400)],
+			[Vector2(0, 0), Vector2(20, 80), Vector2(30, 140), Vector2(30, 300), Vector2(0, 400)],
+			[Vector2(0, 0), Vector2(0, 400)]],
+		"keep_out": [Vector3(-45, 222, 16), Vector3(0, 222, 16), Vector3(45, 222, 16)],
+		"clusters_at": [{"kind": "log", "at": Vector2(-12, 120), "n": 2, "spread": 4.0}, {"kind": "log", "at": Vector2(14, 135), "n": 2, "spread": 4.0},
+			{"kind": "tree", "at": Vector2(-56, 240), "n": 6, "spread": 7.0}, {"kind": "tree", "at": Vector2(55, 205), "n": 6, "spread": 7.0}],
+		"gap_gates": 1, "clusters": 3.0, "mix": {"tree": 5, "log": 3}})
+	# Canyon: the mesa launch. A raised mesa on the left ends in a big kicker
+	# over a dry wash; the low way round on the right weaves through rocks.
+	out.append({"file": "set_mesa_launch", "length": 400.0, "difficulty": 2, "seed": 137, "noise": 1.6,
+		"lines_at": [{"name": "Mesa", "points": [Vector3(-26, 60, 0), Vector3(-26, 110, 5), Vector3(-26, 186, 5)], "width": 18.0, "flat": 0.45}],
+		"kickers_at": [{"name": "MesaKickerPad", "at": Vector2(-26, 190), "aim": Vector2(-26, 280), "scale": Vector3(1.3, 1.6, 1.0), "gate_ahead": 40.0, "gate_up": 11.0}],
+		"gullies_at": [{"name": "Wash", "points": [Vector2(-72, 242), Vector2(8, 242)], "width": 30.0, "depth": 7.0, "flat": 0.25}],
+		"keep_out": [Vector3(-50, 242, 20), Vector3(-22, 242, 20), Vector3(4, 242, 18)],
+		"paths": [[Vector2(0, 0), Vector2(-18, 50), Vector2(-26, 100), Vector2(-26, 320), Vector2(0, 400)],
+			[Vector2(0, 0), Vector2(25, 80), Vector2(40, 200), Vector2(42, 290), Vector2(10, 360), Vector2(0, 400)]],
+		"clusters_at": [{"kind": "rock", "at": Vector2(52, 250), "n": 5, "spread": 6.0}, {"kind": "rock", "at": Vector2(30, 150), "n": 4, "spread": 6.0}],
+		"gap_gates": 1, "clusters": 3.0, "mix": {"rock": 5, "tree": 2}})
+	# Snowline: the cornice. A short run-up to a lip, a 66 deg face, a long
+	# steep landing, then a fast chute with a rock choke.
+	out.append({"file": "set_cornice", "length": 400.0, "difficulty": 3, "seed": 139, "noise": 1.4,
+		"profile": [Vector2(0, 1), Vector2(0.12, 1), Vector2(0.22, 0.3), Vector2(0.28, 0.3), Vector2(0.29, 2.9),
+			Vector2(0.31, 2.9), Vector2(0.33, 1.9), Vector2(0.6, 1.9), Vector2(0.8, 1.45), Vector2(1, 1)],
+		"paths": [[Vector2(-30, 0), Vector2(-30, 400)], [Vector2(0, 0), Vector2(0, 400)], [Vector2(30, 0), Vector2(30, 400)]],
+		"clear": [Vector2(70, 260)], "gates_at": [Vector3(0, 150, 22)],
+		"dense": [Vector3(270, 380, 2.5)], "chokes": 1, "clusters": 4.0, "mix": {"tree": 5, "rock": 3}})
+	# Ash Quarry: the ramp yard. Three staggered kickers and two rails on a
+	# gentle stretch: chain them for gates, or thread between.
+	out.append({"file": "set_ramp_yard", "length": 400.0, "difficulty": 2, "seed": 149, "noise": 1.2,
+		"kickers_at": [{"name": "YardKicker1Pad", "at": Vector2(-30, 90), "aim": Vector2(-30, 170), "scale": Vector3(1.1, 1.3, 1.0), "gate_ahead": 28.0, "gate_up": 6.0},
+			{"name": "YardKicker2Pad", "at": Vector2(25, 150), "aim": Vector2(25, 230), "scale": Vector3(1.1, 1.3, 1.0), "gate_ahead": 28.0, "gate_up": 6.0},
+			{"name": "YardKicker3Pad", "at": Vector2(-20, 255), "aim": Vector2(-20, 335), "scale": Vector3(1.2, 1.5, 1.0), "gate_ahead": 34.0, "gate_up": 8.0}],
+		"rails_at": [{"name": "YardRail1", "points": [Vector3(0, 95, 0.75), Vector3(0, 150, 0.75)]},
+			{"name": "YardRail2", "points": [Vector3(40, 262, 0.75), Vector3(40, 312, 0.75)]}],
+		"paths": [[Vector2(0, 0), Vector2(-28, 50), Vector2(-30, 85), Vector2(-30, 200), Vector2(-20, 240), Vector2(-20, 330), Vector2(0, 400)],
+			[Vector2(0, 0), Vector2(22, 60), Vector2(25, 140), Vector2(25, 225), Vector2(40, 255), Vector2(40, 330), Vector2(0, 400)],
+			[Vector2(0, 0), Vector2(0, 340), Vector2(0, 400)]],
+		"clusters": 3.0, "mix": {"rock": 4, "tree": 2, "fence": 1}})
 	return out
 
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()

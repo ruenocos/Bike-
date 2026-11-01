@@ -20,6 +20,11 @@ extends Resource
 ## Far ground under the valley.
 @export var far_ground: Color = Color(0.46, 0.41, 0.33)
 
+@export_group("Set pieces")
+## Set pieces made for this biome; the stage's first set piece is one of
+## these (v0.16). The shared ones in StageBuilder still come up too.
+@export var set_pieces: Array[PackedScene] = []
+
 @export_group("Props")
 ## Models for trees / rocks / logs (empty = the prop's own).
 @export var trees: Array[PackedScene] = []
@@ -28,6 +33,8 @@ extends Resource
 @export_range(0.2, 3.0, 0.01) var tree_scale: float = 1.0
 ## Multiplies every prop model's colour (e.g. frosted, sun-bleached).
 @export var prop_tint: Color = Color.WHITE
+## Multiplies the rider's dust / spray / landing puffs.
+@export var dust_tint: Color = Color.WHITE
 ## Ink lines around props and the rider (darker = more contrast).
 @export var outline_color: Color = Color(0.16, 0.1, 0.09)
 

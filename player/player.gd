@@ -124,6 +124,8 @@ var crashed: bool = false
 var shields_left: int = 0
 ## Air hops left in this airtime.
 var air_hops_left: int = 0
+## A hazard hit waiting for the next physics tick: [what, body] or [].
+var _pending_hazard: Array = []
 ## Sideways pulls asked for this tick (Gate Magnet), applied capped.
 var _side_pull: Vector3 = Vector3.ZERO
 ## Counts down after a speed boost (perfect landing, landed tricks, sprint
@@ -164,6 +166,7 @@ func _physics_process(delta: float) -> void:
 	boost_timer = maxf(boost_timer - delta, 0.0)
 	_lip_timer = maxf(_lip_timer - delta, 0.0)
 	tricks.poll_gesture(delta)
+	_apply_hazard_hit()
 	_apply_side_pull(delta)
 	state_machine.physics_update(delta)
 	_update_rail_highlight()
@@ -250,8 +253,18 @@ func _apply_side_pull(delta: float) -> void:
 
 
 ## A hazard came down on you (a falling trunk): a crash whatever your own
-## speed, unless a Crash Shield takes it.
+## speed, unless a Crash Shield takes it. Signals can arrive between ticks,
+## so it's applied at the start of the next physics tick.
 func hit_by_hazard(what: String, body: PhysicsBody3D) -> void:
+	_pending_hazard = [what, body]
+
+
+func _apply_hazard_hit() -> void:
+	if _pending_hazard.is_empty():
+		return
+	var what: String = _pending_hazard[0]
+	var body: PhysicsBody3D = _pending_hazard[1] as PhysicsBody3D
+	_pending_hazard = []
 	if _crash_cooldown > 0.0 or state_machine.get_state_name() == &"Bail":
 		return
 	_crash_cooldown = 0.8

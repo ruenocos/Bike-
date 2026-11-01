@@ -77,6 +77,14 @@ func _on_landed(grade: StringName) -> void:
 			_burst(burst_sketchy)
 
 
+## Tints the dust, carve spray and landing puffs (they share one material;
+## the biome sets it: blue-ish on snow so it doesn't vanish into white).
+func set_tint(color: Color) -> void:
+	var quad: QuadMesh = dust.draw_pass_1 as QuadMesh
+	if quad != null and quad.material is StandardMaterial3D:
+		(quad.material as StandardMaterial3D).albedo_color = color
+
+
 ## A dust puff at the rider (air hop, v0.13).
 func puff(size: float) -> void:
 	_burst(size)

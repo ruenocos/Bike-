@@ -45,6 +45,9 @@ signal finished
 	preload("res://chunks/landscape/set_fork.tscn"),
 ]
 @export var set_pieces_per_stage: Vector2i = Vector2i(1, 2)
+## The stage's own set pieces (v0.16, from its biome): the first set-piece
+## slot tries these first, so each biome shows off its own.
+var featured_set_pieces: Array[PackedScene] = []
 @export_range(0, 20) var middle_count: int = 8
 ## Later stages lean toward harder chunks: a chunk's pick weight is
 ## 1 + tier_bias * stage_index * (difficulty - 1). 0 = every chunk equally likely.
@@ -117,20 +120,30 @@ func build(stage_seed: int, middle: int = -1, stage_index: int = 0) -> void:
 	var count: int = middle_count if middle < 0 else middle
 	var set_slots: Array[int] = _pick_set_slots(rng, count)
 	var used_sets: Array[int] = []
+	var pool: Array[PackedScene] = set_pieces.duplicate()
+	for scene: PackedScene in featured_set_pieces:
+		if not pool.has(scene):
+			pool.append(scene)
 	for i: int in count:
 		# A set piece slot tries the set pieces first (each once per stage).
-		if set_slots.has(i) and not set_pieces.is_empty():
+		if set_slots.has(i) and not pool.is_empty():
 			var options: Array[int] = []
-			for k: int in set_pieces.size():
+			for k: int in pool.size():
 				if not used_sets.has(k):
 					options.append(k)
+			# The first set piece of the stage is the biome's own, if it fits.
+			var featured: Array[int] = []
+			if used_sets.is_empty():
+				for scene: PackedScene in featured_set_pieces:
+					featured.append(pool.find(scene))
 			var placed_set: bool = false
 			while not options.is_empty():
-				var pick: int = options.pop_at(rng.randi_range(0, options.size() - 1))
-				var turn_s: float = float(_chunk_property(set_pieces[pick], &"exit_heading_deg", 0.0))
+				var pick: int = featured.pop_back() if not featured.is_empty() else options.pop_at(rng.randi_range(0, options.size() - 1))
+				options.erase(pick)
+				var turn_s: float = float(_chunk_property(pool[pick], &"exit_heading_deg", 0.0))
 				if absf(heading + turn_s) > max_stage_heading_deg:
 					continue
-				var next_s: Transform3D = _place(set_pieces[pick], at)
+				var next_s: Transform3D = _place(pool[pick], at)
 				if next_s == Transform3D():
 					continue
 				at = next_s

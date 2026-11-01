@@ -63,9 +63,13 @@ func _physics_process(delta: float) -> void:
 		# Only when it's ahead of you.
 		if heading.length() < 1.0 or to.dot(heading) <= 0.0:
 			return
-		var near: bool = to.length() < min_trigger_distance
-		if near or (to.length() < _player.speed * (fall_time + reaction_time) and _can_see()):
+		if to.length() < _player.speed * (fall_time + reaction_time) and _can_see():
 			falling = true
+		elif to.length() < min_trigger_distance:
+			# Never in view in time (behind a crest): it's simply already
+			# down, a log to hop, never a tree landing on you unseen.
+			_set_fall(1.0)
+			down = true
 		return
 	if _warn < warn_time:
 		# The warning: a shake and a slight lean toward where it'll fall.
@@ -97,7 +101,8 @@ func _can_see() -> bool:
 	return collider == null or not collider.get_parent() is TerrainPatch
 
 
-## While it falls, the trunk landing on you is a crash at any speed.
+## While it falls, the trunk landing on you is a crash at any speed (the
+## player applies it on its next physics tick).
 func _on_hit_area_body_entered(body: Node3D) -> void:
 	var player: Player = body as Player
 	if player != null and falling and not down:
