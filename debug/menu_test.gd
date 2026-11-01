@@ -3,7 +3,9 @@ extends Node
 ## actions), the way a pad sends them. Opens each menu and checks:
 ##   - stage summary: A continues
 ##   - upgrade picker: A picks the focused card; d-pad down reaches REROLL and A rerolls
-##   - run over: A restarts
+##   - run over: A restarts, d-pad down + A goes to the title screen
+##   - title screen (v0.14): d-pad right shows the next bike, A on a locked
+##	 bike does nothing, back to the first bike and A rides on it
 ## Found in v0.9.1: ui_accept had no pad button, so A did nothing in menus.
 ## Run:  <exe> --path . res://debug/menu_test.tscn   (not headless: GUI focus needs a window)
 ## Exits with code 1 on failure.
@@ -32,14 +34,26 @@ func _check(ok: bool, what: String) -> void:
 
 
 func _run() -> void:
+	# Never touch the player's real save file from a test.
+	Save.enabled = false
+	Save.best_stage = 0
+	Save.best_score = 0
+	Save.total_gates = 0
+	Save.runs = 0
 	var layer: CanvasLayer = CanvasLayer.new()
 	add_child(layer)
 	var summary: StageSummary = (load("res://ui/menus/stage_summary.tscn") as PackedScene).instantiate() as StageSummary
 	var picker: UpgradePicker = (load("res://ui/menus/upgrade_picker.tscn") as PackedScene).instantiate() as UpgradePicker
 	var run_over: RunOver = (load("res://ui/menus/run_over.tscn") as PackedScene).instantiate() as RunOver
-	for menu: Control in [summary, picker, run_over]:
+	var title: MainMenu = (load("res://ui/menus/main_menu.tscn") as PackedScene).instantiate() as MainMenu
+	for menu: Control in [summary, picker, run_over, title]:
 		layer.add_child(menu)
-	var got: Dictionary[String, int] = {"continued": 0, "picked": 0, "reroll": 0, "restart": 0}
+	var got: Dictionary[String, int] = {"continued": 0, "picked": 0, "reroll": 0, "restart": 0, "menu": 0, "ride": 0}
+	var rode: Array[BikeData] = []
+	run_over.to_menu.connect(func() -> void: got["menu"] += 1)
+	title.ride.connect(func(b: BikeData) -> void:
+		got["ride"] += 1
+		rode.append(b))
 	summary.continued.connect(func() -> void: got["continued"] += 1)
 	picker.picked.connect(func(_u: UpgradeData) -> void: got["picked"] += 1)
 	picker.reroll_requested.connect(func() -> void: got["reroll"] += 1)
@@ -67,6 +81,22 @@ func _run() -> void:
 	await get_tree().create_timer(1.2).timeout
 	await _button(JOY_BUTTON_A)
 	_check(got["restart"] == 1, "run over: A restarts")
+	run_over.open(2, 1000, 1)
+	await get_tree().create_timer(1.2).timeout
+	await _button(JOY_BUTTON_DPAD_DOWN)
+	await _button(JOY_BUTTON_A)
+	_check(got["menu"] == 1, "run over: d-pad down + A goes to the title screen")
+
+	var bikes: Array[BikeData] = [load("res://player/bikes/trail.tres"), load("res://player/bikes/dart.tres")]
+	title.open(bikes, 0)
+	await get_tree().create_timer(0.8).timeout
+	await _button(JOY_BUTTON_DPAD_RIGHT)
+	_check(title.index == 1, "title screen: d-pad right shows the next bike")
+	await _button(JOY_BUTTON_A)
+	_check(got["ride"] == 0, "title screen: A on a locked bike does nothing")
+	await _button(JOY_BUTTON_DPAD_LEFT)
+	await _button(JOY_BUTTON_A)
+	_check(got["ride"] == 1 and rode[0] == bikes[0], "title screen: back to the first bike, A rides it")
 
 	print("MENU TEST %s" % ("PASSED" if _failures.is_empty() else "FAILED (%d)" % _failures.size()))
 	get_tree().quit(0 if _failures.is_empty() else 1)

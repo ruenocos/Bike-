@@ -200,6 +200,19 @@ func _solve() -> void:
 		(parts[5] as Node3D).position = arm[1]
 
 
+## Paints the frame tubes (the bike's colour, v0.14).
+func set_frame_color(color: Color) -> void:
+	for tube: String in ["DownTube", "TopTube", "SeatTube", "HeadTube", "ChainStayL", "ChainStayR", "SeatStayL", "SeatStayR", "Fork/BladeL", "Fork/BladeR"]:
+		var mi: MeshInstance3D = get_node_or_null("Bike/" + tube) as MeshInstance3D
+		if mi == null:
+			continue
+		var mat: Material = mi.get_surface_override_material(0)
+		if mat is ShaderMaterial:
+			# The cel material is shared by all frame tubes: one set paints them all.
+			(mat as ShaderMaterial).set_shader_parameter(&"color", color)
+			return
+
+
 ## Two-bone reach from `root` toward `target`: [joint, end]. The joint bends
 ## toward `pole`.
 static func _ik(root: Vector3, target: Vector3, l1: float, l2: float, pole: Vector3) -> PackedVector3Array:

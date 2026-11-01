@@ -3,10 +3,13 @@ extends Node3D
 ## generated slope:
 ##   - a falling tree ahead comes down before you reach it and crashes you if
 ##     you ride into it; hopping it (the bots' hop timing) clears it
-##   - Crash Shield turns that crash into a glance at full speed
+##   - Crash Shield smashes through it at full speed
+##   - a tree coming down on a slow rider is a crash too (its falling trunk)
 ##   - Double Hop: releasing hop in the air pops you up again
 ##   - Gate Magnet pulls you through a gate 5 m off your line (without it
 ##     you miss it)
+##   - meta (v0.14): a run that reaches stage 3 unlocks the Dart and reports
+##     new bests; the save file isn't touched headless
 ## Run:  <exe> --headless --path . --fixed-fps 60 res://debug/powers_test.tscn
 ## Exits with code 1 on failure.
 
@@ -46,10 +49,12 @@ func _run() -> void:
 		await get_tree().physics_frame
 	await _tree_case("falling tree, no hop: comes down in time and crashes you", false, 0, true)
 	await _tree_case("falling tree, bot hop timing: clears it", true, 0, false)
-	await _tree_case("falling tree, Crash Shield: glance at full speed", false, 1, false)
+	await _tree_case("falling tree, Crash Shield: smash through at full speed", false, 1, false)
+	await _slow_rider_case()
 	await _double_hop_case()
 	await _gate_case("gate 5 m off the line, Gate Magnet: pulled through", 10.0, true)
 	await _gate_case("gate 5 m off the line, no magnet: missed", 0.0, false)
+	_save_case()
 	if _failures.is_empty():
 		print("POWERS TEST PASSED")
 		get_tree().quit(0)
@@ -165,3 +170,54 @@ func _gate_case(label: String, magnet: float, want: bool) -> void:
 		_fail("%s: gate collected without the magnet" % label)
 	print("case | %s | gates %d" % [label, _gates])
 	gate.queue_free()
+
+
+func _save_case() -> void:
+	if Save.enabled:
+		_fail("meta: the save file is live in a headless test")
+		return
+	Save.best_stage = 0
+	Save.best_score = 0
+	Save.total_gates = 0
+	Save.runs = 0
+	var bikes: Array[BikeData] = [load("res://player/bikes/trail.tres"), load("res://player/bikes/dart.tres"),
+		load("res://player/bikes/hopper.tres"), load("res://player/bikes/tank.tres")]
+	var first: Dictionary = Save.record_run(2, 5000, 20, bikes)
+	var second: Dictionary = Save.record_run(3, 4000, 45, bikes)
+	var unlocked: Array = second.get("unlocked", [])
+	if not first.get("best_stage", false) or not second.get("best_stage", false) or second.get("best_score", true):
+		_fail("meta: best flags wrong (%s, %s)" % [first, second])
+	if unlocked.size() != 2 or not unlocked.has(bikes[1]) or not unlocked.has(bikes[2]):
+		_fail("meta: stage 3 + 65 gates should unlock Dart and Hopper, got %s" % [unlocked])
+	if Save.is_unlocked(bikes[3]):
+		_fail("meta: Tank unlocked without the score")
+	var t: PlayerTuning = TUNING.duplicate() as PlayerTuning
+	bikes[1].apply(t)
+	if not is_equal_approx(t.max_speed, TUNING.max_speed + 3.0):
+		_fail("meta: Dart's top speed not applied")
+	print("case | meta: unlocked %d bikes" % unlocked.size())
+
+
+func _slow_rider_case() -> void:
+	await _start(TUNING.duplicate() as PlayerTuning, 2.0)
+	var cross: Vector3 = _ground(0.0, -262.0)
+	_player.place(_ground(0.0, -261.5) + Vector3.UP * 0.05, 0.0, 2.0)
+	_player.state_machine.transition_to(&"Air", {})
+	# Hold the brake so the slope doesn't roll the rider out from under it.
+	Input.action_press(&"brake")
+	_bails = 0
+	var tree: FallingTree = TREE.instantiate() as FallingTree
+	add_child(tree)
+	tree.global_position = _ground(5.0, -262.0)
+	tree.look_at(Vector3(cross.x, tree.global_position.y, cross.z), Vector3.UP)
+	tree.crossing = cross
+	tree.falling = true
+	for i: int in 60 * 3:
+		await get_tree().physics_frame
+		if _bails > 0:
+			break
+	if _bails == 0:
+		_fail("tree onto a slow rider: no crash (rider at z %.1f, tree down %s)" % [_player.global_position.z, tree.down])
+	Input.action_release(&"brake")
+	print("case | tree falls on a slow rider | bails %d (%s)" % [_bails, _player.last_bail_reason])
+	tree.queue_free()

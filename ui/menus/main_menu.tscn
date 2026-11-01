@@ -1,0 +1,126 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://ui/menus/main_menu.gd" id="1_script"]
+[ext_resource type="Theme" path="res://ui/bike_theme.tres" id="2_theme"]
+
+[sub_resource type="SystemFont" id="Font_mono"]
+font_names = PackedStringArray("Consolas", "Menlo", "monospace")
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+
+[node name="Dim" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.05, 0.03, 0.06, 0.35)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="Center"]
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="Center/Panel"]
+custom_minimum_size = Vector2(720, 0)
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Title" type="Label" parent="Center/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.8, 0.3, 1)
+theme_override_font_sizes/font_size = 110
+text = "BIKE!"
+horizontal_alignment = 1
+
+[node name="Tag" type="Label" parent="Center/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 0.75)
+text = "Ride down. Outrun the collapse."
+horizontal_alignment = 1
+
+[node name="BikeRow" type="HBoxContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 20
+
+[node name="Prev" type="Button" parent="Center/Panel/VBox/BikeRow"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+text = " < "
+
+[node name="Swatch" type="ColorRect" parent="Center/Panel/VBox/BikeRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
+size_flags_vertical = 4
+color = Color(0.1, 0.62, 0.66, 1)
+
+[node name="BikeName" type="Label" parent="Center/Panel/VBox/BikeRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "TRAIL"
+horizontal_alignment = 1
+
+[node name="Next" type="Button" parent="Center/Panel/VBox/BikeRow"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+text = " > "
+
+[node name="BikeInfo" type="Label" parent="Center/Panel/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(680, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "The all-rounder."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Lock" type="Label" parent="Center/Panel/VBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.6, 0.25, 1)
+theme_override_font_sizes/font_size = 28
+text = "LOCKED"
+horizontal_alignment = 1
+
+[node name="Ride" type="Button" parent="Center/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Ride"
+
+[node name="Best" type="Label" parent="Center/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_fonts/font = SubResource("Font_mono")
+theme_override_font_sizes/font_size = 26
+text = "Best stage   0"
+
+[node name="Hint" type="Label" parent="Center/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 0.5)
+theme_override_font_sizes/font_size = 22
+text = "Left / right: bike    A: ride"
+horizontal_alignment = 1

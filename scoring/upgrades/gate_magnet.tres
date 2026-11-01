@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_upgrade")
 display_name = "Gate Magnet"
-description = "Boost gates pull you in from 10 m away."
+description = "Boost gates up ahead pull you in from up to 10 m to the side."
 stat = &"gate_magnet_radius"
 mode = 0
 amount = 10.0

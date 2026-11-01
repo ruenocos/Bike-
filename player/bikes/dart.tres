@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="BikeData" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://player/bikes/bike_data.gd" id="1_bike"]
+[ext_resource type="Script" path="res://scoring/upgrade_data.gd" id="2_upgrade"]
+
+[sub_resource type="Resource" id="Mod_1"]
+script = ExtResource("2_upgrade")
+display_name = "Dart"
+stat = &"max_speed"
+mode = 0
+amount = 3.0
+
+[sub_resource type="Resource" id="Mod_2"]
+script = ExtResource("2_upgrade")
+display_name = "Dart"
+stat = &"air_steer_rate"
+mode = 1
+amount = 0.85
+
+[resource]
+script = ExtResource("1_bike")
+display_name = "Dart"
+description = "Light race frame: higher top speed, a bit twitchier in the air."
+frame_color = Color(0.9, 0.22, 0.2, 1)
+modifiers = Array[ExtResource("2_upgrade")]([SubResource("Mod_1"), SubResource("Mod_2")])
+unlock = 1
+unlock_value = 3

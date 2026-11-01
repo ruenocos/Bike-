@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BikeData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://player/bikes/bike_data.gd" id="1_bike"]
+[ext_resource type="Script" path="res://scoring/upgrade_data.gd" id="2_upgrade"]
+
+[resource]
+script = ExtResource("1_bike")
+display_name = "Trail"
+description = "The all-rounder. Nothing to prove."
+frame_color = Color(0.1, 0.62, 0.66, 1)
+modifiers = Array[ExtResource("2_upgrade")]([])
+unlock = 0
+unlock_value = 0

@@ -47,7 +47,9 @@ func physics_update(delta: float) -> void:
 	# Coyote hop: hop pressed just after rolling off an edge.
 	if player.coyote_timer > 0.0 and player.has_buffered_hop():
 		player.do_hop()
-	elif player.air_hops_left > 0 and player.has_buffered_hop() and _air_time > t.air_hop_after:
+	elif player.air_hops_left > 0 and player.has_buffered_hop() and _air_time > t.air_hop_after \
+			and player.predict_landing(t.jump_buffer * 1.5).is_empty():
+		# Not when the ground is that close: the buffered hop is for the landing.
 		player.air_hop()
 	_air_time += delta
 

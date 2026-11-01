@@ -16,8 +16,13 @@ extends Area3D
 		radius = v
 		_update_size()
 
+## Gate Magnet only: how far before the gate the pull starts (m).
+@export_range(5.0, 200.0, 1.0, "suffix:m") var magnet_look_ahead: float = 70.0
+
 var _taken: bool = false
 var _player: Player
+
+@onready var _ring: Node3D = $Ring
 
 
 func _ready() -> void:
@@ -28,9 +33,11 @@ func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 
 
-## Gate Magnet upgrade (v0.13): within the player's gate_magnet_radius the
-## gate pulls you sideways toward its centre, and the ring pulses.
-func _physics_process(delta: float) -> void:
+## Gate Magnet upgrade (v0.13): coming up on the gate (within
+## `magnet_look_ahead`) and within the player's gate_magnet_radius to the
+## side, the gate asks the player for a sideways pull toward its centre (capped by the
+## player), and the ring pulses.
+func _physics_process(_delta: float) -> void:
 	if Engine.is_editor_hint() or _taken:
 		return
 	if _player == null:
@@ -41,21 +48,17 @@ func _physics_process(delta: float) -> void:
 	if reach <= 0.0:
 		return
 	var to: Vector3 = global_position - _player.global_position
-	var dist: float = to.length()
-	var ring: Node3D = $Ring
-	if dist > reach + radius or dist < 0.5:
-		ring.scale = Vector3.ONE * radius
-		return
 	var going: Vector3 = _player.velocity.normalized() if _player.velocity.length() > 1.0 else -global_basis.z
-	var side: Vector3 = to - going * to.dot(going)
-	if to.dot(going) <= 0.0 or side.length() < 0.05:
+	var ahead: float = to.dot(going)
+	var side: Vector3 = to - going * ahead
+	# Reach is sideways; it starts `magnet_look_ahead` m before the gate.
+	if ahead <= 0.0 or ahead > magnet_look_ahead or side.length() > reach + radius:
+		_ring.scale = Vector3.ONE * radius
 		return
-	var pull: Vector3 = side.normalized() * minf(_player.tuning.gate_magnet_pull * delta, side.length())
-	if _player.state_machine.get_state_name() == &"Air":
-		_player.velocity += pull
-	elif _player.is_on_floor():
-		_player.ground_dir = _player.tangent_dir(_player.ground_dir * _player.speed + pull * 3.0, _player.ground_normal)
-	ring.scale = Vector3.ONE * radius * (1.0 + 0.12 * sin(Time.get_ticks_msec() * 0.02))
+	if side.length() > 0.2:
+		# Eases off as you line up, so it doesn't swing you past the centre.
+		_player.add_side_pull(side, _player.tuning.gate_magnet_pull * clampf(side.length() / 2.0, 0.0, 1.0))
+	_ring.scale = Vector3.ONE * radius * (1.0 + 0.12 * sin(Time.get_ticks_msec() * 0.02))
 
 
 func _update_size() -> void:

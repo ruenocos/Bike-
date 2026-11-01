@@ -29,6 +29,7 @@ signal air_hopped
 @onready var tricks: TrickRunner = $TrickRunner
 @onready var combo: ComboTracker = $ComboTracker
 @onready var vfx: RiderVfx = $RiderVfx
+@onready var rider: RiderRig = $Visual/RiderRig
 
 ## Speed along the ground (m/s). The heart of the game.
 var speed: float = 0.0
@@ -123,6 +124,8 @@ var crashed: bool = false
 var shields_left: int = 0
 ## Air hops left in this airtime.
 var air_hops_left: int = 0
+## Sideways pulls asked for this tick (Gate Magnet), applied capped.
+var _side_pull: Vector3 = Vector3.ZERO
 ## Counts down after a speed boost (perfect landing, landed tricks, sprint
 ## start); the speed lines flash while it's running.
 var boost_timer: float = 0.0
@@ -161,6 +164,7 @@ func _physics_process(delta: float) -> void:
 	boost_timer = maxf(boost_timer - delta, 0.0)
 	_lip_timer = maxf(_lip_timer - delta, 0.0)
 	tricks.poll_gesture(delta)
+	_apply_side_pull(delta)
 	state_machine.physics_update(delta)
 	_update_rail_highlight()
 	if global_position.y < kill_y or Input.is_action_just_pressed(&"debug_reset"):
@@ -219,6 +223,47 @@ func has_buffered_hop() -> bool:
 func do_hop() -> void:
 	var hop_dir: Vector3 = Vector3.UP.lerp(ground_normal, tuning.hop_normal_blend).normalized()
 	do_hop_from(ground_dir * speed, hop_dir)
+
+
+## Something pulls you sideways this tick (`accel` m/s² along `dir`; Gate
+## Magnet). Several pulls add up; the turn they cause is capped at half the
+## steering rate, so you can always steer out of it.
+func add_side_pull(dir: Vector3, accel: float) -> void:
+	_side_pull += Vector3(dir.x, 0.0, dir.z).normalized() * accel
+
+
+func _apply_side_pull(delta: float) -> void:
+	if _side_pull == Vector3.ZERO:
+		return
+	var pull: Vector3 = _side_pull
+	_side_pull = Vector3.ZERO
+	var flat: Vector3 = Vector3(velocity.x, 0.0, velocity.z)
+	if flat.length() < 1.0:
+		return
+	var max_turn: float = deg_to_rad(tuning.steer_rate_high * 0.5) * delta
+	var turn: float = clampf(pull.length() * delta / flat.length(), 0.0, max_turn)
+	var side: float = signf(flat.cross(pull).y)
+	if state_machine.get_state_name() == &"Air":
+		velocity = velocity.rotated(Vector3.UP, side * turn)
+	elif is_on_floor():
+		ground_dir = tangent_dir(ground_dir.rotated(Vector3.UP, side * turn), ground_normal)
+
+
+## A hazard came down on you (a falling trunk): a crash whatever your own
+## speed, unless a Crash Shield takes it.
+func hit_by_hazard(what: String, body: PhysicsBody3D) -> void:
+	if _crash_cooldown > 0.0 or state_machine.get_state_name() == &"Bail":
+		return
+	_crash_cooldown = 0.8
+	if shields_left > 0:
+		shields_left -= 1
+		_shield_through(body)
+		shield_used.emit()
+		return
+	speed *= 1.0 - tuning.crash_penalty
+	last_bail_reason = "%s came down on you" % what
+	crashed = true
+	state_machine.transition_to(&"Bail", {})
 
 
 ## Double Hop: a second pop in the air (keeps the speed, resets the fall).

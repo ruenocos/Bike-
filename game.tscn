@@ -1,9 +1,15 @@
-[gd_scene load_steps=38 format=3]
+[gd_scene load_steps=44 format=3]
 
 [ext_resource type="Script" path="res://game.gd" id="1_game"]
 [ext_resource type="Script" path="res://biomes/biome.gd" id="30_biome"]
 [ext_resource type="Script" path="res://hazards/hazard_director.gd" id="35_hazards"]
 [ext_resource type="Script" path="res://biomes/biome_look.gd" id="39_look"]
+[ext_resource type="PackedScene" path="res://ui/menus/main_menu.tscn" id="40_main_menu"]
+[ext_resource type="Script" path="res://player/bikes/bike_data.gd" id="41_bike"]
+[ext_resource type="Resource" path="res://player/bikes/trail.tres" id="42_trail"]
+[ext_resource type="Resource" path="res://player/bikes/dart.tres" id="43_dart"]
+[ext_resource type="Resource" path="res://player/bikes/hopper.tres" id="44_hopper"]
+[ext_resource type="Resource" path="res://player/bikes/tank.tres" id="45_tank"]
 [ext_resource type="Resource" path="res://biomes/meadow.tres" id="31_meadow"]
 [ext_resource type="Resource" path="res://biomes/canyon.tres" id="32_canyon"]
 [ext_resource type="Resource" path="res://biomes/snow.tres" id="33_snow"]
@@ -79,6 +85,7 @@ size = Vector2(4000, 4000)
 
 [node name="Game" type="Node3D"]
 script = ExtResource("1_game")
+bikes = Array[ExtResource("41_bike")]([ExtResource("42_trail"), ExtResource("43_dart"), ExtResource("44_hopper"), ExtResource("45_tank")])
 biomes = Array[ExtResource("30_biome")]([ExtResource("31_meadow"), ExtResource("32_canyon"), ExtResource("33_snow"), ExtResource("34_quarry")])
 upgrade_pool = Array[ExtResource("12_upgrade")]([ExtResource("13_u1"), ExtResource("14_u2"), ExtResource("15_u3"), ExtResource("16_u4"), ExtResource("17_u5"), ExtResource("18_u6"), ExtResource("19_u7"), ExtResource("20_u8"), ExtResource("36_u9"), ExtResource("37_u10"), ExtResource("38_u11")])
 
@@ -133,3 +140,5 @@ layer = 20
 [node name="UpgradePicker" parent="Menus" instance=ExtResource("9_picker")]
 
 [node name="RunOver" parent="Menus" instance=ExtResource("10_run_over")]
+
+[node name="MainMenu" parent="Menus" instance=ExtResource("40_main_menu")]

@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://hazards/falling_tree.gd" id="1_fall"]
 [ext_resource type="Script" path="res://chunks/parts/props/prop_model.gd" id="2_model"]
@@ -21,6 +21,26 @@ rings = 1
 [sub_resource type="StandardMaterial3D" id="Mat_stump"]
 albedo_color = Color(0.42, 0.28, 0.2, 1)
 
+[sub_resource type="CapsuleShape3D" id="Shape_hit"]
+radius = 0.6
+height = 10.0
+
+[sub_resource type="Gradient" id="Grad_dust"]
+offsets = PackedFloat32Array(0, 0.2, 1)
+colors = PackedColorArray(0.75, 0.65, 0.5, 0, 0.75, 0.65, 0.5, 0.55, 0.7, 0.6, 0.48, 0)
+
+[sub_resource type="StandardMaterial3D" id="Mat_dust"]
+transparency = 1
+shading_mode = 0
+vertex_color_use_as_albedo = true
+billboard_mode = 3
+proximity_fade_enabled = true
+proximity_fade_distance = 1.0
+
+[sub_resource type="QuadMesh" id="Quad_dust"]
+material = SubResource("Mat_dust")
+size = Vector2(1.6, 1.6)
+
 [node name="FallingTree" type="Node3D"]
 script = ExtResource("1_fall")
 
@@ -41,7 +61,35 @@ model_scale = Vector3(1.25, 1.25, 1.25)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0)
 shape = SubResource("Shape_trunk")
 
+[node name="HitArea" type="Area3D" parent="Pivot"]
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Pivot/HitArea"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0)
+shape = SubResource("Shape_hit")
+
 [node name="Stump" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
 mesh = SubResource("Mesh_stump")
 surface_material_override/0 = SubResource("Mat_stump")
+
+[node name="Dust" type="CPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, -5)
+emitting = false
+amount = 36
+lifetime = 1.4
+one_shot = true
+explosiveness = 0.9
+mesh = SubResource("Quad_dust")
+emission_shape = 3
+emission_box_extents = Vector3(0.6, 0.2, 5)
+direction = Vector3(0, 1, 0)
+spread = 70.0
+gravity = Vector3(0, -1, 0)
+initial_velocity_min = 1.5
+initial_velocity_max = 4.0
+damping_min = 1.5
+damping_max = 2.5
+scale_amount_min = 0.8
+scale_amount_max = 2.0
+color_ramp = SubResource("Grad_dust")

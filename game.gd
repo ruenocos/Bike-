@@ -23,6 +23,8 @@ extends Node3D
 ## through harder chunks (StageBuilder.tier_bias) and a faster collapse,
 ## never through more length.
 @export_range(1, 20) var middle_chunks: int = 8
+## Bikes on the title screen, in order (v0.14); the first is always open.
+@export var bikes: Array[BikeData] = []
 ## One look per stage, in order (stage 5 starts over); see biomes/*.tres.
 @export var biomes: Array[Biome] = []
 ## Falling this far below the track respawns you on it.
@@ -50,6 +52,7 @@ extends Node3D
 @onready var summary: StageSummary = $Menus/StageSummary
 @onready var picker: UpgradePicker = $Menus/UpgradePicker
 @onready var run_over: RunOver = $Menus/RunOver
+@onready var main_menu: MainMenu = $Menus/MainMenu
 @onready var far_ground: Node3D = $FarGround
 @onready var start_sprint: StartSprint = $StartSprint
 @onready var mountains: MountainRing = $Mountains
@@ -58,6 +61,11 @@ extends Node3D
 
 ## The look of the current stage.
 var biome: Biome
+## The bike this run is on (v0.14).
+var bike: BikeData
+## Boost gates collected this run, all stages (for the lifetime total).
+var run_gates: int = 0
+var _seed_arg: int = -1
 ## `--biome=<n>`: start the biome order at n (look at one biome quickly).
 var biome_offset: int = 0
 
@@ -92,6 +100,8 @@ func _ready() -> void:
 	summary.continued.connect(_on_summary_continued)
 	picker.picked.connect(_on_upgrade_picked)
 	run_over.restart.connect(start_run)
+	run_over.to_menu.connect(_open_main_menu)
+	main_menu.ride.connect(_on_ride)
 	start_sprint.launched.connect(_on_launched)
 	Events.bailed.connect(_on_bailed)
 	Events.gate_collected.connect(func(score: int) -> void: hud.flash_gate(score))
@@ -105,9 +115,15 @@ func _ready() -> void:
 			seed_arg = arg.trim_prefix("--seed=").to_int()
 		if arg.begins_with("--biome="):
 			biome_offset = arg.trim_prefix("--biome=").to_int()
+	_seed_arg = seed_arg
+	bike = _saved_bike()
 	if args.has("--autopilot"):
 		add_child(preload("res://debug/autopilot.gd").new())
-	start_run(seed_arg)
+	# Bots and quick looks (--seed, --biome, --skip-menu) skip the title screen.
+	if args.has("--autopilot") or args.has("--skip-menu") or seed_arg >= 0 or biome_offset != 0:
+		start_run(seed_arg)
+	else:
+		_open_main_menu()
 
 
 ## New run: fresh tuning copy, no upgrades, stage 1. `new_seed` < 0 = random.
@@ -118,7 +134,11 @@ func start_run(new_seed: int = -1) -> void:
 	# Godot note: duplicate() copies the Resource, so changing the copy
 	# leaves the .tres (and the test track) alone.
 	run_tuning = base_tuning.duplicate() as PlayerTuning
+	if bike != null:
+		bike.apply(run_tuning)
+		player.rider.set_frame_color(bike.frame_color)
 	player.tuning = run_tuning
+	run_gates = 0
 	upgrades_taken.clear()
 	rerolls = rules.start_rerolls
 	player.combo.drop()
@@ -133,6 +153,7 @@ func start_stage() -> void:
 	player.global_position = Vector3(0.0, 100000.0, 0.0)
 	if not biomes.is_empty():
 		apply_biome(biomes[(stage_index + biome_offset) % biomes.size()])
+	hud.visible = true
 	var stage_seed: int = _rng.randi()
 	builder.build(stage_seed, middle_chunks, stage_index)
 	# Grass builds nearest the start first (the rider is parked far away).
@@ -257,6 +278,28 @@ func _on_finished() -> void:
 			stats.gates, stats.gates_total, earned, rerolls)
 
 
+## The title screen over the empty sky (the stage is built on Ride).
+func _open_main_menu() -> void:
+	in_stage = false
+	_freeze_player()
+	hud.visible = false
+	if not biomes.is_empty():
+		apply_biome(biomes[0])
+	main_menu.open(bikes, maxi(bikes.find(bike), 0))
+
+
+func _on_ride(b: BikeData) -> void:
+	bike = b
+	start_run(_seed_arg)
+
+
+func _saved_bike() -> BikeData:
+	for b: BikeData in bikes:
+		if b.resource_path == Save.bike and Save.is_unlocked(b):
+			return b
+	return bikes[0] if not bikes.is_empty() else null
+
+
 func _on_summary_continued() -> void:
 	_choices = _pick_choices(3)
 	picker.open(_choices, rerolls)
@@ -307,7 +350,9 @@ func _on_caught() -> void:
 	stats.stop()
 	player.combo.drop()
 	_freeze_player()
-	run_over.open(stage_index + 1, player.combo.run_total, upgrades_taken.size())
+	run_gates += stats.gates
+	var report: Dictionary = Save.record_run(stage_index + 1, player.combo.run_total, run_gates, bikes)
+	run_over.open(stage_index + 1, player.combo.run_total, upgrades_taken.size(), report)
 
 
 ## Fell off the world (or pressed reset): same as running out of bounds.

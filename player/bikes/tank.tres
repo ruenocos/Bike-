@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="BikeData" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://player/bikes/bike_data.gd" id="1_bike"]
+[ext_resource type="Script" path="res://scoring/upgrade_data.gd" id="2_upgrade"]
+
+[sub_resource type="Resource" id="Mod_1"]
+script = ExtResource("2_upgrade")
+display_name = "Tank"
+stat = &"crash_shields"
+mode = 0
+amount = 1.0
+
+[sub_resource type="Resource" id="Mod_2"]
+script = ExtResource("2_upgrade")
+display_name = "Tank"
+stat = &"crash_penalty"
+mode = 1
+amount = 0.6
+
+[sub_resource type="Resource" id="Mod_3"]
+script = ExtResource("2_upgrade")
+display_name = "Tank"
+stat = &"max_speed"
+mode = 0
+amount = -2.0
+
+[resource]
+script = ExtResource("1_bike")
+display_name = "Tank"
+description = "Heavy steel: shrugs off a crash every stage, loses less speed, slower top end."
+frame_color = Color(0.25, 0.4, 0.22, 1)
+modifiers = Array[ExtResource("2_upgrade")]([SubResource("Mod_1"), SubResource("Mod_2"), SubResource("Mod_3")])
+unlock = 3
+unlock_value = 30000

@@ -90,7 +90,17 @@ static func _near(p: Vector3, list: PackedVector3Array, distance: float) -> bool
 	return false
 
 
+## The terrain under `at` (props, kickers, boulders and rails are skipped).
 func _ground(builder: StageBuilder, at: Vector3) -> Vector3:
 	var query: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(at + Vector3.UP * 60.0, at + Vector3.DOWN * 120.0)
-	var hit: Dictionary = builder.get_world_3d().direct_space_state.intersect_ray(query)
-	return hit["position"] if not hit.is_empty() else at
+	var skip: Array[RID] = []
+	for i: int in 8:
+		query.exclude = skip
+		var hit: Dictionary = builder.get_world_3d().direct_space_state.intersect_ray(query)
+		if hit.is_empty():
+			return at
+		var collider: Node = hit["collider"] as Node
+		if collider != null and collider.get_parent() is TerrainPatch:
+			return hit["position"]
+		skip.append(hit["rid"])
+	return at
