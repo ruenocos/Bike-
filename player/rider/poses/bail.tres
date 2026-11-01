@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RiderPose" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://player/rider/rider_pose.gd" id="1_pose"]
+
+[resource]
+script = ExtResource("1_pose")
+hips = Vector3(0, 1.0, 0.35)
+torso_pitch_deg = -25
+head_pitch_deg = 25
+foot_left = Vector3(-0.25, 0.35, -0.2)
+foot_right = Vector3(0.3, 0.2, 0.25)
+hand_left = Vector3(-0.35, 0.55, 0.3)
+hand_right = Vector3(0.4, 0.5, 0.2)
+bike_pitch_deg = 0

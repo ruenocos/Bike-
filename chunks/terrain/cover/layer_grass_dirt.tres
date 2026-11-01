@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="GroundCoverLayer" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://chunks/terrain/ground_cover_layer.gd" id="1_layer"]
+[ext_resource type="ArrayMesh" path="res://chunks/terrain/cover/tuft_tall.tres" id="2_mesh"]
+[ext_resource type="Material" path="res://chunks/materials/grass.tres" id="3_grass"]
+
+[resource]
+script = ExtResource("1_layer")
+mesh = ExtResource("2_mesh")
+material = ExtResource("3_grass")
+density = 2.0
+on_grass = 0.0
+zone = 0
+scale_min = 0.4
+scale_max = 0.8
+sink = 0.05
+follow_ground = 0.7
+visibility_end = 80.0

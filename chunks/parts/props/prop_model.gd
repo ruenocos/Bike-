@@ -7,6 +7,12 @@ extends Node3D
 ## shape; this node is visual only. The model is a generated child that
 ## isn't saved: change the variants / scale here and it updates.
 
+## Set by the game for the current stage's biome (v0.12): trees and rocks
+## swap to the biome's models and every prop takes its tint.
+static var biome: Biome
+
+## What this is, so a biome can swap the model ("none" keeps `variants`).
+@export_enum("none", "tree", "rock") var kind: String = "none"
 ## Model scenes to pick from (.gltf / .glb).
 @export var variants: Array[PackedScene] = []:
 	set(v):
@@ -40,13 +46,23 @@ func _rebuild() -> void:
 		_model = null
 	if variants.is_empty():
 		return
+	var pool: Array[PackedScene] = variants
+	var size: float = 1.0
+	var tint: Color = Color.WHITE
+	if biome != null and not Engine.is_editor_hint():
+		tint = biome.prop_tint
+		if kind == "tree" and not biome.trees.is_empty():
+			pool = biome.trees
+			size = biome.tree_scale
+		elif kind == "rock" and not biome.rocks.is_empty():
+			pool = biome.rocks
 	var spot: Vector3 = global_position
 	var h: int = hash(Vector3i(roundi(spot.x * 10.0), roundi(spot.y * 10.0), roundi(spot.z * 10.0)))
-	var scene: PackedScene = variants[absi(h) % variants.size()]
+	var scene: PackedScene = pool[absi(h) % pool.size()]
 	if scene == null:
 		return
 	_model = scene.instantiate() as Node3D
-	_model.scale = model_scale
+	_model.scale = model_scale * size
 	_model.rotation.y = deg_to_rad(float(posmod(h >> 3, 360) - 180) / 180.0 * yaw_jitter)
 	add_child(_model, false, Node.INTERNAL_MODE_BACK)
-	CelLook.apply(_model, outline)
+	CelLook.apply(_model, outline, tint)

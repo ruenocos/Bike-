@@ -17,42 +17,10 @@
 [ext_resource type="Script" path="res://scoring/combo_tracker.gd" id="15_combo"]
 [ext_resource type="PackedScene" path="res://vfx/speed_lines.tscn" id="16_speed_lines"]
 [ext_resource type="PackedScene" path="res://vfx/rider_vfx.tscn" id="18_vfx"]
+[ext_resource type="PackedScene" path="res://player/rider/rider_rig.tscn" id="19_rig"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_body"]
 radius = 0.35
-
-[sub_resource type="StandardMaterial3D" id="Mat_bike"]
-albedo_color = Color(0.15, 0.16, 0.2, 1)
-
-[sub_resource type="BoxMesh" id="BoxMesh_bike"]
-material = SubResource("Mat_bike")
-size = Vector3(0.18, 0.45, 1.5)
-
-[sub_resource type="StandardMaterial3D" id="Mat_wheel"]
-albedo_color = Color(0.08, 0.08, 0.1, 1)
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_wheel"]
-material = SubResource("Mat_wheel")
-top_radius = 0.3
-bottom_radius = 0.3
-height = 0.08
-
-[sub_resource type="StandardMaterial3D" id="Mat_rider"]
-albedo_color = Color(0.95, 0.35, 0.25, 1)
-
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_rider"]
-material = SubResource("Mat_rider")
-radius = 0.25
-height = 1.0
-
-[sub_resource type="StandardMaterial3D" id="Mat_nose"]
-albedo_color = Color(1, 0.85, 0.2, 1)
-emission_enabled = true
-emission = Color(1, 0.75, 0.1, 1)
-
-[sub_resource type="BoxMesh" id="BoxMesh_nose"]
-material = SubResource("Mat_nose")
-size = Vector3(0.5, 0.06, 0.06)
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_probe"]
 radius = 0.3
@@ -68,25 +36,7 @@ shape = SubResource("SphereShape3D_body")
 
 [node name="Visual" type="Node3D" parent="."]
 
-[node name="Frame" type="MeshInstance3D" parent="Visual"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
-mesh = SubResource("BoxMesh_bike")
-
-[node name="FrontWheel" type="MeshInstance3D" parent="Visual"]
-transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0.3, -0.6)
-mesh = SubResource("CylinderMesh_wheel")
-
-[node name="RearWheel" type="MeshInstance3D" parent="Visual"]
-transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0.3, 0.6)
-mesh = SubResource("CylinderMesh_wheel")
-
-[node name="Rider" type="MeshInstance3D" parent="Visual"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15, 0.1)
-mesh = SubResource("CapsuleMesh_rider")
-
-[node name="Handlebar" type="MeshInstance3D" parent="Visual"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, -0.55)
-mesh = SubResource("BoxMesh_nose")
+[node name="RiderRig" parent="Visual" instance=ExtResource("19_rig")]
 
 [node name="GroundProbe" type="ShapeCast3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, 0)

@@ -1,0 +1,600 @@
+[gd_scene load_steps=69 format=3]
+
+[ext_resource type="Script" path="res://player/rider/rider_rig.gd" id="1_rig"]
+
+[ext_resource type="Resource" path="res://player/rider/poses/ride.tres" id="2_ride"]
+
+[ext_resource type="Resource" path="res://player/rider/poses/tuck.tres" id="3_tuck"]
+
+[ext_resource type="Resource" path="res://player/rider/poses/pedal.tres" id="4_pedal"]
+
+[ext_resource type="Resource" path="res://player/rider/poses/air.tres" id="5_air"]
+
+[ext_resource type="Resource" path="res://player/rider/poses/trick.tres" id="6_trick"]
+
+[ext_resource type="Resource" path="res://player/rider/poses/grind.tres" id="7_grind"]
+
+[ext_resource type="Resource" path="res://player/rider/poses/bail.tres" id="8_bail"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_frame"]
+albedo_color = Color(0.1, 0.62, 0.66, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_tire"]
+albedo_color = Color(0.09, 0.08, 0.09, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_metal"]
+albedo_color = Color(0.55, 0.57, 0.6, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_seat"]
+albedo_color = Color(0.12, 0.12, 0.14, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_jersey"]
+albedo_color = Color(0.93, 0.33, 0.22, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_pants"]
+albedo_color = Color(0.16, 0.19, 0.3, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_skin"]
+albedo_color = Color(0.87, 0.64, 0.5, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_helmet"]
+albedo_color = Color(1.0, 0.8, 0.18, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_shoe"]
+albedo_color = Color(0.92, 0.9, 0.86, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_glove"]
+albedo_color = Color(0.18, 0.18, 0.2, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_1"]
+material = SubResource("Mat_frame")
+top_radius = 0.028
+bottom_radius = 0.028
+height = 0.5385
+radial_segments = 6
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_2"]
+material = SubResource("Mat_frame")
+top_radius = 0.025
+bottom_radius = 0.025
+height = 0.5803
+radial_segments = 6
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_3"]
+material = SubResource("Mat_frame")
+top_radius = 0.024
+bottom_radius = 0.024
+height = 0.4617
+radial_segments = 6
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_4"]
+material = SubResource("Mat_frame")
+top_radius = 0.033
+bottom_radius = 0.033
+height = 0.1456
+radial_segments = 6
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_5"]
+material = SubResource("Mat_frame")
+top_radius = 0.016
+bottom_radius = 0.016
+height = 0.4016
+radial_segments = 6
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_6"]
+material = SubResource("Mat_frame")
+top_radius = 0.014
+bottom_radius = 0.014
+height = 0.4851
+radial_segments = 6
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_7"]
+material = SubResource("Mat_frame")
+top_radius = 0.016
+bottom_radius = 0.016
+height = 0.4016
+radial_segments = 6
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_8"]
+material = SubResource("Mat_frame")
+top_radius = 0.014
+bottom_radius = 0.014
+height = 0.4851
+radial_segments = 6
+rings = 1
+
+[sub_resource type="BoxMesh" id="BoxMesh_9"]
+material = SubResource("Mat_seat")
+size = Vector3(0.11, 0.05, 0.26)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_10"]
+material = SubResource("Mat_metal")
+top_radius = 0.09
+bottom_radius = 0.09
+height = 0.012
+radial_segments = 10
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_11"]
+material = SubResource("Mat_frame")
+top_radius = 0.017
+bottom_radius = 0.017
+height = 0.3353
+radial_segments = 6
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_12"]
+material = SubResource("Mat_frame")
+top_radius = 0.017
+bottom_radius = 0.017
+height = 0.3353
+radial_segments = 6
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_13"]
+material = SubResource("Mat_metal")
+top_radius = 0.022
+bottom_radius = 0.022
+height = 0.1456
+radial_segments = 6
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_14"]
+material = SubResource("Mat_metal")
+top_radius = 0.016
+bottom_radius = 0.016
+height = 0.3419
+radial_segments = 6
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_15"]
+material = SubResource("Mat_metal")
+top_radius = 0.016
+bottom_radius = 0.016
+height = 0.3419
+radial_segments = 6
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_16"]
+material = SubResource("Mat_metal")
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.26
+radial_segments = 6
+rings = 1
+
+[sub_resource type="TorusMesh" id="TorusMesh_17"]
+material = SubResource("Mat_tire")
+inner_radius = 0.235
+outer_radius = 0.3
+rings = 18
+ring_segments = 6
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_18"]
+material = SubResource("Mat_metal")
+top_radius = 0.035
+bottom_radius = 0.035
+height = 0.11
+radial_segments = 8
+rings = 1
+
+[sub_resource type="BoxMesh" id="BoxMesh_19"]
+material = SubResource("Mat_metal")
+size = Vector3(0.02, 0.46, 0.025)
+
+[sub_resource type="BoxMesh" id="BoxMesh_20"]
+material = SubResource("Mat_metal")
+size = Vector3(0.02, 0.46, 0.025)
+
+[sub_resource type="BoxMesh" id="BoxMesh_21"]
+material = SubResource("Mat_metal")
+size = Vector3(0.02, 0.46, 0.025)
+
+[sub_resource type="TorusMesh" id="TorusMesh_22"]
+material = SubResource("Mat_tire")
+inner_radius = 0.235
+outer_radius = 0.3
+rings = 18
+ring_segments = 6
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_23"]
+material = SubResource("Mat_metal")
+top_radius = 0.035
+bottom_radius = 0.035
+height = 0.11
+radial_segments = 8
+rings = 1
+
+[sub_resource type="BoxMesh" id="BoxMesh_24"]
+material = SubResource("Mat_metal")
+size = Vector3(0.02, 0.46, 0.025)
+
+[sub_resource type="BoxMesh" id="BoxMesh_25"]
+material = SubResource("Mat_metal")
+size = Vector3(0.02, 0.46, 0.025)
+
+[sub_resource type="BoxMesh" id="BoxMesh_26"]
+material = SubResource("Mat_metal")
+size = Vector3(0.02, 0.46, 0.025)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_27"]
+material = SubResource("Mat_metal")
+top_radius = 0.013
+bottom_radius = 0.013
+height = 0.1703
+radial_segments = 6
+rings = 1
+
+[sub_resource type="BoxMesh" id="BoxMesh_28"]
+material = SubResource("Mat_seat")
+size = Vector3(0.1, 0.02, 0.09)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_29"]
+material = SubResource("Mat_metal")
+top_radius = 0.013
+bottom_radius = 0.013
+height = 0.1703
+radial_segments = 6
+rings = 1
+
+[sub_resource type="BoxMesh" id="BoxMesh_30"]
+material = SubResource("Mat_seat")
+size = Vector3(0.1, 0.02, 0.09)
+
+[sub_resource type="BoxMesh" id="BoxMesh_31"]
+material = SubResource("Mat_pants")
+size = Vector3(0.26, 0.13, 0.17)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_32"]
+material = SubResource("Mat_jersey")
+radius = 0.155
+height = 0.58
+radial_segments = 8
+rings = 2
+
+[sub_resource type="BoxMesh" id="BoxMesh_33"]
+material = SubResource("Mat_shoe")
+size = Vector3(0.16, 0.14, 0.02)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_34"]
+material = SubResource("Mat_skin")
+top_radius = 0.05
+bottom_radius = 0.055
+height = 0.1
+radial_segments = 6
+rings = 1
+
+[sub_resource type="SphereMesh" id="SphereMesh_35"]
+material = SubResource("Mat_skin")
+radius = 0.11
+height = 0.24
+radial_segments = 10
+rings = 5
+
+[sub_resource type="SphereMesh" id="SphereMesh_36"]
+material = SubResource("Mat_helmet")
+radius = 0.135
+height = 0.135
+radial_segments = 12
+rings = 4
+is_hemisphere = true
+
+[sub_resource type="BoxMesh" id="BoxMesh_37"]
+material = SubResource("Mat_helmet")
+size = Vector3(0.2, 0.03, 0.07)
+
+[sub_resource type="BoxMesh" id="BoxMesh_38"]
+material = SubResource("Mat_helmet")
+size = Vector3(0.14, 0.06, 0.06)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_39"]
+material = SubResource("Mat_pants")
+radius = 0.075
+height = 0.53
+radial_segments = 8
+rings = 2
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_40"]
+material = SubResource("Mat_pants")
+radius = 0.06
+height = 0.522
+radial_segments = 8
+rings = 2
+
+[sub_resource type="BoxMesh" id="BoxMesh_41"]
+material = SubResource("Mat_shoe")
+size = Vector3(0.1, 0.08, 0.24)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_42"]
+material = SubResource("Mat_jersey")
+radius = 0.058
+height = 0.37
+radial_segments = 8
+rings = 2
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_43"]
+material = SubResource("Mat_jersey")
+radius = 0.048
+height = 0.348
+radial_segments = 8
+rings = 2
+
+[sub_resource type="SphereMesh" id="SphereMesh_44"]
+material = SubResource("Mat_glove")
+radius = 0.05
+height = 0.1
+radial_segments = 6
+rings = 3
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_45"]
+material = SubResource("Mat_pants")
+radius = 0.075
+height = 0.53
+radial_segments = 8
+rings = 2
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_46"]
+material = SubResource("Mat_pants")
+radius = 0.06
+height = 0.522
+radial_segments = 8
+rings = 2
+
+[sub_resource type="BoxMesh" id="BoxMesh_47"]
+material = SubResource("Mat_shoe")
+size = Vector3(0.1, 0.08, 0.24)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_48"]
+material = SubResource("Mat_jersey")
+radius = 0.058
+height = 0.37
+radial_segments = 8
+rings = 2
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_49"]
+material = SubResource("Mat_jersey")
+radius = 0.048
+height = 0.348
+radial_segments = 8
+rings = 2
+
+[sub_resource type="SphereMesh" id="SphereMesh_50"]
+material = SubResource("Mat_glove")
+radius = 0.05
+height = 0.1
+radial_segments = 6
+rings = 3
+
+[node name="RiderRig" type="Node3D"]
+script = ExtResource("1_rig")
+pose_ride = ExtResource("2_ride")
+pose_tuck = ExtResource("3_tuck")
+pose_pedal = ExtResource("4_pedal")
+pose_air = ExtResource("5_air")
+pose_trick = ExtResource("6_trick")
+pose_grind = ExtResource("7_grind")
+pose_bail = ExtResource("8_bail")
+
+[node name="Bike" type="Node3D" parent="."]
+
+[node name="DownTube" type="MeshInstance3D" parent="Bike"]
+transform = Transform3D(-1, 0, 0, 0, 0.5199, -0.8542, -0, -0.8542, -0.5199, 0, 0.46, -0.17)
+mesh = SubResource("CylinderMesh_1")
+
+[node name="TopTube" type="MeshInstance3D" parent="Bike"]
+transform = Transform3D(1, 0, 0, 0, -0.03446, 0.9994, 0, -0.9994, -0.03446, 0, 0.71, -0.13)
+mesh = SubResource("CylinderMesh_2")
+
+[node name="SeatTube" type="MeshInstance3D" parent="Bike"]
+transform = Transform3D(-1, 0, 0, 0, 0.9529, 0.3032, 0, 0.3032, -0.9529, 0, 0.54, 0.13)
+mesh = SubResource("CylinderMesh_3")
+
+[node name="HeadTube" type="MeshInstance3D" parent="Bike"]
+transform = Transform3D(-1, 0, 0, 0, 0.9615, -0.2747, -0, -0.2747, -0.9615, 0, 0.67, -0.42)
+mesh = SubResource("CylinderMesh_4")
+
+[node name="ChainStayL" type="MeshInstance3D" parent="Bike"]
+transform = Transform3D(0.5547, -0.8321, 0, -0.0747, -0.0498, 0.996, -0.8287, -0.5525, -0.08977, -0.045, 0.31, 0.26)
+mesh = SubResource("CylinderMesh_5")
+
+[node name="SeatStayL" type="MeshInstance3D" parent="Bike"]
+transform = Transform3D(0.9969, -0.0787, 0, -0.06185, -0.7834, 0.6185, -0.04867, -0.6165, -0.7858, -0.045, 0.49, 0.31)
+mesh = SubResource("CylinderMesh_6")
+
+[node name="ChainStayR" type="MeshInstance3D" parent="Bike"]
+transform = Transform3D(0.5547, 0.8321, 0, 0.0747, -0.0498, 0.996, 0.8287, -0.5525, -0.08977, 0.045, 0.31, 0.26)
+mesh = SubResource("CylinderMesh_7")
+
+[node name="SeatStayR" type="MeshInstance3D" parent="Bike"]
+transform = Transform3D(0.9969, 0.0787, 0, 0.06185, -0.7834, 0.6185, 0.04867, -0.6165, -0.7858, 0.045, 0.49, 0.31)
+mesh = SubResource("CylinderMesh_8")
+
+[node name="Seat" type="MeshInstance3D" parent="Bike"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.79, 0.22)
+mesh = SubResource("BoxMesh_9")
+
+[node name="Sprocket" type="MeshInstance3D" parent="Bike"]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0.05, 0.32, 0.06)
+mesh = SubResource("CylinderMesh_10")
+
+[node name="Fork" type="Node3D" parent="Bike"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -0.46)
+
+[node name="BladeL" type="MeshInstance3D" parent="Bike/Fork"]
+transform = Transform3D(1, 0, 0, 0, -0.9545, -0.2983, 0, 0.2983, -0.9545, -0.05, -0.04, -0.01)
+mesh = SubResource("CylinderMesh_11")
+
+[node name="BladeR" type="MeshInstance3D" parent="Bike/Fork"]
+transform = Transform3D(1, 0, 0, 0, -0.9545, -0.2983, 0, 0.2983, -0.9545, 0.05, -0.04, -0.01)
+mesh = SubResource("CylinderMesh_12")
+
+[node name="Stem" type="MeshInstance3D" parent="Bike/Fork"]
+transform = Transform3D(-1, 0, 0, 0, 0.9615, 0.2747, 0, 0.2747, -0.9615, 0, 0.31, 0.04)
+mesh = SubResource("CylinderMesh_13")
+
+[node name="BarL" type="MeshInstance3D" parent="Bike/Fork"]
+transform = Transform3D(-0.2356, -0.9719, -0, -0.9652, 0.234, 0.117, -0.1137, 0.02756, -0.9931, -0.165, 0.42, 0.08)
+mesh = SubResource("CylinderMesh_14")
+
+[node name="BarR" type="MeshInstance3D" parent="Bike/Fork"]
+transform = Transform3D(-0.2356, 0.9719, 0, 0.9652, 0.234, 0.117, 0.1137, 0.02756, -0.9931, 0.165, 0.42, 0.08)
+mesh = SubResource("CylinderMesh_15")
+
+[node name="CrossBar" type="MeshInstance3D" parent="Bike/Fork"]
+transform = Transform3D(-0, 1, 0, 1, 0, 0, 0, 0, -1, 0, 0.42, 0.08)
+mesh = SubResource("CylinderMesh_16")
+
+[node name="GripL" type="Marker3D" parent="Bike/Fork"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3, 0.46, 0.1)
+
+[node name="GripR" type="Marker3D" parent="Bike/Fork"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, 0.46, 0.1)
+
+[node name="FrontWheel" type="Node3D" parent="Bike/Fork"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2, -0.06)
+
+[node name="Tire" type="MeshInstance3D" parent="Bike/Fork/FrontWheel"]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("TorusMesh_17")
+
+[node name="Hub" type="MeshInstance3D" parent="Bike/Fork/FrontWheel"]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("CylinderMesh_18")
+
+[node name="Spoke0" type="MeshInstance3D" parent="Bike/Fork/FrontWheel"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, -0, 1, 0, 0, 0)
+mesh = SubResource("BoxMesh_19")
+
+[node name="Spoke1" type="MeshInstance3D" parent="Bike/Fork/FrontWheel"]
+transform = Transform3D(1, 0, 0, 0, 0.5, 0.866, 0, -0.866, 0.5, 0, 0, 0)
+mesh = SubResource("BoxMesh_20")
+
+[node name="Spoke2" type="MeshInstance3D" parent="Bike/Fork/FrontWheel"]
+transform = Transform3D(1, 0, 0, 0, -0.5, 0.866, 0, -0.866, -0.5, 0, 0, 0)
+mesh = SubResource("BoxMesh_21")
+
+[node name="RearWheel" type="Node3D" parent="Bike"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0.46)
+
+[node name="Tire" type="MeshInstance3D" parent="Bike/RearWheel"]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("TorusMesh_22")
+
+[node name="Hub" type="MeshInstance3D" parent="Bike/RearWheel"]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("CylinderMesh_23")
+
+[node name="Spoke0" type="MeshInstance3D" parent="Bike/RearWheel"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, -0, 1, 0, 0, 0)
+mesh = SubResource("BoxMesh_24")
+
+[node name="Spoke1" type="MeshInstance3D" parent="Bike/RearWheel"]
+transform = Transform3D(1, 0, 0, 0, 0.5, 0.866, 0, -0.866, 0.5, 0, 0, 0)
+mesh = SubResource("BoxMesh_25")
+
+[node name="Spoke2" type="MeshInstance3D" parent="Bike/RearWheel"]
+transform = Transform3D(1, 0, 0, 0, -0.5, 0.866, 0, -0.866, -0.5, 0, 0, 0)
+mesh = SubResource("BoxMesh_26")
+
+[node name="Cranks" type="Node3D" parent="Bike"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.32, 0.06)
+
+[node name="ArmL" type="MeshInstance3D" parent="Bike/Cranks"]
+transform = Transform3D(0, -1, -0, -0.05872, 0, -0.9983, 0.9983, 0, -0.05872, -0.075, 0, -0.085)
+mesh = SubResource("CylinderMesh_27")
+
+[node name="PedalL" type="Node3D" parent="Bike/Cranks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.12, 0, -0.17)
+
+[node name="Plate" type="MeshInstance3D" parent="Bike/Cranks/PedalL"]
+mesh = SubResource("BoxMesh_28")
+
+[node name="ArmR" type="MeshInstance3D" parent="Bike/Cranks"]
+transform = Transform3D(-0, 1, 0, 0.05872, 0, 0.9983, 0.9983, 0, -0.05872, 0.075, 0, 0.085)
+mesh = SubResource("CylinderMesh_29")
+
+[node name="PedalR" type="Node3D" parent="Bike/Cranks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.12, 0, 0.17)
+
+[node name="Plate" type="MeshInstance3D" parent="Bike/Cranks/PedalR"]
+mesh = SubResource("BoxMesh_30")
+
+[node name="Pelvis" type="MeshInstance3D" parent="Bike"]
+mesh = SubResource("BoxMesh_31")
+
+[node name="Torso" type="Node3D" parent="Bike"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.08, 0.14)
+
+[node name="Chest" type="MeshInstance3D" parent="Bike/Torso"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.27, 0)
+mesh = SubResource("CapsuleMesh_32")
+
+[node name="Number" type="MeshInstance3D" parent="Bike/Torso"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0.145)
+mesh = SubResource("BoxMesh_33")
+
+[node name="Head" type="Node3D" parent="Bike/Torso"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+
+[node name="Neck" type="MeshInstance3D" parent="Bike/Torso/Head"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+mesh = SubResource("CylinderMesh_34")
+
+[node name="Face" type="MeshInstance3D" parent="Bike/Torso/Head"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.17, -0.01)
+mesh = SubResource("SphereMesh_35")
+
+[node name="Helmet" type="MeshInstance3D" parent="Bike/Torso/Head"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0.01)
+mesh = SubResource("SphereMesh_36")
+
+[node name="Visor" type="MeshInstance3D" parent="Bike/Torso/Head"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.22, -0.13)
+mesh = SubResource("BoxMesh_37")
+
+[node name="ChinGuard" type="MeshInstance3D" parent="Bike/Torso/Head"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, -0.09)
+mesh = SubResource("BoxMesh_38")
+
+[node name="ThighL" type="MeshInstance3D" parent="Bike"]
+mesh = SubResource("CapsuleMesh_39")
+
+[node name="ShinL" type="MeshInstance3D" parent="Bike"]
+mesh = SubResource("CapsuleMesh_40")
+
+[node name="ShoeL" type="MeshInstance3D" parent="Bike"]
+mesh = SubResource("BoxMesh_41")
+
+[node name="UpperArmL" type="MeshInstance3D" parent="Bike"]
+mesh = SubResource("CapsuleMesh_42")
+
+[node name="ForearmL" type="MeshInstance3D" parent="Bike"]
+mesh = SubResource("CapsuleMesh_43")
+
+[node name="HandL" type="MeshInstance3D" parent="Bike"]
+mesh = SubResource("SphereMesh_44")
+
+[node name="ThighR" type="MeshInstance3D" parent="Bike"]
+mesh = SubResource("CapsuleMesh_45")
+
+[node name="ShinR" type="MeshInstance3D" parent="Bike"]
+mesh = SubResource("CapsuleMesh_46")
+
+[node name="ShoeR" type="MeshInstance3D" parent="Bike"]
+mesh = SubResource("BoxMesh_47")
+
+[node name="UpperArmR" type="MeshInstance3D" parent="Bike"]
+mesh = SubResource("CapsuleMesh_48")
+
+[node name="ForearmR" type="MeshInstance3D" parent="Bike"]
+mesh = SubResource("CapsuleMesh_49")
+
+[node name="HandR" type="MeshInstance3D" parent="Bike"]
+mesh = SubResource("SphereMesh_50")

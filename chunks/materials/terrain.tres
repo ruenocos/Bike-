@@ -5,3 +5,4 @@
 [resource]
 render_priority = 0
 shader = ExtResource("1_terrain")
+shader_parameter/use_ground_palette = true

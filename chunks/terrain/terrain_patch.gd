@@ -162,6 +162,15 @@ const BOUNDARY_SEGMENT: float = 20.0
 		material = v
 		if _mesh_instance != null:
 			_mesh_instance.material_override = material
+## The current stage's biome cover, set by the game (v0.12); wins over
+## `ground_cover` outside the editor.
+static var cover_override: GroundCover
+
+## Grass / dirt patches and what grows on them (v0.11). Empty = bare ground.
+@export var ground_cover: GroundCover = preload("res://chunks/terrain/cover/meadow.tres"):
+	set(v):
+		ground_cover = v
+		queue_rebuild()
 
 ## Grid size and heights of the last build (row-major; row r is r * row
 ## spacing down the spine, column c runs across it).
@@ -171,6 +180,8 @@ var heights: PackedFloat32Array = PackedFloat32Array()
 
 var _mesh_instance: MeshInstance3D
 var _body: StaticBody3D
+var _cover: Node3D
+var _mesh_arrays: Array = []
 var _rebuild_queued: bool = false
 var _noise: FastNoiseLite = FastNoiseLite.new()
 ## Per row: height of the base slope, half the play width, the spine point
@@ -190,6 +201,9 @@ func _ready() -> void:
 	_body = StaticBody3D.new()
 	_body.name = "TerrainBody"
 	add_child(_body, false, Node.INTERNAL_MODE_BACK)
+	_cover = Node3D.new()
+	_cover.name = "GroundCover"
+	add_child(_cover, false, Node.INTERNAL_MODE_BACK)
 	rebuild()
 	# Adding or removing shaping nodes rebuilds (connected after our own children).
 	child_order_changed.connect(queue_rebuild)
@@ -211,6 +225,9 @@ func rebuild() -> void:
 	_compute_heights()
 	_build_mesh()
 	_build_collision()
+	# Grass patches are in world space: wait until whoever added us has put
+	# us in place (StageBuilder moves a chunk right after adding it).
+	_build_cover.call_deferred()
 
 
 ## Swaps a watched Curve: edits to the curve rebuild the terrain.
@@ -617,6 +634,107 @@ func _apply_flatten(flat: TerrainFlatten, detail: PackedFloat32Array, dz: float)
 			detail[idx] = lerpf(detail[idx], plane_y - _row_base[r], k)
 
 
+# --- Ground cover (v0.11) --------------------------------------------------
+
+## Writes the grass amount into the vertex colours (red) and scatters the
+## cover layers into MultiMesh tiles. Skipped headless (tests).
+func _build_cover() -> void:
+	if not is_inside_tree() or _cover == null or _mesh_arrays.is_empty():
+		return
+	for child: Node in _cover.get_children():
+		child.free()
+	var cover: GroundCover = ground_cover
+	if cover_override != null and not Engine.is_editor_hint():
+		cover = cover_override
+	if cover == null or DisplayServer.get_name() == "headless":
+		return
+	var verts: PackedVector3Array = _mesh_arrays[Mesh.ARRAY_VERTEX]
+	var normals: PackedVector3Array = _mesh_arrays[Mesh.ARRAY_NORMAL]
+	var to_world: Transform3D = global_transform
+	var mask: PackedFloat32Array = PackedFloat32Array()
+	mask.resize(verts.size())
+	var colors: PackedColorArray = PackedColorArray()
+	colors.resize(verts.size())
+	for i: int in verts.size():
+		var n_world: Vector3 = (to_world.basis * normals[i]).normalized()
+		mask[i] = cover.mask_at(to_world * verts[i], n_world.y)
+		colors[i] = Color(mask[i], 0.0, 0.0, 1.0)
+	var arrays: Array = _mesh_arrays.duplicate()
+	arrays[Mesh.ARRAY_COLOR] = colors
+	var mesh: ArrayMesh = ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	_mesh_instance.mesh = mesh
+	for li: int in cover.layers.size():
+		var layer: GroundCoverLayer = cover.layers[li]
+		if layer != null and layer.density > 0.0 and layer.get_mesh() != null:
+			_scatter(cover, layer, li, verts, normals, mask)
+
+
+func _scatter(cover: GroundCover, layer: GroundCoverLayer, index: int, verts: PackedVector3Array, normals: PackedVector3Array, mask: PackedFloat32Array) -> void:
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	rng.seed = hash(Vector3i(noise_seed, index, cover.patch_seed))
+	var cells: int = (rows - 1) * (columns - 1)
+	var dz: float = length / float(rows - 1)
+	var area: float = 0.0
+	for r: int in rows - 1:
+		area += (_row_half[r] + outside_width) * 2.0 * dz
+	var tries: int = int(area / 100.0 * layer.density)
+	var weight_max: float = maxf(layer.on_grass, 1.0 - layer.on_grass)
+	var tiles: Dictionary[Vector2i, Array] = {}
+	var tile: float = cover.tile_size
+	for t: int in tries:
+		var cell: int = rng.randi_range(0, cells - 1)
+		var r: int = cell / (columns - 1)
+		var c: int = cell % (columns - 1)
+		var u: float = rng.randf()
+		var v: float = rng.randf()
+		var a: int = r * columns + c
+		var m: float = lerpf(lerpf(mask[a], mask[a + 1], u), lerpf(mask[a + columns], mask[a + columns + 1], u), v)
+		var w: float = (m * layer.on_grass + (1.0 - m) * (1.0 - layer.on_grass)) / weight_max
+		if rng.randf() > w:
+			continue
+		var x: float = lerpf(_column_x(r, c), _column_x(r, c + 1), u)
+		var half: float = _row_half[r]
+		match layer.zone:
+			GroundCoverLayer.Zone.PLAY:
+				if absf(x) > half - wall_width * 0.6:
+					continue
+			GroundCoverLayer.Zone.EDGE:
+				if absf(x) < half - wall_width or absf(x) > half + outside_width * 0.5:
+					continue
+			GroundCoverLayer.Zone.OUTSIDE:
+				if absf(x) < half:
+					continue
+		var p: Vector3 = verts[a].lerp(verts[a + 1], u).lerp(verts[a + columns].lerp(verts[a + columns + 1], u), v)
+		var n: Vector3 = normals[a].lerp(normals[a + columns + 1], v).normalized()
+		var up: Vector3 = Vector3.UP.lerp(n, layer.follow_ground).normalized()
+		var basis: Basis = Basis(Vector3.UP, rng.randf() * TAU)
+		basis = Basis(Quaternion(Vector3.UP, up)) * basis
+		basis = basis.scaled(Vector3.ONE * rng.randf_range(layer.scale_min, layer.scale_max))
+		var key: Vector2i = Vector2i(floori(p.x / tile), floori(p.z / tile))
+		if not tiles.has(key):
+			tiles[key] = []
+		tiles[key].append(Transform3D(basis, p - up * layer.sink))
+	for key: Vector2i in tiles:
+		var list: Array = tiles[key]
+		var mm: MultiMesh = MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.use_colors = true
+		mm.mesh = layer.get_mesh()
+		mm.instance_count = list.size()
+		for i: int in list.size():
+			mm.set_instance_transform(i, list[i])
+			mm.set_instance_color(i, Color(rng.randf(), rng.randf(), 0.0, 1.0))
+		var mmi: MultiMeshInstance3D = MultiMeshInstance3D.new()
+		mmi.multimesh = mm
+		mmi.material_override = layer.get_material()
+		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if layer.cast_shadows else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mmi.visibility_range_end = layer.visibility_end
+		mmi.visibility_range_end_margin = layer.visibility_end * 0.15
+		mmi.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+		_cover.add_child(mmi)
+
+
 # --- Mesh and collision ----------------------------------------------------
 
 func _build_mesh() -> void:
@@ -658,6 +776,7 @@ func _build_mesh() -> void:
 	arrays[Mesh.ARRAY_VERTEX] = verts
 	arrays[Mesh.ARRAY_NORMAL] = normals
 	arrays[Mesh.ARRAY_INDEX] = indices
+	_mesh_arrays = arrays
 	var mesh: ArrayMesh = ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	_mesh_instance.mesh = mesh

@@ -1,0 +1,48 @@
+@tool
+class_name Biome
+extends Resource
+## One look for a stage (biomes/*.tres): ground colours, what grows, which
+## trees and rocks stand there, sky, fog, sun and the far mountains. The game
+## applies one per stage (Game `biomes`); the chunks and their gameplay stay
+## the same, only the world around them changes.
+
+@export var display_name: String = "Meadow"
+## Short line under the name on the stage title card.
+@export var subtitle: String = ""
+
+@export_group("Ground")
+@export var ground_dirt: Color = Color(0.6, 0.5, 0.39)
+@export var ground_grass: Color = Color(0.46, 0.54, 0.24)
+@export var ground_rock: Color = Color(0.56, 0.5, 0.45)
+@export var grass_tip: Color = Color(0.74, 0.75, 0.38)
+## Grass patches and what grows on them.
+@export var ground_cover: GroundCover
+## Far ground under the valley.
+@export var far_ground: Color = Color(0.46, 0.41, 0.33)
+
+@export_group("Props")
+## Models for trees / rocks / logs (empty = the prop's own).
+@export var trees: Array[PackedScene] = []
+@export var rocks: Array[PackedScene] = []
+## Size of the biome's trees against the prop's own model_scale.
+@export_range(0.2, 3.0, 0.01) var tree_scale: float = 1.0
+## Multiplies every prop model's colour (e.g. frosted, sun-bleached).
+@export var prop_tint: Color = Color.WHITE
+
+@export_group("Sky and light")
+@export var sky_top: Color = Color(0.17, 0.29, 0.56)
+@export var sky_horizon: Color = Color(1.0, 0.72, 0.5)
+@export var ground_horizon: Color = Color(0.95, 0.69, 0.52)
+@export var fog_color: Color = Color(0.93, 0.72, 0.56)
+@export_range(0.0, 0.01, 0.0001) var fog_density: float = 0.0007
+@export var sun_color: Color = Color(1.0, 0.79, 0.56)
+@export_range(0.0, 4.0, 0.05) var sun_energy: float = 1.5
+## Sun height above the horizon (deg) and direction (deg around up).
+@export_range(2.0, 90.0, 0.5) var sun_elevation: float = 16.5
+@export_range(-180.0, 180.0, 0.5) var sun_heading: float = 143.0
+@export_range(0.0, 4.0, 0.05) var ambient_energy: float = 1.1
+@export_range(0.0, 2.0, 0.01) var saturation: float = 1.12
+
+@export_group("Mountains")
+@export var peak_color: Color = Color(0.36, 0.38, 0.52)
+@export var haze_color: Color = Color(0.86, 0.66, 0.56)

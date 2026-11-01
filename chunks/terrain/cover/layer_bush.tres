@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="GroundCoverLayer" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://chunks/terrain/ground_cover_layer.gd" id="1_layer"]
+[ext_resource type="PackedScene" path="res://art/nature/megakit/Bush_Common.gltf" id="2_model"]
+
+[resource]
+script = ExtResource("1_layer")
+model = ExtResource("2_model")
+density = 0.5
+on_grass = 0.8
+zone = 2
+scale_min = 0.6
+scale_max = 1.1
+sink = 0.15
+follow_ground = 0.3
+visibility_end = 400.0
+cast_shadows = true
+outline = true

@@ -19,24 +19,25 @@ static var _white: ImageTexture
 
 
 ## Every MeshInstance3D under `root` gets cel materials (surface overrides).
-static func apply(root: Node, outline: bool) -> void:
+## `tint` multiplies the colour (biomes: frosted, sun-bleached props).
+static func apply(root: Node, outline: bool, tint: Color = Color.WHITE) -> void:
 	if root is MeshInstance3D:
 		var mi: MeshInstance3D = root as MeshInstance3D
 		for s: int in mi.mesh.get_surface_count():
-			mi.set_surface_override_material(s, material_for(mi.mesh.surface_get_material(s), outline))
+			mi.set_surface_override_material(s, material_for(mi.mesh.surface_get_material(s), outline, tint))
 	for child: Node in root.get_children():
-		apply(child, outline)
+		apply(child, outline, tint)
 
 
-static func material_for(source: Material, outline: bool) -> Material:
-	var key: String = "%d:%s" % [source.get_instance_id() if source != null else 0, outline]
+static func material_for(source: Material, outline: bool, tint: Color = Color.WHITE) -> Material:
+	var key: String = "%d:%s:%s" % [source.get_instance_id() if source != null else 0, outline, tint.to_html()]
 	if _cache.has(key):
 		return _cache[key]
 	var bm: BaseMaterial3D = source as BaseMaterial3D
 	var cut: bool = bm != null and bm.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED
 	var mat: ShaderMaterial = ShaderMaterial.new()
 	mat.shader = CUTOUT if cut else OPAQUE
-	mat.set_shader_parameter(&"color", bm.albedo_color if bm != null else Color(0.7, 0.7, 0.7))
+	mat.set_shader_parameter(&"color", (bm.albedo_color if bm != null else Color(0.7, 0.7, 0.7)) * tint)
 	mat.set_shader_parameter(&"base_texture", bm.albedo_texture if bm != null and bm.albedo_texture != null else _white_texture())
 	mat.set_shader_parameter(&"specular", Color(0.15, 0.15, 0.15, 0.2))
 	mat.set_shader_parameter(&"fresnel", Color(0.35, 0.28, 0.2, 0.25))

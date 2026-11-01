@@ -67,7 +67,7 @@ Prefer editor-visible setup: scenes, nodes, .tres, @export, @tool previews; code
 ## Input map (to set up)
 steer_left/right: left stick X · lean_forward: left stick up = pump (ground only; lean_back unused since v0.6) · pedal: RT · brake: LT · hop: South (hold to charge) · grind: West (unused since v0.9.1: rails catch you when you hop onto them) · menus: A confirm / B back · F3 debug readout · trick_left/right/up/down: right stick · pause: Start
 
-## Status (2026-11-01, v0.10 on branch `landscape`)
+## Status (2026-11-01, v0.11 on branch `landscape`)
 Done (v0.1): project settings, input map (+ debug_reset on Back/R), test track, Player with Ride/Air/Land/Bail, landing grades, debug overlay, physics interpolation. Feel gate approved by Wons.
 Done (v0.2, phase 2 batch A):
 - tricks/: TrickData resource + 4 starter tricks in tricks/data (up Frontloop, down Pocket, left/right Whirl). TrickRunner (child of Player) reads right-stick flicks (neutral -> >0.7 within 0.15 s), plays them on the Visual around the hips, chains a new flick in the last 30%.
@@ -209,12 +209,21 @@ Done (v0.10 "visual direction, first pass", branch `landscape`; sources and lice
 - Terrain: chunks/materials/terrain_cel.gdshader (banded light + the old warm earth and faint grid) used by terrain.tres, feature.tres, transition.tres. Golden hour, fog and mountains unchanged. Sky3D not used (the procedural sky already does the job; one less addon on 4.7 D3D12).
 - Checks: import, quit, terrain, landing 42/42, feel 16/16, smoke, line, menu 4/4 all pass; real time 59-60 fps with the models and outlines.
 - Record: `<exe> --path . --write-movie <abs>/v0.10.avi --fixed-fps 30 --quit-after 2450 res://game.tscn -- --autopilot --seed=7 --autopilot-shots=<abs dir>` (captures/v0.10).
+Done (v0.11 "rider and ground", branch `landscape`, autonomous run after Wons: "expand the game ... you make all the decisions"):
+- Rider + BMX: player/rider/rider_rig.tscn (RiderRig, @tool), low-poly primitives with the cel look + outline, replaces the capsule/box placeholder under Player/Visual. Poses are RiderPose resources (player/rider/poses/ride, tuck, pedal, air, trick, grind, bail .tres: hips, torso/head pitch, hand/foot offsets, bike pitch); the rig picks one from the player's state (tuck blends in above `tuck_from` of max speed, pedal while RT on the ground, trick mid-trick, bail flails the torso) and blends over `blend_time`. Legs and arms are two-bone IK to the pedals and grips, so the cranks turn while pedalling (level when coasting), the bars steer, the wheels spin, and landings dip the hips (`land_dip`). In the editor pick `preview` on the RiderRig to see a pose. debug/rider_poses.tscn lines all poses up (`-- --shot=<png>`).
+- Ground cover: TerrainPatch `ground_cover` (GroundCover .tres, default chunks/terrain/cover/meadow.tres). A world-space noise splits the ground into grass and dirt patches (`grass_amount`, `patch_frequency`), written into the terrain's vertex colour so the shader paints it; steep faces turn to rock. Layers (GroundCoverLayer): grass tufts (GrassTuftMesh: procedural blades, chunks/materials/grass.gdshader with wind sway), sparse tufts on dirt, MegaKit bushes on the banks only (`zone` EDGE: nothing that looks solid in the play area, none of it collides). Scattered into 48 m MultiMesh tiles that hide past `visibility_end`; ~18 ms per chunk at build, skipped headless.
+- Ground palette = global shader parameters (Project Settings > Shader Globals: ground_dirt, ground_grass, ground_rock, grass_tip), so a biome can recolour the world at runtime.
+- Rolling boulders are MegaKit rocks (PropModel), kickers / rail ledges a wood-plank look (feature.tres), dust and carve spray muted with soft edges.
+- Checks: all tests pass; 59-60 fps real time with grass.
+- Known: the autopilot isn't exactly repeatable between `--write-movie` runs (same seed); one movie run of seed 7 hit a tree + a rail ledge in stage 1 and got caught, the next finished the stage clean (bots only).
+- Record: as v0.10 into captures/v0.11, plus `<exe> --path . res://debug/rider_poses.tscn -- --angle=30 --shot=<abs png>`.
 Tweak in the editor (v0.9):
 - Any chunk in chunks/landscape/: select Terrain for size/slope/noise/edges and the bend (Bend > heading_curve) / narrowing (width_profile); drag the shaping nodes under Terrain (gullies, ridges, rollers, rail beds, kicker pads: they rebuild live); move props under Terrain/Props then press "Snap props to ground"; RollingBoulder `roll_to` / `trigger_distance` / `roll_time`; TightZone `size`. Lines/Path* are invisible bot/respawn paths: if you move props onto one, the smoke test will say so.
 - Set pieces: chunks/landscape/set_cliff.tscn, set_ravine.tscn, set_bend_kicker.tscn, set_rail_gap.tscn, set_canyon_slot.tscn, set_fork.tscn (Terrain slope_profile for the cliff, the Ravine gully, the big kicker pads, Gates/*). Boost gates: any Gates/Gate* node (speed_boost, score, radius); drag one onto a risky spot. Rerolls: scoring/run_rules.tres.
 - game.tscn: Game (middle_chunks, oob/penalty times, rules), StageBuilder (set_pieces, set_pieces_per_stage), StartSprint (fill time, sweet zone, boosts), Collapse (difficulty arrays, penalties, feel), StageBuilder (chunk lists, tier_bias).
 - player/player_tuning.tres: Steering, Crashes, trick boost (Combo group), Camera open/tight + turn lead, Speed lines (incl. boost flash).
 - Particles: Player/RiderVfx (thresholds) and its child nodes' process materials. Mood: game.tscn WorldEnvironment (sky, fog, glow), DirectionalLight3D (sun angle / colour), FarGround/Mountains (MountainRing), chunks/materials/terrain.tres (ground colours, terrain_cel.gdshader).
+- Rider (v0.11): player/rider/poses/*.tres (poses), RiderRig in player/rider/rider_rig.tscn (Feel: blend, tuck, steer, cadence, land dip; Body: limb lengths). Ground cover: chunks/terrain/cover/meadow.tres (patches + layers), ground colours in Shader Globals.
 - Look (v0.10): a prop scene's Model node (PropModel: variants, scale, outline); light bands in vfx/cel/diffuse_curve.tres; outline colour / width in Project Settings > Shader Globals.
 
 ## Next tasks, in order

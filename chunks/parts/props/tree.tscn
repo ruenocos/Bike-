@@ -17,6 +17,7 @@ radius = 0.5
 
 [node name="Model" type="Node3D" parent="."]
 script = ExtResource("1_model")
+kind = "tree"
 variants = Array[PackedScene]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9")])
 model_scale = Vector3(1.25, 1.25, 1.25)
 outline = true

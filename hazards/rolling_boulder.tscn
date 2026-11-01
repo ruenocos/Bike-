@@ -1,16 +1,9 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://hazards/rolling_boulder.gd" id="1_boulder"]
-
-[sub_resource type="StandardMaterial3D" id="Mat_boulder"]
-albedo_color = Color(0.5, 0.38, 0.32, 1)
-
-[sub_resource type="SphereMesh" id="Mesh_boulder"]
-material = SubResource("Mat_boulder")
-radius = 2.2
-height = 4.4
-radial_segments = 10
-rings = 6
+[ext_resource type="Script" path="res://chunks/parts/props/prop_model.gd" id="2_model"]
+[ext_resource type="PackedScene" path="res://art/nature/megakit/Rock_Medium_1.gltf" id="3_rock1"]
+[ext_resource type="PackedScene" path="res://art/nature/megakit/Rock_Medium_3.gltf" id="4_rock3"]
 
 [sub_resource type="SphereShape3D" id="Shape_boulder"]
 radius = 2.1
@@ -20,8 +13,12 @@ script = ExtResource("1_boulder")
 
 [node name="Body" type="AnimatableBody3D" parent="." groups=["obstacles"]]
 
-[node name="Mesh" type="MeshInstance3D" parent="Body"]
-mesh = SubResource("Mesh_boulder")
+[node name="Model" type="Node3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, -1.25, -0.5)
+script = ExtResource("2_model")
+variants = Array[PackedScene]([ExtResource("3_rock1"), ExtResource("4_rock3")])
+model_scale = Vector3(1.45, 1.45, 1.45)
+yaw_jitter = 0.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Body"]
 shape = SubResource("Shape_boulder")

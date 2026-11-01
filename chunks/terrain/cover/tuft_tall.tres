@@ -1,0 +1,11 @@
+[gd_resource type="ArrayMesh" script_class="GrassTuftMesh" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://chunks/terrain/grass_tuft_mesh.gd" id="1_tuft"]
+
+[resource]
+script = ExtResource("1_tuft")
+blades = 13
+height = 0.45
+blade_width = 0.06
+spread = 0.3
+lean = 0.25
