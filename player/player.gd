@@ -233,8 +233,11 @@ func _update_grind_input(delta: float) -> void:
 		grind_buffer_timer = tuning.grind_buffer
 
 
-## True while grind is pressed (buffered) or held.
+## True while grind is pressed (buffered) or held, or (rail_auto_catch) any
+## time you're in the air: then landing on a rail grinds by itself.
 func wants_grind() -> bool:
+	if tuning.rail_auto_catch and not is_on_floor():
+		return true
 	return grind_buffer_timer > 0.0 or Input.is_action_pressed(&"grind")
 
 
@@ -249,7 +252,9 @@ func get_rail_snap_radius() -> float:
 ## Rail to snap onto right now, or null. Ride and Air call this each tick
 ## and switch to Grind when it returns a rail. Holding grind counts too, so
 ## you can hold it on the way in and catch the rail the moment it's in reach.
-func find_grind_rail() -> RailSnap:
+func find_grind_rail(airborne: bool = true) -> RailSnap:
+	if not airborne and not tuning.rail_ground_catch:
+		return null
 	if not wants_grind() or grind_cooldown_timer > 0.0 or tricks.is_mid_trick():
 		return null
 	var snap: RailSnap = RailSnap.find_closest(get_tree(), global_position, get_rail_snap_radius())
@@ -264,6 +269,8 @@ func find_grind_rail() -> RailSnap:
 func apply_rail_magnet(delta: float) -> void:
 	var t: PlayerTuning = tuning
 	if not wants_grind() or grind_cooldown_timer > 0.0 or tricks.is_mid_trick():
+		return
+	if t.rail_magnet_air_only and is_on_floor():
 		return
 	var snap: RailSnap = RailSnap.find_closest(get_tree(), global_position, t.rail_magnet_radius)
 	if snap == null:
@@ -503,9 +510,18 @@ func _check_obstacle_hit(approach: Vector3) -> Hit:
 			continue
 		var normal: Vector3 = collision.get_normal()
 		var impact: float = -approach.dot(normal)
-		# Slide along it, pushed a little away (head-on hits bounce off sideways).
+		# Keep going: slide along it, and if the hit was head-on (little left
+		# to slide with) veer around it sideways. Never back up the hill:
+		# bouncing backwards left you stuck behind a rail ledge while the
+		# collapse caught up (v0.9.1).
 		var away: Vector3 = Vector3(normal.x, 0.0, normal.z).normalized()
-		var slide: Vector3 = approach - normal * approach.dot(normal) + away * approach.length() * 0.3
+		var slide: Vector3 = approach - normal * approach.dot(normal)
+		if slide.length() < approach.length() * 0.5:
+			var side: Vector3 = Vector3.UP.cross(away).normalized()
+			if side.dot(slide) < 0.0:
+				side = -side
+			slide += side * approach.length() * 0.6
+		slide += away * approach.length() * 0.05
 		if impact <= 0.5:
 			continue
 		var result: Hit = Hit.GLANCE

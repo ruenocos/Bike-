@@ -34,7 +34,8 @@ const OUTSIDE_WIDTH: float = 35.0
 const OUTSIDE_DROP: float = 25.0
 ## No obstacles or features this close to the entry / exit (open seams).
 const END_CLEAR: float = 32.0
-const RAIL_HEIGHT: float = 0.6
+## Rails sit this high on a ledge you have to hop onto (v0.9.1).
+const RAIL_HEIGHT: float = 0.75
 ## Obstacle footprint radius by kind (m), for spacing and corridor clearance.
 const RADIUS: Dictionary = {"tree": 0.6, "rock": 1.8, "log": 5.0, "fence": 3.2, "barrier": 1.6}
 ## Per tier (index = difficulty): corridor clear half-width, clusters per
@@ -59,7 +60,7 @@ static func specs() -> Array[Dictionary]:
 		"heading": [Vector2(0, 0), Vector2(0.15, 0), Vector2(0.45, 15), Vector2(0.8, -10), Vector2(1, 0)],
 		"profile": [Vector2(0, 1), Vector2(0.18, 1), Vector2(0.32, 1.35), Vector2(0.48, 1.35), Vector2(0.6, 0.6), Vector2(0.82, 0.6), Vector2(0.94, 1), Vector2(1, 1)],
 		"dense": [Vector3(205, 280, 3.0)],
-		"corridors": 4, "kickers": 3, "rails": 2, "rollers": 2, "gullies": 0, "ridges": 1, "gap_gates": 1,
+		"corridors": 4, "kickers": 3, "rails": 3, "rollers": 2, "gullies": 0, "ridges": 1, "gap_gates": 1,
 		"mix": {"tree": 5, "rock": 2, "log": 1, "fence": 1}})
 	out.append({"file": "land_ridge", "length": 360.0, "difficulty": 1, "seed": 23, "noise": 2.2,
 		"heading": [Vector2(0, 0), Vector2(0.15, 0), Vector2(0.85, 25), Vector2(1, 25)],
@@ -73,18 +74,18 @@ static func specs() -> Array[Dictionary]:
 		"profile": [Vector2(0, 1), Vector2(0.15, 1), Vector2(0.28, 0.55), Vector2(0.7, 0.55), Vector2(0.84, 1.3), Vector2(0.95, 1), Vector2(1, 1)],
 		"dense": [Vector3(100, 250, 3.0)],
 		"corridors": 4, "kickers": 2, "rails": 2, "rollers": 2, "gullies": 1, "ridges": 1, "boulders": 1, "gap_gates": 2, "chokes": 2,
-		"mix": {"tree": 8, "log": 2, "fence": 1, "barrier": 1}, "tight": true})
+		"mix": {"tree": 8, "log": 2, "fence": 1}, "tight": true})
 	out.append({"file": "land_boulders", "length": 360.0, "difficulty": 2, "seed": 41, "noise": 2.8,
 		"heading": [Vector2(0, 0), Vector2(0.15, 0), Vector2(0.85, -25), Vector2(1, -25)],
 		"profile": [Vector2(0, 1), Vector2(0.15, 1), Vector2(0.28, 1.45), Vector2(0.44, 1.45), Vector2(0.56, 0.6), Vector2(0.8, 0.6), Vector2(0.92, 1), Vector2(1, 1)],
 		"dense": [Vector3(200, 290, 3.0)],
-		"corridors": 4, "kickers": 3, "rails": 1, "rollers": 1, "gullies": 2, "ridges": 1, "boulders": 2, "gap_gates": 2, "chokes": 2,
-		"mix": {"rock": 6, "tree": 2, "barrier": 1}})
+		"corridors": 4, "kickers": 3, "rails": 2, "rollers": 1, "gullies": 2, "ridges": 1, "boulders": 2, "gap_gates": 2, "chokes": 2,
+		"mix": {"rock": 6, "tree": 2}})
 	out.append({"file": "land_gorge", "length": 380.0, "difficulty": 2, "seed": 53, "noise": 2.6,
 		"heading": [Vector2(0, 0), Vector2(0.15, 0), Vector2(0.45, 28), Vector2(0.8, -8), Vector2(1, 0)],
 		"width": [Vector2(0, 1), Vector2(0.15, 1), Vector2(0.35, 0.62), Vector2(0.75, 0.62), Vector2(0.92, 1), Vector2(1, 1)],
 		"profile": [Vector2(0, 1), Vector2(0.2, 1), Vector2(0.34, 1.35), Vector2(0.74, 1.35), Vector2(0.9, 1), Vector2(1, 1)],
-		"corridors": 3, "kickers": 2, "rails": 1, "rollers": 2, "gullies": 1, "ridges": 0, "gap_gates": 1, "chokes": 1,
+		"corridors": 3, "kickers": 2, "rails": 2, "rollers": 2, "gullies": 1, "ridges": 0, "gap_gates": 1, "chokes": 1,
 		"mix": {"rock": 4, "tree": 4, "log": 1}, "tight": true})
 	# Tier 3: dense obstacles and sharp bends.
 	out.append({"file": "land_slalom", "length": 360.0, "difficulty": 3, "seed": 67, "noise": 2.4,
@@ -92,13 +93,13 @@ static func specs() -> Array[Dictionary]:
 		"profile": [Vector2(0, 1), Vector2(0.12, 1), Vector2(0.25, 0.6), Vector2(0.8, 0.6), Vector2(0.92, 1), Vector2(1, 1)],
 		"dense": [Vector3(90, 290, 2.0)],
 		"corridors": 4, "kickers": 2, "rails": 2, "rollers": 1, "gullies": 0, "ridges": 1, "boulders": 1, "gap_gates": 3, "chokes": 3,
-		"mix": {"tree": 9, "fence": 2, "barrier": 1}, "tight": true})
+		"mix": {"tree": 9, "fence": 2}, "tight": true})
 	out.append({"file": "land_fast_s", "length": 360.0, "difficulty": 3, "seed": 71, "noise": 2.2,
 		"heading": [Vector2(0, 0), Vector2(0.1, 0), Vector2(0.38, 36), Vector2(0.7, -12), Vector2(0.9, 0), Vector2(1, 0)],
 		"width": [Vector2(0, 1), Vector2(0.1, 1), Vector2(0.3, 0.66), Vector2(0.78, 0.66), Vector2(0.92, 1), Vector2(1, 1)],
 		"profile": [Vector2(0, 1), Vector2(0.15, 1), Vector2(0.3, 1.3), Vector2(0.84, 1.3), Vector2(1, 1)],
-		"corridors": 3, "kickers": 1, "rails": 1, "rollers": 2, "gullies": 1, "ridges": 0, "gap_gates": 1, "chokes": 1,
-		"mix": {"tree": 5, "rock": 3, "barrier": 1}, "tight": true})
+		"corridors": 3, "kickers": 1, "rails": 2, "rollers": 2, "gullies": 1, "ridges": 0, "gap_gates": 1, "chokes": 1,
+		"mix": {"tree": 5, "rock": 3}, "tight": true})
 	for side: float in [1.0, -1.0]:
 		out.append({"file": "land_switchback_left" if side > 0.0 else "land_switchback_right", "length": 380.0,
 			"difficulty": 3, "seed": 79 if side > 0.0 else 83, "noise": 2.2,
@@ -106,7 +107,7 @@ static func specs() -> Array[Dictionary]:
 			"width": [Vector2(0, 1), Vector2(0.15, 1), Vector2(0.32, 0.58), Vector2(0.72, 0.58), Vector2(0.9, 1), Vector2(1, 1)],
 			"profile": [Vector2(0, 1), Vector2(0.15, 1), Vector2(0.3, 0.65), Vector2(0.78, 0.65), Vector2(0.9, 1), Vector2(1, 1)],
 			"dense": [Vector3(110, 300, 2.0)],
-			"corridors": 3, "kickers": 1, "rails": 1, "rollers": 1, "gullies": 1, "ridges": 0, "boulders": 1, "gap_gates": 2, "chokes": 2,
+			"corridors": 3, "kickers": 1, "rails": 2, "rollers": 1, "gullies": 1, "ridges": 0, "boulders": 1, "gap_gates": 2, "chokes": 2,
 			"mix": {"rock": 4, "tree": 5}, "tight": true})
 	out.append({"file": "land_finish", "length": 300.0, "difficulty": 1, "seed": 7, "noise": 1.5,
 		"profile": [Vector2(0.0, 1.0), Vector2(0.3, 1.0), Vector2(0.6, 0.3), Vector2(1.0, 0.25)],
@@ -151,6 +152,38 @@ static func set_pieces() -> Array[Dictionary]:
 			[Vector2(0, 0), Vector2(-15, 90), Vector2(-28, 180), Vector2(-20, 280), Vector2(0, 400)]],
 		"clusters_at": [{"kind": "rock", "at": Vector2(-44, 150), "n": 5, "spread": 8.0}, {"kind": "tree", "at": Vector2(40, 210), "n": 8, "spread": 9.0}],
 		"gap_gates": 1, "clusters": 5.0, "mix": {"tree": 5, "rock": 3}, "tight": true})
+	# v0.9.1 set pieces.
+	# The rail gap: a rail on the left whose last 16 m kicks up to 3 m high,
+	# launching you over a gully (through a gate); or go round on the right.
+	out.append({"file": "set_rail_gap", "length": 400.0, "difficulty": 2, "seed": 109, "noise": 1.6,
+		"rails_at": [{"name": "LaunchRail", "points": [Vector3(-22, 150, 0.75), Vector3(-22, 196, 0.75), Vector3(-22, 212, 3.0)]}],
+		"gullies_at": [{"name": "Gap", "points": [Vector2(-82, 236), Vector2(18, 236)], "width": 30.0, "depth": 8.0, "flat": 0.2}],
+		"gates_at": [Vector3(-22, 234, 12.0)],
+		"keep_out": [Vector3(-60, 236, 18), Vector3(-30, 236, 18), Vector3(0, 236, 18)],
+		"paths": [[Vector2(0, 0), Vector2(-15, 80), Vector2(-22, 130), Vector2(-22, 320), Vector2(0, 400)],
+			[Vector2(0, 0), Vector2(20, 90), Vector2(45, 180), Vector2(48, 280), Vector2(15, 350), Vector2(0, 400)]],
+		"clusters_at": [{"kind": "tree", "at": Vector2(52, 215), "n": 8, "spread": 9.0}, {"kind": "tree", "at": Vector2(38, 260), "n": 7, "spread": 8.0}],
+		"gap_gates": 1, "clusters": 3.5, "mix": {"tree": 5, "rock": 2}})
+	# The canyon slot: the valley pinches to a 50 m slot (a ~19 m floor
+	# between the banks) that kinks left and right, rocks at its edges.
+	out.append({"file": "set_canyon_slot", "length": 380.0, "difficulty": 3, "seed": 113, "noise": 1.4,
+		"heading": [Vector2(0, 0), Vector2(0.3, 0), Vector2(0.48, 22), Vector2(0.66, -10), Vector2(0.85, 0), Vector2(1, 0)],
+		"width": [Vector2(0, 1), Vector2(0.18, 1), Vector2(0.34, 0.34), Vector2(0.72, 0.34), Vector2(0.88, 1), Vector2(1, 1)],
+		"paths": [[Vector2(0, 0), Vector2(0, 380)]],
+		"clusters_at": [{"kind": "rock", "at": Vector2(-9, 150), "n": 2, "spread": 3.0}, {"kind": "rock", "at": Vector2(9, 185), "n": 2, "spread": 3.0},
+			{"kind": "rock", "at": Vector2(-9, 220), "n": 2, "spread": 3.0}, {"kind": "rock", "at": Vector2(9, 250), "n": 2, "spread": 3.0}],
+		"gates_at": [Vector3(0, 200, 2.4)],
+		"clusters": 3.0, "mix": {"tree": 4, "rock": 4}, "tight": true})
+	# The fork: a raised causeway on the left (6 m up, steep sides, gates on
+	# top: fall off and you lose the line) or the low sunken line on the right
+	# through the rock walls.
+	out.append({"file": "set_fork", "length": 400.0, "difficulty": 2, "seed": 127, "noise": 1.6,
+		"lines_at": [{"name": "Causeway", "points": [Vector3(-28, 70, 0), Vector3(-28, 125, 6), Vector3(-28, 280, 6), Vector3(-28, 325, 0)], "width": 16.0, "flat": 0.45}],
+		"gullies_at": [{"name": "LowLine", "points": [Vector2(30, 80), Vector2(30, 320)], "width": 18.0, "depth": 3.0, "flat": 0.4}],
+		"gates_at": [Vector3(-28, 165, 2.2), Vector3(-28, 225, 2.2), Vector3(-28, 270, 2.2)],
+		"paths": [[Vector2(0, 0), Vector2(-15, 45), Vector2(-28, 90), Vector2(-28, 305), Vector2(-10, 350), Vector2(0, 400)],
+			[Vector2(0, 0), Vector2(20, 55), Vector2(30, 100), Vector2(30, 300), Vector2(10, 355), Vector2(0, 400)]],
+		"chokes": 2, "dense": [Vector3(130, 290, 3.0)], "clusters": 4.0, "mix": {"tree": 5, "rock": 3}})
 	return out
 
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
@@ -272,7 +305,7 @@ func _author(spec: Dictionary, path: String) -> void:
 		var span: float = _rng.randf_range(50.0, 70.0)
 		# Straight ground under it and 40 m past its end: off the end you fly
 		# straight on, so the valley mustn't bend away there.
-		var d0: float = _free_d(c, taken, span + 40.0, length, terrain, 8.0)
+		var d0: float = _free_d(c, taken, span + 25.0, length, terrain, 10.0)
 		if d0 < 0.0:
 			continue
 		# Smooth ground under the rail (LINE on the plain slope), rail on top later.
@@ -290,6 +323,7 @@ func _author(spec: Dictionary, path: String) -> void:
 	var pads: Array[TerrainFlatten] = []
 	## Kicker spots for the air gates: valley point, direction, gate distance / height.
 	var kicks: Array[Dictionary] = []
+	var hand_rails: Array[Dictionary] = []
 	for i: int in int(spec.get("kickers", 0)):
 		var c: PackedVector2Array = corridors[_rng.randi() % corridors.size()]
 		var d: float = _free_d(c, taken, 40.0, length, terrain, 5.0)
@@ -315,6 +349,50 @@ func _author(spec: Dictionary, path: String) -> void:
 		var gully2: TerrainShape = _shape_from(terrain, PackedVector2Array(g["points"]), TerrainShape.Mode.GULLY, g["width"], g["depth"], g.get("flat", 0.3))
 		gully2.name = String(g.get("name", "Gully"))
 		_add(root, shapes, gully2)
+	for l2: Dictionary in spec.get("lines_at", []):
+		var pts4: Array = l2["points"]
+		var line4: PackedVector2Array = PackedVector2Array()
+		var d4: float = (pts4[0] as Vector3).y
+		var dend: float = (pts4[-1] as Vector3).y
+		var shape4: TerrainShape = TerrainShape.new()
+		shape4.name = String(l2.get("name", "Line"))
+		shape4.mode = TerrainShape.Mode.LINE
+		shape4.width = l2.get("width", 12.0)
+		shape4.flat = l2.get("flat", 0.45)
+		shape4.curve = Curve3D.new()
+		while d4 <= dend + 0.01:
+			# Height above the plain slope, eased between the key points.
+			var h4: float = 0.0
+			var x4: float = (pts4[0] as Vector3).x
+			for i4: int in range(1, pts4.size()):
+				var a4: Vector3 = pts4[i4 - 1]
+				var b4: Vector3 = pts4[i4]
+				if d4 <= b4.y:
+					var f4: float = clampf((d4 - a4.y) / maxf(b4.y - a4.y, 0.001), 0.0, 1.0)
+					f4 = f4 * f4 * (3.0 - 2.0 * f4)
+					h4 = lerpf(a4.z, b4.z, f4)
+					x4 = lerpf(a4.x, b4.x, f4)
+					break
+			shape4.curve.add_point(terrain.valley_to_local(x4, terrain.base_height(x4, -d4) + h4, d4))
+			d4 += 2.5
+		_add(root, shapes, shape4)
+	for r2: Dictionary in spec.get("ridges_at", []):
+		var ridge2: TerrainShape = _shape_from(terrain, PackedVector2Array(r2["points"]), TerrainShape.Mode.RIDGE, r2["width"], r2["depth"], r2.get("flat", 0.3))
+		ridge2.name = String(r2.get("name", "Ridge"))
+		_add(root, shapes, ridge2)
+	# Hand-placed rails: Vector3(x, d, height above the ground) key points,
+	# smoothed ground under them, a gate after the end if asked.
+	for rr: Dictionary in spec.get("rails_at", []):
+		var keys: Array = rr["points"]
+		var line2: PackedVector2Array = PackedVector2Array()
+		for kp: Vector3 in keys:
+			line2.append(Vector2(kp.x, kp.y))
+		var bed2: TerrainShape = _shape_from(terrain, line2, TerrainShape.Mode.LINE, 9.0, 0.0, 0.45)
+		bed2.name = String(rr.get("name", "Rail")) + "Bed"
+		_add(root, shapes, bed2)
+		hand_rails.append(rr)
+		for kp: Vector3 in keys:
+			taken.append(Vector3(kp.x, kp.y, 8.0))
 	for k: Dictionary in spec.get("kickers_at", []):
 		var p: Vector2 = k["at"]
 		var dir: Vector2 = ((k["aim"] as Vector2) - p).normalized()
@@ -352,6 +430,22 @@ func _author(spec: Dictionary, path: String) -> void:
 			rail.curve.add_point(terrain.valley_to_local(x, terrain.surface_height(x, -d) + RAIL_HEIGHT, d))
 			d += 4.0
 		_add(root, root, rail)
+
+	# --- Hand-placed rails (set pieces), heights from the built ground.
+	for rr2: Dictionary in hand_rails:
+		var rail2: Path3D = RAIL.instantiate() as Path3D
+		rail2.name = String(rr2.get("name", "Rail"))
+		rail2.curve = Curve3D.new()
+		var keys2: Array = rr2["points"]
+		for i: int in keys2.size() - 1:
+			var a3: Vector3 = keys2[i]
+			var b3: Vector3 = keys2[i + 1]
+			var steps: int = maxi(1, ceili(Vector2(b3.x - a3.x, b3.y - a3.y).length() / 4.0))
+			for st: int in steps + (1 if i == keys2.size() - 2 else 0):
+				var f3: float = float(st) / steps
+				var p3: Vector3 = a3.lerp(b3, f3)
+				rail2.curve.add_point(terrain.valley_to_local(p3.x, terrain.surface_height(p3.x, -p3.y) + p3.z, p3.y))
+		_add(root, root, rail2)
 
 	# --- Boost gates on the risky options: in the air off kickers, just past
 	# rail ends, in narrow two-tree gaps off the safe ways, and set-piece ones.
@@ -528,7 +622,8 @@ func _make_corridor(terrain: TerrainPatch, i: int, count: int, wander: float, le
 	var out: PackedVector2Array = PackedVector2Array()
 	var d: float = 0.0
 	while d <= length + 0.01:
-		var room: float = terrain.half_play_at(d) - terrain.wall_width * 0.6
+		# Stay on the flat floor, clear of the edge banks.
+		var room: float = terrain.half_play_at(d) - terrain.wall_width
 		var x: float = base * room + a1 * sin(TAU * d / l1 + p1) + a2 * sin(TAU * d / l2 + p2)
 		out.append(Vector2(clampf(x, -room, room), d))
 		d += 2.5

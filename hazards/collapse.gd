@@ -36,7 +36,7 @@ signal caught
 ## ~40-45 in the slow technical sections (v0.9; a clean stage averages ~50),
 ## so even stage 1 creeps up on you there and falls back on the fast drops.
 ## From stage ~6 it is as fast as a clean average: then the leash decides.
-@export var max_speed_by_stage: Array[float] = [44.0, 45.0, 46.0, 47.5, 49.0, 50.0, 51.0, 52.5]
+@export var max_speed_by_stage: Array[float] = [42.0, 44.0, 46.0, 47.5, 49.0, 50.0, 51.0, 52.5]
 ## The leash: never more than this far behind the rider (m). Stage 1 is
 ## loose, so only real mistakes (several bails, falling off, stalling) let
 ## it catch up; later stages keep it close.
@@ -47,7 +47,7 @@ signal caught
 ## by seconds x its speed (at least this speed, m/s)...
 @export_range(0.0, 80.0, 1.0, "suffix:m/s") var penalty_min_speed: float = 30.0
 ## ...but a penalty alone never brings it closer than this (m).
-@export_range(0.0, 100.0, 1.0, "suffix:m") var penalty_min_gap: float = 20.0
+@export_range(0.0, 100.0, 1.0, "suffix:m") var penalty_min_gap: float = 40.0
 
 @export_group("Feel")
 ## It's felt from this far away (m): shake and rumble grow as it closes in.

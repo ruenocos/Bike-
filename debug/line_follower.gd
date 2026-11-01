@@ -49,3 +49,39 @@ static func distance_to(line: RideLine, pos: Vector3) -> float:
 		var t: float = clampf((p - a).dot(ab) / maxf(ab.length_squared(), 0.0001), 0.0, 1.0)
 		best = minf(best, p.distance_to(a + ab * t))
 	return best
+
+
+## Distance to the start of the next rail straight ahead (within `lane` m
+## sideways of where you're heading), or INF. Rails are ledges you hop onto
+## (v0.9.1), so the bots charge a hop and let go about speed x 0.3 s before.
+static func rail_ahead(player: Player, lane: float = 5.0) -> float:
+	var going: Vector3 = Vector3(player.velocity.x, 0.0, player.velocity.z)
+	if going.length() < 1.0:
+		return INF
+	going = going.normalized()
+	var best: float = INF
+	for node: Node in player.get_tree().get_nodes_in_group(&"rails"):
+		var rail: Path3D = node as Path3D
+		if rail == null or not rail.is_inside_tree() or rail.curve == null or rail.curve.point_count < 2:
+			continue
+		var start: Vector3 = rail.to_global(rail.curve.get_point_position(0))
+		var to: Vector3 = start - player.global_position
+		to.y = 0.0
+		var ahead: float = to.dot(going)
+		if ahead > 0.0 and (to - going * ahead).length() < lane:
+			best = minf(best, ahead)
+	return best
+
+
+## Presses / releases hop to jump onto a rail coming up: hold from
+## speed x 0.6 s out (full charge), let go at speed x 0.3 s.
+static func hop_for_rails(player: Player) -> void:
+	var state: StringName = player.state_machine.get_state_name()
+	if state != &"Ride":
+		return
+	var d: float = rail_ahead(player)
+	var v: float = maxf(player.speed, 1.0)
+	if d < v * 0.6 and d > v * 0.3:
+		Input.action_press(&"hop")
+	elif d <= v * 0.3 and Input.is_action_pressed(&"hop"):
+		Input.action_release(&"hop")

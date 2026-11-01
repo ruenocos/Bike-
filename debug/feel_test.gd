@@ -1,7 +1,7 @@
 extends Node3D
 ## Headless feel checks on the real chunk scenes (rails, kickers):
-##   - rail catch: hold grind (or tap it late) riding down the middle at 50 m/s,
-##     no steering: the magnet and the speed-scaled snap reach must catch the rail
+##   - rails (v0.9.1): a hop onto the rail ledge catches it by itself (also
+##     2 m off, the air assist), no hop into the ledge crashes, beside it rides past
 ##   - kicker airtime: no input off each kicker at 45-56 m/s, airtime in range
 ##     and a perfect landing
 ##   - trick chain: two tricks off the big air at 52 m/s land clean
@@ -18,19 +18,19 @@ extends Node3D
 const PLAYER: PackedScene = preload("res://player/player.tscn")
 
 const SCENARIOS: Array[Dictionary] = [
-	{"name": "rail 1, hold grind from the start, 50 m/s", "chunk": "chunk_rail", "at": "Rail1", "back": 35.0, "speed": 50.0,
-		"inputs": [[0.0, &"grind", 1.0]], "grind": "Rail1", "time": 2.0},
-	{"name": "rail 1, lined up 2 m left, tap at the start, 50 m/s", "chunk": "chunk_rail", "at": "Rail1", "back": 35.0, "side": -2.0, "speed": 50.0,
-		"inputs": [[0.65, &"grind", 1.0], [0.75, &"grind", 0.0]], "grind": "Rail1", "time": 2.0},
-	{"name": "rail 1, middle, tap at the start: out of reach", "chunk": "chunk_rail", "at": "Rail1", "back": 35.0, "speed": 50.0,
-		"inputs": [[0.65, &"grind", 1.0], [0.75, &"grind", 0.0]], "no_grind": true, "time": 2.0},
-	{"name": "rail 2, hold grind from the start, 50 m/s", "chunk": "chunk_rail", "at": "Rail2", "back": 45.0, "speed": 50.0,
-		"inputs": [[0.0, &"grind", 1.0]], "grind": "Rail2", "time": 2.0},
-	{"name": "rail 2, hold grind, 56 m/s", "chunk": "chunk_rail", "at": "Rail2", "back": 45.0, "speed": 56.0,
-		"inputs": [[0.0, &"grind", 1.0]], "grind": "Rail2", "time": 2.0},
-	{"name": "rail 1, no grind: rides past", "chunk": "chunk_rail", "at": "Rail1", "back": 35.0, "speed": 50.0,
-		"inputs": [], "no_grind": true, "time": 2.0},
-	{"name": "kicker 1, no input, 45 m/s", "chunk": "chunk_kickers", "at": "Kicker1", "back": 40.0, "speed": 45.0,
+	# v0.9.1 rails are ledges: hop onto them (no grind button), riding into one crashes.
+	{"name": "rail 1, hop onto it, 50 m/s", "chunk": "chunk_rail", "at": "Rail1", "back": 35.0, "side": -5.0, "speed": 50.0,
+		"inputs": [[0.15, &"hop", 1.0], [0.42, &"hop", 0.0]], "grind": "Rail1", "time": 2.0},
+	{"name": "rail 1, hop 2 m left of it, 50 m/s (air assist)", "chunk": "chunk_rail", "at": "Rail1", "back": 35.0, "side": -3.0, "speed": 50.0,
+		"inputs": [[0.15, &"hop", 1.0], [0.42, &"hop", 0.0]], "grind": "Rail1", "time": 2.0},
+	{"name": "rail 1, hop 8 m away: out of reach", "chunk": "chunk_rail", "at": "Rail1", "back": 35.0, "side": 3.0, "speed": 50.0,
+		"inputs": [[0.15, &"hop", 1.0], [0.42, &"hop", 0.0]], "no_grind": true, "time": 2.0},
+	{"name": "rail 2, hop onto it, 56 m/s", "chunk": "chunk_rail", "at": "Rail2", "back": 45.0, "side": 5.0, "speed": 56.0,
+		"inputs": [[0.25, &"hop", 1.0], [0.52, &"hop", 0.0]], "grind": "Rail2", "time": 2.0},
+	{"name": "rail 1, no hop: rides into the ledge and crashes", "chunk": "chunk_rail", "at": "Rail1", "back": 35.0, "side": -5.0, "speed": 50.0,
+		"inputs": [], "no_grind": true, "crash": true, "time": 2.0},
+	{"name": "rail 1, beside it, no hop: rides past", "chunk": "chunk_rail", "at": "Rail1", "back": 35.0, "side": -1.0, "speed": 50.0,
+		"inputs": [], "no_grind": true, "time": 2.0},	{"name": "kicker 1, no input, 45 m/s", "chunk": "chunk_kickers", "at": "Kicker1", "back": 40.0, "speed": 45.0,
 		"inputs": [], "air": [0.7, 1.6], "grades": [&"perfect"], "time": 3.0},
 	{"name": "kicker 1, no input, 50 m/s", "chunk": "chunk_kickers", "at": "Kicker1", "back": 40.0, "speed": 50.0,
 		"inputs": [], "air": [1.0, 1.6], "grades": [&"perfect"], "time": 3.0},
@@ -70,6 +70,7 @@ var _air_start: float = -1.0
 var _grades: Array[StringName] = []
 var _angles: PackedFloat32Array = PackedFloat32Array()
 var _tricks: int = 0
+var _crashes: int = 0
 var _grinds: PackedStringArray = PackedStringArray()
 var _flicks: Array = []
 var _flick_release: Dictionary[StringName, int] = {}
@@ -94,6 +95,7 @@ func _ready() -> void:
 	Events.landed.connect(_on_landed)
 	Events.trick_completed.connect(func(_n: String, _s: int) -> void: _tricks += 1)
 	Events.grind_started.connect(_on_grind_started)
+	Events.bailed.connect(func() -> void: _crashes += 1)
 
 
 func _physics_process(delta: float) -> void:
@@ -162,6 +164,7 @@ func _start() -> void:
 	_longest_air = 0.0
 	_air_start = -1.0
 	_grades.clear()
+	_crashes = 0
 	_angles.clear()
 	_tricks = 0
 	_grinds.clear()
@@ -234,6 +237,8 @@ func _finish() -> void:
 		_longest_air = maxf(_longest_air, _time - _air_start)
 	var ok: bool = true
 	if s.has("grind") and not _grinds.has(String(s["grind"])):
+		ok = false
+	if s.get("crash", false) and _crashes == 0:
 		ok = false
 	if s.get("no_grind", false) and not _grinds.is_empty():
 		ok = false

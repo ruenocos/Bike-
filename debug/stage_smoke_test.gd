@@ -186,7 +186,8 @@ func _check_lines(scene: PackedScene) -> void:
 			query.transform = Transform3D(Basis.IDENTITY, p + Vector3.UP * (line.clearance + 0.3))
 			for hit: Dictionary in space.intersect_shape(query, 8):
 				var collider: Node = hit["collider"] as Node
-				if collider != null and collider.is_in_group(&"obstacles"):
+				# Rail ledges sit on the paths on purpose (hop onto them).
+				if collider != null and collider.is_in_group(&"obstacles") and not collider.get_parent().is_in_group(&"rails"):
 					blocked += 1
 					if blocked <= 5:
 						_failures.append("%s %s: %s within %.1f m of the line at (%.0f, %.0f)" % [name_of, line.name, collider.name, line.clearance, p.x, p.z])

@@ -10,7 +10,7 @@ func physics_update(delta: float) -> void:
 		machine.transition_to(&"Air", {})
 		return
 
-	var snap: RailSnap = player.find_grind_rail()
+	var snap: RailSnap = player.find_grind_rail(false)
 	if snap != null:
 		machine.transition_to(&"Grind", {"snap": snap})
 		return

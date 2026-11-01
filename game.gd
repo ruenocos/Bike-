@@ -37,7 +37,7 @@ extends Node3D
 ## clock, and the collapse gains this many seconds of its speed.
 @export_range(0.0, 20.0, 0.1, "suffix:s") var respawn_time_cost: float = 3.0
 ## Time cost of a crash / bail (s). Crashes never end the run by themselves.
-@export_range(0.0, 20.0, 0.1, "suffix:s") var bail_time_cost: float = 1.5
+@export_range(0.0, 20.0, 0.1, "suffix:s") var bail_time_cost: float = 1.0
 
 @onready var builder: StageBuilder = $StageBuilder
 @onready var collapse: Collapse = $Collapse
@@ -49,6 +49,7 @@ extends Node3D
 @onready var run_over: RunOver = $Menus/RunOver
 @onready var far_ground: Node3D = $FarGround
 @onready var start_sprint: StartSprint = $StartSprint
+@onready var mountains: Node3D = $Mountains
 
 var run_seed: int = 0
 ## 0 = first stage.
@@ -67,6 +68,10 @@ var _choices: Array[UpgradeData] = []
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 ## Stage distance of the start pad's drop-in edge.
 var _drop_in_distance: float = 0.0
+## Height of the far ground plane: below the stage's lowest point, so it
+## never hides the valley ahead (v0.9.1: it used to follow the rider 60 m
+## down and cut the downhill view off like a flat floor).
+var _far_ground_y: float = 0.0
 
 
 func _ready() -> void:
@@ -123,6 +128,10 @@ func start_stage() -> void:
 	player.place(spawn.origin + Vector3.UP * 0.05, atan2(-forward.x, -forward.z), 0.0)
 	player.state_machine.transition_to(&"Air", {})
 	player_progress = builder.progress_at(player.global_position, true)
+	var lowest: float = INF
+	for p: Vector3 in builder.line_points:
+		lowest = minf(lowest, p.y)
+	_far_ground_y = lowest - 120.0
 	var drop_in: Node3D = builder.chunks[0].get_node_or_null(^"DropIn") as Node3D
 	_drop_in_distance = builder.nearest_distance(drop_in.global_position) if drop_in != null else player_progress + 30.0
 	collapse.reset(builder, player_progress, stage_index, run_tuning.collapse_speed_scale)
@@ -141,7 +150,9 @@ func _physics_process(delta: float) -> void:
 	start_sprint.tick(delta, player_progress > _drop_in_distance)
 	collapse.advance(delta, player_progress)
 	builder.free_behind(player_progress)
-	far_ground.global_position = Vector3(player.global_position.x, track_y - 60.0, player.global_position.z)
+	far_ground.global_position = Vector3(player.global_position.x, _far_ground_y, player.global_position.z)
+	# The mountain ring stays on the horizon at the rider's height.
+	mountains.global_position = Vector3(player.global_position.x, track_y - 200.0, player.global_position.z)
 	_update_out_of_bounds(delta)
 	_update_collapse_feel()
 
@@ -174,7 +185,7 @@ func _process(_delta: float) -> void:
 		gap = maxf(gap, hud.meter_range)
 	hud.update_run(stage_index + 1, stats.time, player.combo.run_total, gap,
 			player_progress, collapse.distance, builder.length, builder.finish_distance,
-			player.catchable_rail != null)
+			false)
 	hud.show_start(start_sprint if in_stage else null)
 
 

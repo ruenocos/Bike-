@@ -123,6 +123,14 @@ extends Resource
 @export var trick_pivot_height: float = 0.7
 
 @export_group("Grind")
+## v0.9.1 rail rules: rails are raised ledges you hop onto. Coming onto one
+## from the air within snap reach grinds automatically (no button)...
+@export var rail_auto_catch: bool = true
+## ...and on the ground nothing snaps (you hit the ledge instead). Turn this
+## on for the old "press grind while riding past" behaviour.
+@export var rail_ground_catch: bool = false
+## The magnet only pulls while you're in the air (off = the old ground pull too).
+@export var rail_magnet_air_only: bool = true
 ## Press grind within this distance of a rail to snap on (m), at low speed...
 @export var rail_snap_radius: float = 1.5
 ## ...growing to this at rail_snap_fast_speed and above (m). Lining up with

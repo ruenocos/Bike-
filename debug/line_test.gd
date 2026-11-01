@@ -2,7 +2,7 @@ extends Node3D
 ## Headless line check: the bot (LineFollower) rides every invisible path
 ## (RideLine) of every landscape chunk: several different ways through each
 ## open valley, bends included. It only steers, holds grind when a rail is in
-## reach and pedals. A path passes when the bot reaches the end without
+## reach and pedals. (v0.9.1: no grind button; it hops onto rails, which then grind by themselves.) A path passes when the bot reaches the end without
 ## crashing into anything, without bailing a landing, without going out of
 ## bounds and without drifting more than MAX_OFF metres off it.
 ## Rolling boulders are removed first (they're timing hazards, not layout).
@@ -101,10 +101,7 @@ func _ride(chunk: Chunk, line: RideLine, label: String) -> void:
 		var state: StringName = _player.state_machine.get_state_name()
 		Input.action_press(&"pedal")
 		LineFollower.steer(_player, line, LineFollower.look_ahead(_player.speed))
-		if state != &"Grind" and RailSnap.find_closest(get_tree(), _player.global_position, _player.get_rail_snap_radius()) != null:
-			Input.action_press(&"grind")
-		else:
-			Input.action_release(&"grind")
+		LineFollower.hop_for_rails(_player)
 		await get_tree().physics_frame
 		time += 1.0 / Engine.physics_ticks_per_second
 		var pos: Vector3 = _player.global_position

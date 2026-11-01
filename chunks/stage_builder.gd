@@ -45,7 +45,7 @@ signal finished
 @export_range(0, 20) var middle_count: int = 8
 ## Later stages lean toward harder chunks: a chunk's pick weight is
 ## 1 + tier_bias * stage_index * (difficulty - 1). 0 = every chunk equally likely.
-@export_range(0.0, 5.0, 0.05) var tier_bias: float = 0.5
+@export_range(0.0, 5.0, 0.05) var tier_bias: float = 0.75
 ## Bending valleys (v0.8.1): the stage's total turn (sum of the chunks'
 ## exit_heading_deg) never goes past this either way...
 @export_range(0.0, 180.0, 1.0, "suffix:deg") var max_stage_heading_deg: float = 85.0
