@@ -57,13 +57,13 @@ void fragment() {
 	} else if (n.z > n.y) {
 		uv = world_pos.xy;
 	}
-	float lines = max(grid_lines(uv, cell, line_width), grid_lines(uv, cell * major_every, line_width * 1.6));
 	if (use_ground_palette) {
 		vec3 ground = mix(srgb(ground_dirt.rgb), srgb(ground_grass.rgb), grass);
 		float rock = 1.0 - smoothstep(rock_full, rock_from, normalize(world_normal).y);
 		ground = mix(ground, srgb(ground_rock.rgb), rock);
-		ALBEDO = ground * (1.0 - lines * 0.045);
+		ALBEDO = ground;
 	} else {
+		float lines = max(grid_lines(uv, cell, line_width), grid_lines(uv, cell * major_every, line_width * 1.6));
 		ALBEDO = mix(base_color, line_color, lines);
 	}
 	SPECULAR_COLOR = specular.rgb;

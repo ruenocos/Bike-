@@ -23,17 +23,16 @@ extends Resource
 @export_range(-45.0, 45.0, 0.5) var bike_pitch_deg: float = 0.0
 
 
-func blended(to: RiderPose, t: float) -> RiderPose:
-	var p: RiderPose = RiderPose.new()
-	p.hips = hips.lerp(to.hips, t)
-	p.torso_pitch_deg = lerpf(torso_pitch_deg, to.torso_pitch_deg, t)
-	p.head_pitch_deg = lerpf(head_pitch_deg, to.head_pitch_deg, t)
-	p.foot_left = foot_left.lerp(to.foot_left, t)
-	p.foot_right = foot_right.lerp(to.foot_right, t)
-	p.hand_left = hand_left.lerp(to.hand_left, t)
-	p.hand_right = hand_right.lerp(to.hand_right, t)
-	p.bike_pitch_deg = lerpf(bike_pitch_deg, to.bike_pitch_deg, t)
-	return p
+## Makes this pose the mix of `a` and `b` (`t` 0..1), in place.
+func set_blend(a: RiderPose, b: RiderPose, t: float) -> void:
+	hips = a.hips.lerp(b.hips, t)
+	torso_pitch_deg = lerpf(a.torso_pitch_deg, b.torso_pitch_deg, t)
+	head_pitch_deg = lerpf(a.head_pitch_deg, b.head_pitch_deg, t)
+	foot_left = a.foot_left.lerp(b.foot_left, t)
+	foot_right = a.foot_right.lerp(b.foot_right, t)
+	hand_left = a.hand_left.lerp(b.hand_left, t)
+	hand_right = a.hand_right.lerp(b.hand_right, t)
+	bike_pitch_deg = lerpf(a.bike_pitch_deg, b.bike_pitch_deg, t)
 
 
 ## Moves this pose toward `to` (in place), `t` 0..1.

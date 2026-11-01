@@ -182,6 +182,12 @@ var _mesh_instance: MeshInstance3D
 var _body: StaticBody3D
 var _cover: Node3D
 var _mesh_arrays: Array = []
+## Patches waiting for their ground cover (one is built per frame).
+static var _cover_queue: Array[TerrainPatch] = []
+static var _cover_frame: int = -1
+## After the cover is built: instances per layer and the mean grass amount
+## (also filled headless, where no MultiMesh is made; the tests read it).
+var cover_stats: Dictionary = {}
 var _rebuild_queued: bool = false
 var _noise: FastNoiseLite = FastNoiseLite.new()
 ## Per row: height of the base slope, half the play width, the spine point
@@ -209,6 +215,35 @@ func _ready() -> void:
 	child_order_changed.connect(queue_rebuild)
 
 
+func _process(_delta: float) -> void:
+	if Engine.is_editor_hint() or not _cover_queue.has(self):
+		set_process(false)
+		return
+	var frame: int = Engine.get_process_frames()
+	if _cover_frame == frame:
+		return
+	_cover_frame = frame
+	var eye: Vector3 = Vector3.ZERO
+	var camera: Camera3D = get_viewport().get_camera_3d()
+	if camera != null:
+		eye = camera.global_position
+	var nearest: TerrainPatch = null
+	var best: float = INF
+	for patch: TerrainPatch in _cover_queue:
+		if is_instance_valid(patch) and patch.is_inside_tree():
+			var d: float = patch.global_position.distance_squared_to(eye)
+			if d < best:
+				best = d
+				nearest = patch
+	if nearest != null:
+		_cover_queue.erase(nearest)
+		nearest._build_cover()
+
+
+func _exit_tree() -> void:
+	_cover_queue.erase(self)
+
+
 ## Rebuild once at the end of this frame (many edits in a row = one build).
 func queue_rebuild() -> void:
 	if _rebuild_queued or not is_inside_tree():
@@ -226,8 +261,14 @@ func rebuild() -> void:
 	_build_mesh()
 	_build_collision()
 	# Grass patches are in world space: wait until whoever added us has put
-	# us in place (StageBuilder moves a chunk right after adding it).
-	_build_cover.call_deferred()
+	# us in place (StageBuilder moves a chunk right after adding it). In the
+	# game, patches queue up and build one per frame, nearest the camera
+	# first, so a new stage doesn't hitch.
+	if Engine.is_editor_hint():
+		_build_cover.call_deferred()
+	elif not _cover_queue.has(self):
+		_cover_queue.append(self)
+		set_process(true)
 
 
 ## Swaps a watched Curve: edits to the curve rebuild the terrain.
@@ -637,40 +678,66 @@ func _apply_flatten(flat: TerrainFlatten, detail: PackedFloat32Array, dz: float)
 # --- Ground cover (v0.11) --------------------------------------------------
 
 ## Writes the grass amount into the vertex colours (red) and scatters the
-## cover layers into MultiMesh tiles. Skipped headless (tests).
+## cover layers into MultiMesh tiles. Headless only the amounts are worked
+## out (cover_stats), no MultiMesh.
 func _build_cover() -> void:
 	if not is_inside_tree() or _cover == null or _mesh_arrays.is_empty():
 		return
 	for child: Node in _cover.get_children():
 		child.free()
+	cover_stats = {}
 	var cover: GroundCover = ground_cover
 	if cover_override != null and not Engine.is_editor_hint():
 		cover = cover_override
-	if cover == null or DisplayServer.get_name() == "headless":
+	if cover == null:
 		return
 	var verts: PackedVector3Array = _mesh_arrays[Mesh.ARRAY_VERTEX]
 	var normals: PackedVector3Array = _mesh_arrays[Mesh.ARRAY_NORMAL]
 	var to_world: Transform3D = global_transform
 	var mask: PackedFloat32Array = PackedFloat32Array()
 	mask.resize(verts.size())
-	var colors: PackedColorArray = PackedColorArray()
-	colors.resize(verts.size())
+	var total: float = 0.0
 	for i: int in verts.size():
 		var n_world: Vector3 = (to_world.basis * normals[i]).normalized()
 		mask[i] = cover.mask_at(to_world * verts[i], n_world.y)
-		colors[i] = Color(mask[i], 0.0, 0.0, 1.0)
-	var arrays: Array = _mesh_arrays.duplicate()
-	arrays[Mesh.ARRAY_COLOR] = colors
-	var mesh: ArrayMesh = ArrayMesh.new()
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	_mesh_instance.mesh = mesh
+		total += mask[i]
+	cover_stats["grass"] = total / maxf(verts.size(), 1.0)
+	var headless: bool = DisplayServer.get_name() == "headless"
+	if not headless:
+		_write_mask(mask)
 	for li: int in cover.layers.size():
 		var layer: GroundCoverLayer = cover.layers[li]
 		if layer != null and layer.density > 0.0 and layer.get_mesh() != null:
-			_scatter(cover, layer, li, verts, normals, mask)
+			cover_stats[li] = _scatter(cover, layer, li, verts, normals, mask, not headless)
 
 
-func _scatter(cover: GroundCover, layer: GroundCoverLayer, index: int, verts: PackedVector3Array, normals: PackedVector3Array, mask: PackedFloat32Array) -> void:
+## Puts the grass amounts into the existing mesh's colour stream (RGBA8:
+## 4 bytes per vertex) without building a new mesh.
+func _write_mask(mask: PackedFloat32Array) -> void:
+	var mesh: ArrayMesh = _mesh_instance.mesh as ArrayMesh
+	var stride: int = RenderingServer.mesh_surface_get_format_attribute_stride(mesh.surface_get_format(0), mask.size())
+	if stride == 4:
+		var bytes: PackedByteArray = PackedByteArray()
+		bytes.resize(mask.size() * 4)
+		for i: int in mask.size():
+			bytes[i * 4] = int(clampf(mask[i], 0.0, 1.0) * 255.0)
+			bytes[i * 4 + 3] = 255
+		RenderingServer.mesh_surface_update_attribute_region(mesh.get_rid(), 0, 0, bytes)
+		return
+	# Unexpected layout: rebuild the mesh with the colours instead.
+	var colors: PackedColorArray = PackedColorArray()
+	colors.resize(mask.size())
+	for i: int in mask.size():
+		colors[i] = Color(mask[i], 0.0, 0.0, 1.0)
+	var arrays: Array = _mesh_arrays.duplicate()
+	arrays[Mesh.ARRAY_COLOR] = colors
+	var rebuilt: ArrayMesh = ArrayMesh.new()
+	rebuilt.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	_mesh_instance.mesh = rebuilt
+
+
+## Returns the number of instances placed.
+func _scatter(cover: GroundCover, layer: GroundCoverLayer, index: int, verts: PackedVector3Array, normals: PackedVector3Array, mask: PackedFloat32Array, make: bool) -> int:
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.seed = hash(Vector3i(noise_seed, index, cover.patch_seed))
 	var cells: int = (rows - 1) * (columns - 1)
@@ -715,6 +782,11 @@ func _scatter(cover: GroundCover, layer: GroundCoverLayer, index: int, verts: Pa
 		if not tiles.has(key):
 			tiles[key] = []
 		tiles[key].append(Transform3D(basis, p - up * layer.sink))
+	var placed: int = 0
+	for key: Vector2i in tiles:
+		placed += tiles[key].size()
+	if not make:
+		return placed
 	for key: Vector2i in tiles:
 		var list: Array = tiles[key]
 		var mm: MultiMesh = MultiMesh.new()
@@ -733,6 +805,7 @@ func _scatter(cover: GroundCover, layer: GroundCoverLayer, index: int, verts: Pa
 		mmi.visibility_range_end_margin = layer.visibility_end * 0.15
 		mmi.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
 		_cover.add_child(mmi)
+	return placed
 
 
 # --- Mesh and collision ----------------------------------------------------
@@ -776,6 +849,11 @@ func _build_mesh() -> void:
 	arrays[Mesh.ARRAY_VERTEX] = verts
 	arrays[Mesh.ARRAY_NORMAL] = normals
 	arrays[Mesh.ARRAY_INDEX] = indices
+	# Grass amount per vertex (red); bare until the ground cover fills it in.
+	var colors: PackedColorArray = PackedColorArray()
+	colors.resize(count)
+	colors.fill(Color(0.0, 0.0, 0.0, 1.0))
+	arrays[Mesh.ARRAY_COLOR] = colors
 	_mesh_arrays = arrays
 	var mesh: ArrayMesh = ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)

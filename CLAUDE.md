@@ -67,7 +67,7 @@ Prefer editor-visible setup: scenes, nodes, .tres, @export, @tool previews; code
 ## Input map (to set up)
 steer_left/right: left stick X · lean_forward: left stick up = pump (ground only; lean_back unused since v0.6) · pedal: RT · brake: LT · hop: South (hold to charge) · grind: West (unused since v0.9.1: rails catch you when you hop onto them) · menus: A confirm / B back · F3 debug readout · trick_left/right/up/down: right stick · pause: Start
 
-## Status (2026-11-01, v0.11 on branch `landscape`)
+## Status (2026-11-01, v0.12 on branch `landscape`)
 Done (v0.1): project settings, input map (+ debug_reset on Back/R), test track, Player with Ride/Air/Land/Bail, landing grades, debug overlay, physics interpolation. Feel gate approved by Wons.
 Done (v0.2, phase 2 batch A):
 - tricks/: TrickData resource + 4 starter tricks in tricks/data (up Frontloop, down Pocket, left/right Whirl). TrickRunner (child of Player) reads right-stick flicks (neutral -> >0.7 within 0.15 s), plays them on the Visual around the hips, chains a new flick in the last 30%.
@@ -217,12 +217,19 @@ Done (v0.11 "rider and ground", branch `landscape`, autonomous run after Wons: "
 - Checks: all tests pass; 59-60 fps real time with grass.
 - Known: the autopilot isn't exactly repeatable between `--write-movie` runs (same seed); one movie run of seed 7 hit a tree + a rail ledge in stage 1 and got caught, the next finished the stage clean (bots only).
 - Record: as v0.10 into captures/v0.11, plus `<exe> --path . res://debug/rider_poses.tscn -- --angle=30 --shot=<abs png>`.
+Done (v0.12 "biomes", branch `landscape`, + fixes from the external review of v0.11):
+- Biome resource (biomes/biome.gd, one .tres each): ground palette, GroundCover, far ground, tree / rock models (+ `tree_scale`) and a `prop_tint`, sky, fog, sun colour / energy / elevation / heading, ambient, saturation, mountain colours. Game `biomes` (game.tscn) applies one per stage in order: Sunset Meadow, Red Rock Canyon (dead trees, dry grass, red dirt), Snowline (snow ground, frosted pines, pale sky), Ash Quarry (dusk, magenta sky, grey dust, teal moss, dead trees; the sci-fi nod), then round again. Game.apply_biome sets the global ground parameters, PropModel.biome (trees / rocks swap and tint as chunks spawn), TerrainPatch.cover_override, the environment, sun, far ground and MountainRing. Gameplay is the same in every biome.
+- Stage title card (RunHud TitleCard: "STAGE 2 / RED ROCK CANYON / Dry wind, hard ground", `title_time` 3.5 s).
+- `-- --biome=<n>` starts the biome order at n (0 meadow, 1 canyon, 2 snow, 3 quarry).
+- Review fixes: ground cover builds queue up and run one patch per frame, nearest the camera first (no stage-start hitch); the grass amounts are written into the existing mesh's colour stream (no second mesh); the terrain mesh always has a colour array (bare = dirt, never accidental grass); the cover maths runs headless (only MultiMesh creation is skipped; TerrainPatch.cover_stats) and the terrain test checks it; bushes moved outside the crests (they don't collide); grass sways along one world wind direction; RiderRig caches its limb nodes and the tuck blend pose; the dead GrindPrompt is gone from the HUD; the palette ground has no grid lines; camera closer at speed (`cam_open_distance` 4 → 2.5, `cam_open_height` 3 → 2, `fov_max` 105 → 98) so the rider reads.
+- Checks: all tests pass (terrain test + cover check); 59-60 fps real time through a stage change.
 Tweak in the editor (v0.9):
 - Any chunk in chunks/landscape/: select Terrain for size/slope/noise/edges and the bend (Bend > heading_curve) / narrowing (width_profile); drag the shaping nodes under Terrain (gullies, ridges, rollers, rail beds, kicker pads: they rebuild live); move props under Terrain/Props then press "Snap props to ground"; RollingBoulder `roll_to` / `trigger_distance` / `roll_time`; TightZone `size`. Lines/Path* are invisible bot/respawn paths: if you move props onto one, the smoke test will say so.
 - Set pieces: chunks/landscape/set_cliff.tscn, set_ravine.tscn, set_bend_kicker.tscn, set_rail_gap.tscn, set_canyon_slot.tscn, set_fork.tscn (Terrain slope_profile for the cliff, the Ravine gully, the big kicker pads, Gates/*). Boost gates: any Gates/Gate* node (speed_boost, score, radius); drag one onto a risky spot. Rerolls: scoring/run_rules.tres.
 - game.tscn: Game (middle_chunks, oob/penalty times, rules), StageBuilder (set_pieces, set_pieces_per_stage), StartSprint (fill time, sweet zone, boosts), Collapse (difficulty arrays, penalties, feel), StageBuilder (chunk lists, tier_bias).
 - player/player_tuning.tres: Steering, Crashes, trick boost (Combo group), Camera open/tight + turn lead, Speed lines (incl. boost flash).
 - Particles: Player/RiderVfx (thresholds) and its child nodes' process materials. Mood: game.tscn WorldEnvironment (sky, fog, glow), DirectionalLight3D (sun angle / colour), FarGround/Mountains (MountainRing), chunks/materials/terrain.tres (ground colours, terrain_cel.gdshader).
+- Biomes (v0.12): biomes/*.tres (everything about a stage's look); order in game.tscn Game `biomes`. Ground covers: chunks/terrain/cover/*.tres (layers are their own .tres, shared).
 - Rider (v0.11): player/rider/poses/*.tres (poses), RiderRig in player/rider/rider_rig.tscn (Feel: blend, tuck, steer, cadence, land dip; Body: limb lengths). Ground cover: chunks/terrain/cover/meadow.tres (patches + layers), ground colours in Shader Globals.
 - Look (v0.10): a prop scene's Model node (PropModel: variants, scale, outline); light bands in vfx/cel/diffuse_curve.tres; outline colour / width in Project Settings > Shader Globals.
 

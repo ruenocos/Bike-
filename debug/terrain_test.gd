@@ -8,6 +8,9 @@ extends Node3D
 ##   - GULLY digs `depth`, RIDGE raises `depth`, Flatten makes its plane, LINE
 ##     follows its curve's height
 ##   - boundary walls (when on) stop a horizontal ray at the outer edge
+##   Ground cover (v0.12, no MultiMesh headless): grass patches cover part of
+##   the ground (not none, not all), every layer places instances, bushes
+##   only outside the crests; a patch with no cover stays bare
 ##   Riding (debug/terrain_sandbox.tscn, no input):
 ##   - never falls through the terrain, never leaves the mesh (the sandbox has boundary walls on), crosses
 ##     the seam between the two patches, rides into both edge walls at 50 m/s
@@ -37,6 +40,7 @@ func _run() -> void:
 	await _check_seam_and_collision()
 	await _check_shapes()
 	await _check_bends()
+	await _check_cover()
 	await _check_rides()
 	if _failures.is_empty():
 		print("terrain test: all passed")
@@ -174,6 +178,35 @@ func _check_shapes() -> void:
 	_expect_height(p, "plain", 0.0, -250.0, p.base_height(0.0, -250.0))
 	p.queue_free()
 	await get_tree().physics_frame
+
+
+func _check_cover() -> void:
+	var p: TerrainPatch = TerrainPatch.new()
+	p.length = 300.0
+	p.ground_cover = preload("res://chunks/terrain/cover/meadow.tres")
+	add_child(p)
+	p._build_cover()
+	var grass: float = p.cover_stats.get("grass", -1.0)
+	if grass < 0.15 or grass > 0.9:
+		_fail("cover: grass share %.2f (want some grass and some dirt)" % grass)
+	for li: int in p.ground_cover.layers.size():
+		var placed: int = p.cover_stats.get(li, 0)
+		if placed <= 0:
+			_fail("cover: layer %d placed nothing" % li)
+	var bush: GroundCoverLayer = preload("res://chunks/terrain/cover/layer_bush.tres")
+	if bush.zone != GroundCoverLayer.Zone.OUTSIDE:
+		_fail("cover: bushes must stay outside the crests (they don't collide)")
+	p.free()
+	var bare: TerrainPatch = TerrainPatch.new()
+	bare.length = 100.0
+	bare.ground_cover = null
+	add_child(bare)
+	bare._build_cover()
+	var colors: PackedColorArray = (bare._mesh_arrays[Mesh.ARRAY_COLOR] as PackedColorArray)
+	if colors.is_empty() or colors[colors.size() / 2].r > 0.0:
+		_fail("cover: a patch without cover isn't bare (vertex colour grass)")
+	bare.free()
+	await get_tree().process_frame
 
 
 func _line_shape(mode: TerrainShape.Mode, x: float, y: float, slope: float) -> TerrainShape:

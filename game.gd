@@ -12,7 +12,8 @@ extends Node3D
 ## when the collapse catches you.
 ##
 ## User args (after a bare `--`): --seed=<n> fixes the run seed,
-## --autopilot rides by itself (debug/autopilot.gd, for recordings).
+## --biome=<n> starts the biome order at n, --autopilot rides by itself
+## (debug/autopilot.gd, for recordings).
 
 @export var base_tuning: PlayerTuning = preload("res://player/player_tuning.tres")
 ## What boost gates and score earn between stages (upgrade rerolls).
@@ -22,6 +23,8 @@ extends Node3D
 ## through harder chunks (StageBuilder.tier_bias) and a faster collapse,
 ## never through more length.
 @export_range(1, 20) var middle_chunks: int = 8
+## One look per stage, in order (stage 5 starts over); see biomes/*.tres.
+@export var biomes: Array[Biome] = []
 ## Falling this far below the track respawns you on it.
 @export_range(5.0, 200.0, 1.0, "suffix:m") var fall_margin: float = 40.0
 ## Respawning puts you this far back up the nearest ride line...
@@ -49,7 +52,14 @@ extends Node3D
 @onready var run_over: RunOver = $Menus/RunOver
 @onready var far_ground: Node3D = $FarGround
 @onready var start_sprint: StartSprint = $StartSprint
-@onready var mountains: Node3D = $Mountains
+@onready var mountains: MountainRing = $Mountains
+@onready var world_environment: WorldEnvironment = $WorldEnvironment
+@onready var sun: DirectionalLight3D = $DirectionalLight3D
+
+## The look of the current stage.
+var biome: Biome
+## `--biome=<n>`: start the biome order at n (look at one biome quickly).
+var biome_offset: int = 0
 
 var run_seed: int = 0
 ## 0 = first stage.
@@ -91,6 +101,8 @@ func _ready() -> void:
 	for arg: String in args:
 		if arg.begins_with("--seed="):
 			seed_arg = arg.trim_prefix("--seed=").to_int()
+		if arg.begins_with("--biome="):
+			biome_offset = arg.trim_prefix("--biome=").to_int()
 	if args.has("--autopilot"):
 		add_child(preload("res://debug/autopilot.gd").new())
 	start_run(seed_arg)
@@ -117,6 +129,8 @@ func start_stage() -> void:
 	# Out of the way while the new stage is built: a new finish gate in the
 	# same place as the old one would otherwise "see" the parked rider.
 	player.global_position = Vector3(0.0, 100000.0, 0.0)
+	if not biomes.is_empty():
+		apply_biome(biomes[(stage_index + biome_offset) % biomes.size()])
 	builder.build(_rng.randi(), middle_chunks, stage_index)
 	# CSG builds its collision a frame or two after entering the tree.
 	for i: int in 3:
@@ -139,6 +153,8 @@ func start_stage() -> void:
 	stats.start(get_tree().get_nodes_in_group(&"boost_gates").size())
 	oob_timer = 0.0
 	in_stage = true
+	if biome != null:
+		hud.show_title(stage_index + 1, biome.display_name, biome.subtitle)
 
 
 func _physics_process(delta: float) -> void:
@@ -155,6 +171,39 @@ func _physics_process(delta: float) -> void:
 	mountains.global_position = Vector3(player.global_position.x, track_y - 200.0, player.global_position.z)
 	_update_out_of_bounds(delta)
 	_update_collapse_feel()
+
+
+## Recolours the world for a stage: ground palette (global shader
+## parameters), what grows and which trees / rocks stand there (read by the
+## chunks as they're built), sky, fog, sun and the far mountains.
+func apply_biome(b: Biome) -> void:
+	biome = b
+	PropModel.biome = b
+	TerrainPatch.cover_override = b.ground_cover
+	RenderingServer.global_shader_parameter_set(&"ground_dirt", b.ground_dirt)
+	RenderingServer.global_shader_parameter_set(&"ground_grass", b.ground_grass)
+	RenderingServer.global_shader_parameter_set(&"ground_rock", b.ground_rock)
+	RenderingServer.global_shader_parameter_set(&"grass_tip", b.grass_tip)
+	var env: Environment = world_environment.environment
+	var sky: ProceduralSkyMaterial = env.sky.sky_material as ProceduralSkyMaterial
+	if sky != null:
+		sky.sky_top_color = b.sky_top
+		sky.sky_horizon_color = b.sky_horizon
+		sky.ground_horizon_color = b.ground_horizon
+	env.fog_light_color = b.fog_color
+	env.fog_density = b.fog_density
+	env.ambient_light_energy = b.ambient_energy
+	env.adjustment_saturation = b.saturation
+	sun.light_color = b.sun_color
+	sun.light_energy = b.sun_energy
+	sun.rotation = Vector3(deg_to_rad(-b.sun_elevation), deg_to_rad(b.sun_heading), 0.0)
+	var far_mat: ShaderMaterial = (far_ground as MeshInstance3D).mesh.surface_get_material(0) as ShaderMaterial
+	if far_mat != null:
+		far_mat.set_shader_parameter(&"base_color", b.far_ground)
+		far_mat.set_shader_parameter(&"line_color", b.far_ground.darkened(0.06))
+		far_mat.set_shader_parameter(&"major_color", b.far_ground.darkened(0.12))
+	mountains.peak_color = b.peak_color
+	mountains.haze_color = b.haze_color
 
 
 ## Past the valley crests (sideways from the centerline): count down, then
@@ -184,8 +233,7 @@ func _process(_delta: float) -> void:
 	if collapse.waiting:
 		gap = maxf(gap, hud.meter_range)
 	hud.update_run(stage_index + 1, stats.time, player.combo.run_total, gap,
-			player_progress, collapse.distance, builder.length, builder.finish_distance,
-			false)
+			player_progress, collapse.distance, builder.length, builder.finish_distance)
 	hud.show_start(start_sprint if in_stage else null)
 
 

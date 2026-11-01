@@ -1,9 +1,8 @@
 class_name RunHud
 extends CanvasLayer
 ## In-run HUD: stage number, stage time, run score, distance to the collapse,
-## a stage progress bar, a red screen-edge warning when the collapse is close,
-## and a grind prompt while a rail is in reach. The game calls update_run()
-## every frame (call down). Layout and text live in run_hud.tscn.
+## a stage progress bar and a red screen-edge warning when the collapse is
+## close. The game calls update_run() every frame (call down). Layout and text live in run_hud.tscn.
 ## v0.8: the sprint-start meter + pedal prompt (StartPanel), PERFECT START
 ## flash, OUT OF BOUNDS countdown, "+x s" time penalties and the collapse
 ## proximity meter under the distance.
@@ -14,6 +13,8 @@ extends CanvasLayer
 @export_range(0.0, 300.0, 5.0, "suffix:m") var alarm_distance: float = 50.0
 ## The collapse meter starts filling at this distance (m).
 @export_range(10.0, 1000.0, 5.0, "suffix:m") var meter_range: float = 250.0
+## How long the stage title card stays up (s), fading over the last 0.8 s.
+@export_range(0.5, 10.0, 0.1, "suffix:s") var title_time: float = 3.5
 ## How long the start / penalty flashes stay up (s).
 @export_range(0.1, 5.0, 0.1, "suffix:s") var flash_time: float = 1.4
 
@@ -22,7 +23,6 @@ extends CanvasLayer
 @onready var score_label: Label = $ScoreLabel
 @onready var collapse_label: Label = $CollapseLabel
 @onready var alarm_label: Label = $AlarmLabel
-@onready var grind_prompt: Label = $GrindPrompt
 @onready var progress: StageProgress = $Progress
 @onready var vignette: ColorRect = $Vignette
 @onready var collapse_fill: ColorRect = $CollapseMeter/Fill
@@ -35,13 +35,21 @@ extends CanvasLayer
 @onready var good_zone: ColorRect = $StartPanel/MeterBack/GoodZone
 @onready var sweet_zone: ColorRect = $StartPanel/MeterBack/SweetZone
 @onready var needle: ColorRect = $StartPanel/MeterBack/Needle
+@onready var title_card: Control = $TitleCard
+@onready var title_stage: Label = $TitleCard/StageNo
+@onready var title_name: Label = $TitleCard/Name
+@onready var title_sub: Label = $TitleCard/Sub
 
 var _start_flash_timer: float = 0.0
+var _title_timer: float = 0.0
 var _penalty_timer: float = 0.0
 var _penalty_total: float = 0.0
 
 
 func _process(delta: float) -> void:
+	_title_timer = maxf(_title_timer - delta, 0.0)
+	title_card.visible = _title_timer > 0.0
+	title_card.modulate.a = clampf(_title_timer / 0.8, 0.0, 1.0)
 	_start_flash_timer = maxf(_start_flash_timer - delta, 0.0)
 	start_flash.visible = _start_flash_timer > 0.0
 	start_flash.modulate.a = clampf(_start_flash_timer / 0.3, 0.0, 1.0)
@@ -50,6 +58,14 @@ func _process(delta: float) -> void:
 	penalty_label.modulate.a = clampf(_penalty_timer / 0.3, 0.0, 1.0)
 	if _penalty_timer <= 0.0:
 		_penalty_total = 0.0
+
+
+## Stage title card (v0.12): stage number, biome name, a short line.
+func show_title(stage: int, place: String, line: String) -> void:
+	title_stage.text = "STAGE %d" % stage
+	title_name.text = place.to_upper()
+	title_sub.text = line
+	_title_timer = title_time
 
 
 ## The sprint-start meter (hidden when `sprint` is null or done).
@@ -102,7 +118,7 @@ func flash_penalty(seconds: float) -> void:
 
 
 func update_run(stage: int, time: float, score: int, gap: float, player_progress: float,
-		collapse_distance: float, stage_length: float, finish_distance: float, rail_in_reach: bool) -> void:
+		collapse_distance: float, stage_length: float, finish_distance: float) -> void:
 	stage_label.text = "STAGE %d" % stage
 	time_label.text = "%d:%05.2f" % [floori(time / 60.0), fmod(time, 60.0)]
 	score_label.text = "%d" % score
@@ -111,10 +127,5 @@ func update_run(stage: int, time: float, score: int, gap: float, player_progress
 	collapse_label.modulate = Color.WHITE.lerp(Color(1.0, 0.3, 0.15), danger)
 	(vignette.material as ShaderMaterial).set_shader_parameter(&"intensity", danger)
 	alarm_label.visible = gap < alarm_distance and fmod(Time.get_ticks_msec() / 1000.0, 0.5) < 0.3
-	grind_prompt.visible = rail_in_reach
-	if rail_in_reach:
-		# Gentle pulse so it reads as "now".
-		var pulse: float = 1.0 + 0.08 * sin(Time.get_ticks_msec() / 1000.0 * 14.0)
-		grind_prompt.scale = Vector2(pulse, pulse)
 	progress.set_values(stage_length, finish_distance, player_progress, collapse_distance)
 	collapse_fill.size.x = (collapse_fill.get_parent() as Control).size.x * clampf(1.0 - gap / meter_range, 0.0, 1.0)

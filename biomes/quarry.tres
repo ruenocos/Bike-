@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="Biome" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://biomes/biome.gd" id="1_biome"]
+[ext_resource type="Resource" path="res://chunks/terrain/cover/quarry.tres" id="2_cover"]
+[ext_resource type="PackedScene" path="res://art/nature/megakit/DeadTree_1.gltf" id="3_m"]
+[ext_resource type="PackedScene" path="res://art/nature/megakit/DeadTree_2.gltf" id="4_m"]
+[ext_resource type="PackedScene" path="res://art/nature/megakit/Pine_3.gltf" id="5_m"]
+
+[resource]
+script = ExtResource("1_biome")
+display_name = "Ash Quarry"
+subtitle = "The old dig site, after dark"
+ground_dirt = Color(0.38, 0.35, 0.37, 1)
+ground_grass = Color(0.24, 0.44, 0.42, 1)
+ground_rock = Color(0.31, 0.29, 0.32, 1)
+grass_tip = Color(0.42, 0.88, 0.8, 1)
+ground_cover = ExtResource("2_cover")
+far_ground = Color(0.2, 0.18, 0.22, 1)
+trees = Array[PackedScene]([ExtResource("3_m"), ExtResource("4_m"), ExtResource("5_m")])
+rocks = Array[PackedScene]([])
+tree_scale = 0.85
+prop_tint = Color(0.72, 0.72, 0.82, 1)
+sky_top = Color(0.1, 0.08, 0.22, 1)
+sky_horizon = Color(0.92, 0.42, 0.4, 1)
+ground_horizon = Color(0.6, 0.32, 0.36, 1)
+fog_color = Color(0.62, 0.38, 0.46, 1)
+fog_density = 0.001
+sun_color = Color(1, 0.55, 0.42, 1)
+sun_energy = 1.3
+sun_elevation = 8.0
+sun_heading = 150.0
+ambient_energy = 1.0
+saturation = 1.15
+peak_color = Color(0.2, 0.17, 0.32, 1)
+haze_color = Color(0.72, 0.42, 0.46, 1)

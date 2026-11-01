@@ -98,26 +98,6 @@ theme_override_font_sizes/font_size = 56
 text = "COLLAPSE!"
 horizontal_alignment = 1
 
-[node name="GrindPrompt" type="Label" parent="."]
-visible = false
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -300.0
-offset_top = -280.0
-offset_right = 300.0
-offset_bottom = -220.0
-grow_horizontal = 2
-grow_vertical = 0
-pivot_offset = Vector2(300, 30)
-theme = ExtResource("4_theme")
-theme_override_colors/font_color = Color(0.4, 0.95, 1, 1)
-theme_override_font_sizes/font_size = 44
-text = "[X]  GRIND"
-horizontal_alignment = 1
-
 [node name="Progress" type="Control" parent="."]
 anchors_preset = 7
 anchor_left = 0.5
@@ -258,3 +238,39 @@ offset_top = -8.0
 offset_right = 3.0
 offset_bottom = 36.0
 mouse_filter = 2
+
+[node name="TitleCard" type="VBoxContainer" parent="."]
+visible = false
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -500.0
+offset_top = 190.0
+offset_right = 500.0
+offset_bottom = 400.0
+grow_horizontal = 2
+theme_override_constants/separation = 0
+alignment = 1
+
+[node name="StageNo" type="Label" parent="TitleCard"]
+layout_mode = 2
+theme = ExtResource("4_theme")
+theme_override_colors/font_color = Color(1, 0.86, 0.55, 1)
+theme_override_font_sizes/font_size = 30
+text = "STAGE 1"
+horizontal_alignment = 1
+
+[node name="Name" type="Label" parent="TitleCard"]
+layout_mode = 2
+theme = ExtResource("4_theme")
+theme_override_font_sizes/font_size = 84
+text = "Sunset Meadow"
+horizontal_alignment = 1
+
+[node name="Sub" type="Label" parent="TitleCard"]
+layout_mode = 2
+theme = ExtResource("4_theme")
+theme_override_colors/font_color = Color(1, 1, 1, 0.8)
+theme_override_font_sizes/font_size = 28
+text = "Golden hour in the high pastures"
+horizontal_alignment = 1

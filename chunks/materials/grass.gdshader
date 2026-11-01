@@ -11,6 +11,8 @@ global uniform vec4 grass_tip;
 uniform float sway = 0.12;
 uniform float sway_speed = 1.7;
 uniform float gust_scale = 0.06;
+// Wind blows this way in the world (x, z), so every tuft leans together.
+uniform vec2 wind_direction = vec2(0.8, 0.6);
 // Per-instance brightness variation (instance colour red).
 uniform float variation = 0.25;
 
@@ -33,8 +35,10 @@ void vertex() {
 	float t = TIME * sway_speed;
 	float gust = sin(t + wp.x * gust_scale + wp.z * gust_scale * 0.7) + 0.5 * sin(t * 2.3 + wp.z * gust_scale * 2.0);
 	float bend = tip * tip * sway;
-	VERTEX.x += gust * bend;
-	VERTEX.z += 0.5 * gust * bend;
+	// World-space push turned into the tuft's own (rotated, scaled) space.
+	vec3 push = vec3(wind_direction.x, 0.0, wind_direction.y) * gust * bend;
+	float scale = length(MODEL_MATRIX[0].xyz);
+	VERTEX += (push * mat3(MODEL_MATRIX)) / (scale * scale) * scale;
 }
 
 void fragment() {

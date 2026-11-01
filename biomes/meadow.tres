@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="Biome" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://biomes/biome.gd" id="1_biome"]
+[ext_resource type="Resource" path="res://chunks/terrain/cover/meadow.tres" id="2_cover"]
+
+[resource]
+script = ExtResource("1_biome")
+display_name = "Sunset Meadow"
+subtitle = "Golden hour in the high pastures"
+ground_dirt = Color(0.6, 0.5, 0.39, 1)
+ground_grass = Color(0.46, 0.54, 0.24, 1)
+ground_rock = Color(0.56, 0.5, 0.45, 1)
+grass_tip = Color(0.74, 0.75, 0.38, 1)
+ground_cover = ExtResource("2_cover")
+far_ground = Color(0.46, 0.41, 0.33, 1)
+trees = Array[PackedScene]([])
+rocks = Array[PackedScene]([])
+tree_scale = 1.0
+prop_tint = Color(1, 1, 1, 1)
+sky_top = Color(0.17, 0.29, 0.56, 1)
+sky_horizon = Color(1, 0.72, 0.5, 1)
+ground_horizon = Color(0.95, 0.69, 0.52, 1)
+fog_color = Color(0.93, 0.72, 0.56, 1)
+fog_density = 0.0007
+sun_color = Color(1, 0.79, 0.56, 1)
+sun_energy = 1.5
+sun_elevation = 16.5
+sun_heading = 143.0
+ambient_energy = 1.1
+saturation = 1.12
+peak_color = Color(0.36, 0.38, 0.52, 1)
+haze_color = Color(0.86, 0.66, 0.56, 1)

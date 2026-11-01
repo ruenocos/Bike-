@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="Biome" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://biomes/biome.gd" id="1_biome"]
+[ext_resource type="Resource" path="res://chunks/terrain/cover/snow.tres" id="2_cover"]
+[ext_resource type="PackedScene" path="res://art/nature/megakit/Pine_1.gltf" id="3_m"]
+[ext_resource type="PackedScene" path="res://art/nature/megakit/Pine_2.gltf" id="4_m"]
+[ext_resource type="PackedScene" path="res://art/nature/megakit/Pine_3.gltf" id="5_m"]
+[ext_resource type="PackedScene" path="res://art/nature/megakit/Pine_4.gltf" id="6_m"]
+[ext_resource type="PackedScene" path="res://art/nature/megakit/Pine_5.gltf" id="7_m"]
+
+[resource]
+script = ExtResource("1_biome")
+display_name = "Snowline"
+subtitle = "Thin air above the trees"
+ground_dirt = Color(0.76, 0.8, 0.88, 1)
+ground_grass = Color(0.5, 0.56, 0.52, 1)
+ground_rock = Color(0.42, 0.44, 0.5, 1)
+grass_tip = Color(0.74, 0.78, 0.7, 1)
+ground_cover = ExtResource("2_cover")
+far_ground = Color(0.72, 0.76, 0.84, 1)
+trees = Array[PackedScene]([ExtResource("3_m"), ExtResource("4_m"), ExtResource("5_m"), ExtResource("6_m"), ExtResource("7_m")])
+rocks = Array[PackedScene]([])
+tree_scale = 1.0
+prop_tint = Color(0.82, 0.9, 1, 1)
+sky_top = Color(0.22, 0.38, 0.7, 1)
+sky_horizon = Color(0.78, 0.82, 0.9, 1)
+ground_horizon = Color(0.8, 0.84, 0.92, 1)
+fog_color = Color(0.74, 0.79, 0.88, 1)
+fog_density = 0.0006
+sun_color = Color(1, 0.95, 0.86, 1)
+sun_energy = 1.05
+sun_elevation = 24.0
+sun_heading = 160.0
+ambient_energy = 0.85
+saturation = 1.05
+peak_color = Color(0.62, 0.68, 0.82, 1)
+haze_color = Color(0.84, 0.87, 0.94, 1)

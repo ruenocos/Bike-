@@ -1,6 +1,11 @@
-[gd_scene load_steps=28 format=3]
+[gd_scene load_steps=33 format=3]
 
 [ext_resource type="Script" path="res://game.gd" id="1_game"]
+[ext_resource type="Script" path="res://biomes/biome.gd" id="30_biome"]
+[ext_resource type="Resource" path="res://biomes/meadow.tres" id="31_meadow"]
+[ext_resource type="Resource" path="res://biomes/canyon.tres" id="32_canyon"]
+[ext_resource type="Resource" path="res://biomes/snow.tres" id="33_snow"]
+[ext_resource type="Resource" path="res://biomes/quarry.tres" id="34_quarry"]
 [ext_resource type="Script" path="res://chunks/stage_builder.gd" id="2_builder"]
 [ext_resource type="PackedScene" path="res://hazards/collapse.tscn" id="3_collapse"]
 [ext_resource type="PackedScene" path="res://player/player.tscn" id="4_player"]
@@ -69,6 +74,7 @@ size = Vector2(4000, 4000)
 
 [node name="Game" type="Node3D"]
 script = ExtResource("1_game")
+biomes = Array[ExtResource("30_biome")]([ExtResource("31_meadow"), ExtResource("32_canyon"), ExtResource("33_snow"), ExtResource("34_quarry")])
 upgrade_pool = Array[ExtResource("12_upgrade")]([ExtResource("13_u1"), ExtResource("14_u2"), ExtResource("15_u3"), ExtResource("16_u4"), ExtResource("17_u5"), ExtResource("18_u6"), ExtResource("19_u7"), ExtResource("20_u8")])
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]

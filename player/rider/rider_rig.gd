@@ -53,6 +53,10 @@ var _bars: float = 0.0
 var _flail: float = 0.0
 var _last_state: StringName = &""
 var _player: Player
+## Reused for the ride / tuck blend (no new pose every frame).
+var _blend: RiderPose = RiderPose.new()
+## Per side (0 = left, 1 = right): thigh, shin, shoe, upper arm, forearm, hand.
+var _limbs: Array[Array] = []
 
 @onready var _bike: Node3D = $Bike
 @onready var _fork: Node3D = $Bike/Fork
@@ -69,6 +73,11 @@ var _player: Player
 
 
 func _ready() -> void:
+	for tag: String in ["L", "R"]:
+		var parts: Array[Node3D] = []
+		for part: String in ["Thigh", "Shin", "Shoe", "UpperArm", "Forearm", "Hand"]:
+			parts.append(get_node("Bike/" + part + tag) as Node3D)
+		_limbs.append(parts)
 	_pose = _pick(preview).duplicate() if _pick(preview) != null else RiderPose.new()
 	if not Engine.is_editor_hint():
 		CelLook.apply(self, outline)
@@ -119,7 +128,10 @@ func _drive(delta: float) -> RiderPose:
 	if pedal:
 		return pose_pedal
 	var tuck: float = clampf((speed01 - tuck_from) / maxf(1.0 - tuck_from, 0.01), 0.0, 1.0)
-	return pose_ride.blended(pose_tuck, tuck) if tuck > 0.0 else pose_ride
+	if tuck <= 0.0:
+		return pose_ride
+	_blend.set_blend(pose_ride, pose_tuck, tuck)
+	return _blend
 
 
 func _pedal_and_wheels(delta: float, pedal: bool, speed: float, grounded: bool) -> void:
@@ -152,7 +164,7 @@ func _pick(pose_name: String) -> RiderPose:
 
 ## Places the torso, head, arms and legs for the current pose.
 func _solve() -> void:
-	if _bike == null or _pose == null:
+	if _bike == null or _pose == null or _limbs.size() < 2:
 		return
 	_bike.rotation.x = deg_to_rad(_pose.bike_pitch_deg)
 	var hips: Vector3 = _pose.hips + Vector3(0.0, minf(_dip, 0.05), 0.0)
@@ -172,11 +184,10 @@ func _solve() -> void:
 		var foot: Vector3 = to_bike * pedal.global_position + Vector3(0.0, 0.07, 0.0) + foot_off
 		var knee_pole: Vector3 = hip + Vector3(side * 0.15, -0.1, -1.0)
 		var leg: PackedVector3Array = _ik(hip, foot, thigh, shin, knee_pole)
-		var tag: String = "L" if side < 0 else "R"
-		_segment(get_node("Bike/Thigh" + tag) as Node3D, hip, leg[0])
-		_segment(get_node("Bike/Shin" + tag) as Node3D, leg[0], leg[1])
-		var shoe: Node3D = get_node("Bike/Shoe" + tag) as Node3D
-		shoe.position = leg[1] + Vector3(0.0, -0.03, -0.03)
+		var parts: Array = _limbs[0 if side < 0 else 1]
+		_segment(parts[0], hip, leg[0])
+		_segment(parts[1], leg[0], leg[1])
+		(parts[2] as Node3D).position = leg[1] + Vector3(0.0, -0.03, -0.03)
 		# Arms: shoulder -> grip.
 		var grip: Node3D = _grip_l if side < 0 else _grip_r
 		var hand_off: Vector3 = _pose.hand_left if side < 0 else _pose.hand_right
@@ -184,9 +195,9 @@ func _solve() -> void:
 		var hand: Vector3 = to_bike * grip.global_position + hand_off
 		var elbow_pole: Vector3 = shoulder + Vector3(side * 0.6, -0.3, 0.5)
 		var arm: PackedVector3Array = _ik(shoulder, hand, upper_arm, forearm, elbow_pole)
-		_segment(get_node("Bike/UpperArm" + tag) as Node3D, shoulder, arm[0])
-		_segment(get_node("Bike/Forearm" + tag) as Node3D, arm[0], arm[1])
-		(get_node("Bike/Hand" + tag) as Node3D).position = arm[1]
+		_segment(parts[3], shoulder, arm[0])
+		_segment(parts[4], arm[0], arm[1])
+		(parts[5] as Node3D).position = arm[1]
 
 
 ## Two-bone reach from `root` toward `target`: [joint, end]. The joint bends
