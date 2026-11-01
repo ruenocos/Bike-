@@ -120,6 +120,14 @@ func _ready() -> void:
 		start_run(_seed_arg))
 	pause_menu.to_menu.connect(func() -> void:
 		_unpause()
+		# Leaving for the title counts the run so far (gates, runs, bests);
+		# Restart run doesn't.
+		if in_stage:
+			in_stage = false
+			stats.stop()
+			run_gates += stats.gates
+			_add_stage_stats(player_progress)
+			Save.record_run(stage_index + 1, player.combo.run_total, run_gates, bikes)
 		_open_main_menu())
 	Events.trick_completed.connect(func(_n: String, _s: int) -> void:
 		if in_stage:

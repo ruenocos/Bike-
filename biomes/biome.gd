@@ -51,6 +51,14 @@ extends Resource
 @export_range(-180.0, 180.0, 0.5) var sun_heading: float = 143.0
 @export_range(0.0, 4.0, 0.05) var ambient_energy: float = 1.1
 @export_range(0.0, 2.0, 0.01) var saturation: float = 1.12
+## Glow / bloom (bright snow blooms into a white haze: keep it low there).
+@export_range(0.0, 2.0, 0.01) var glow_intensity: float = 0.9
+@export_range(0.0, 1.0, 0.01) var glow_bloom: float = 0.08
+## Overall exposure (tonemap).
+@export_range(0.2, 2.0, 0.01) var exposure: float = 1.0
+## Large soft light / dark patches on the ground (0 = flat colour), so an
+## all-white snowfield still shows its shape.
+@export_range(0.0, 0.5, 0.01) var ground_variation: float = 0.06
 
 @export_group("Mountains")
 @export var peak_color: Color = Color(0.36, 0.38, 0.52)

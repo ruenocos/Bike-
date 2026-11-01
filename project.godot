@@ -178,3 +178,7 @@ grass_tip={
 "type": "color",
 "value": Color(0.74, 0.75, 0.38, 1)
 }
+ground_variation={
+"type": "float",
+"value": 0.06
+}

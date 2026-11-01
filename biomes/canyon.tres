@@ -38,5 +38,7 @@ sun_elevation = 34.0
 sun_heading = 120.0
 ambient_energy = 1.0
 saturation = 0.98
+ground_variation = 0.08
+glow_intensity = 0.7
 peak_color = Color(0.56, 0.32, 0.28, 1)
 haze_color = Color(0.95, 0.74, 0.6, 1)

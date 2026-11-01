@@ -26,6 +26,7 @@ func apply(b: Biome) -> void:
 	RenderingServer.global_shader_parameter_set(&"ground_rock", b.ground_rock)
 	RenderingServer.global_shader_parameter_set(&"grass_tip", b.grass_tip)
 	RenderingServer.global_shader_parameter_set(&"outline_color", b.outline_color)
+	RenderingServer.global_shader_parameter_set(&"ground_variation", b.ground_variation)
 	if world_environment != null and world_environment.environment != null:
 		var env: Environment = world_environment.environment
 		if env.sky != null:
@@ -38,6 +39,9 @@ func apply(b: Biome) -> void:
 		env.fog_density = b.fog_density
 		env.ambient_light_energy = b.ambient_energy
 		env.adjustment_saturation = b.saturation
+		env.glow_intensity = b.glow_intensity
+		env.glow_bloom = b.glow_bloom
+		env.tonemap_exposure = b.exposure
 	if sun != null:
 		sun.light_color = b.sun_color
 		sun.light_energy = b.sun_energy
@@ -45,9 +49,12 @@ func apply(b: Biome) -> void:
 	if far_ground != null and far_ground.mesh != null:
 		var far_mat: ShaderMaterial = far_ground.mesh.surface_get_material(0) as ShaderMaterial
 		if far_mat != null:
-			far_mat.set_shader_parameter(&"base_color", b.far_ground)
-			far_mat.set_shader_parameter(&"line_color", b.far_ground.darkened(0.04))
-			far_mat.set_shader_parameter(&"major_color", b.far_ground.darkened(0.08))
+			# Most of the way to the fog colour, so the plane far below melts
+			# into the haze instead of reading as a flat table.
+			var far: Color = b.far_ground.lerp(b.fog_color, 0.65)
+			far_mat.set_shader_parameter(&"base_color", far)
+			far_mat.set_shader_parameter(&"line_color", far.darkened(0.03))
+			far_mat.set_shader_parameter(&"major_color", far.darkened(0.05))
 	if mountains != null:
 		mountains.peak_color = b.peak_color
 		mountains.haze_color = b.haze_color
