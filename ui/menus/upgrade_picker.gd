@@ -11,6 +11,8 @@ signal reroll_requested
 
 @onready var buttons: Array[Button] = [%Choice1, %Choice2, %Choice3]
 @onready var reroll_button: Button = %Reroll
+@onready var names: Array[Label] = [%Name1, %Name2, %Name3]
+@onready var descs: Array[Label] = [%Desc1, %Desc2, %Desc3]
 
 var _choices: Array[UpgradeData] = []
 
@@ -29,8 +31,8 @@ func open(choices: Array[UpgradeData], rerolls: int = 0) -> void:
 	for i: int in buttons.size():
 		buttons[i].visible = i < choices.size()
 		if i < choices.size():
-			(buttons[i].get_node(^"Text/Name") as Label).text = choices[i].display_name.to_upper()
-			(buttons[i].get_node(^"Text/Desc") as Label).text = choices[i].description
+			names[i].text = choices[i].display_name.to_upper()
+			descs[i].text = choices[i].description
 	show()
 	for button: Button in buttons:
 		button.disabled = true

@@ -229,6 +229,50 @@ static func set_pieces() -> Array[Dictionary]:
 			[Vector2(0, 0), Vector2(22, 60), Vector2(25, 140), Vector2(25, 225), Vector2(40, 255), Vector2(40, 330), Vector2(0, 400)],
 			[Vector2(0, 0), Vector2(8, 60), Vector2(10, 340), Vector2(0, 400)]],
 		"clusters": 3.0, "mix": {"rock": 4, "tree": 2, "fence": 1}})
+	# v0.23: a second set piece per biome (later stages see more variety).
+	# Meadow: the log rhythm. Low log piles every ~45 m, alternating sides,
+	# on a long roller section: weave the gaps or hop the rhythm for gates.
+	out.append({"file": "set_log_rhythm", "length": 400.0, "difficulty": 2, "seed": 151, "noise": 1.2,
+		"rollers": 3,
+		"paths": [[Vector2(0, 0), Vector2(-25, 60), Vector2(-25, 340), Vector2(0, 400)],
+			[Vector2(0, 0), Vector2(25, 60), Vector2(25, 340), Vector2(0, 400)],
+			[Vector2(0, 0), Vector2(0, 400)]],
+		"clusters_at": [{"kind": "log", "at": Vector2(-12, 100), "n": 2, "spread": 3.0}, {"kind": "log", "at": Vector2(12, 145), "n": 2, "spread": 3.0},
+			{"kind": "log", "at": Vector2(-12, 190), "n": 2, "spread": 3.0}, {"kind": "log", "at": Vector2(12, 235), "n": 2, "spread": 3.0},
+			{"kind": "log", "at": Vector2(-12, 280), "n": 2, "spread": 3.0},
+			{"kind": "tree", "at": Vector2(-50, 170), "n": 6, "spread": 7.0}, {"kind": "tree", "at": Vector2(50, 260), "n": 6, "spread": 7.0}],
+		"gap_gates": 2, "clusters": 2.5, "mix": {"tree": 5, "log": 3}})
+	# Canyon: the narrows. The valley pinches twice (to 45% and 40%) with a
+	# kink between; a kicker in the first pinch hops a shallow wash.
+	out.append({"file": "set_narrows", "length": 400.0, "difficulty": 3, "seed": 157, "noise": 1.4,
+		"heading": [Vector2(0, 0), Vector2(0.25, 0), Vector2(0.5, 18), Vector2(0.75, -6), Vector2(1, 0)],
+		"width": [Vector2(0, 1), Vector2(0.15, 1), Vector2(0.3, 0.45), Vector2(0.42, 0.45), Vector2(0.55, 0.8),
+			Vector2(0.68, 0.4), Vector2(0.8, 0.4), Vector2(0.92, 1), Vector2(1, 1)],
+		"gullies_at": [{"name": "Wash", "points": [Vector2(-30, 160), Vector2(30, 160)], "width": 12.0, "depth": 2.5, "flat": 0.4}],
+		"kickers_at": [{"name": "NarrowsKickerPad", "at": Vector2(-8, 132), "aim": Vector2(-8, 200), "scale": Vector3(0.9, 1.2, 1.0), "gate_ahead": 22.0, "gate_up": 5.0}],
+		"paths": [[Vector2(0, 0), Vector2(-8, 100), Vector2(-8, 200), Vector2(0, 300), Vector2(0, 400)],
+			[Vector2(0, 0), Vector2(8, 100), Vector2(10, 200), Vector2(4, 300), Vector2(0, 400)]],
+		"clusters_at": [{"kind": "rock", "at": Vector2(14, 280), "n": 2, "spread": 3.0}, {"kind": "rock", "at": Vector2(-14, 300), "n": 2, "spread": 3.0}],
+		"clusters": 3.0, "mix": {"rock": 5, "tree": 2}, "tight": true})
+	# Snowline: the ice chute. A long steep fast drop over rollers with two
+	# rock chokes: pick a gap at full speed.
+	out.append({"file": "set_ice_chute", "length": 420.0, "difficulty": 3, "seed": 163, "noise": 1.0,
+		"profile": [Vector2(0, 1), Vector2(0.15, 1), Vector2(0.25, 1.5), Vector2(0.8, 1.5), Vector2(0.9, 1), Vector2(1, 1)],
+		"rollers": 3,
+		"paths": [[Vector2(-30, 0), Vector2(-30, 420)], [Vector2(0, 0), Vector2(0, 420)], [Vector2(30, 0), Vector2(30, 420)]],
+		"dense": [Vector3(150, 330, 3.0)], "chokes": 2, "gap_gates": 2, "clusters": 3.5, "mix": {"tree": 5, "rock": 3}})
+	# Ash Quarry: the bridge gap. Two raised ramps on the left with a gap
+	# between them (jump it for the gate) over a deep cut; or the low road.
+	out.append({"file": "set_bridge_gap", "length": 400.0, "difficulty": 2, "seed": 167, "noise": 1.2,
+		"lines_at": [{"name": "BridgeIn", "points": [Vector3(-26, 70, 0), Vector3(-26, 140, 5), Vector3(-26, 196, 6)], "width": 14.0, "flat": 0.45},
+			{"name": "BridgeOut", "points": [Vector3(-26, 236, 3), Vector3(-26, 290, 2), Vector3(-26, 330, 0)], "width": 14.0, "flat": 0.45}],
+		"gullies_at": [{"name": "Cut", "points": [Vector2(-70, 216), Vector2(0, 216)], "width": 26.0, "depth": 8.0, "flat": 0.25}],
+		"gates_at": [Vector3(-26, 216, 9.0)],
+		"keep_out": [Vector3(-50, 216, 18), Vector3(-22, 216, 18)],
+		"paths": [[Vector2(0, 0), Vector2(-18, 50), Vector2(-26, 100), Vector2(-26, 320), Vector2(0, 400)],
+			[Vector2(0, 0), Vector2(25, 80), Vector2(35, 200), Vector2(35, 290), Vector2(10, 360), Vector2(0, 400)]],
+		"clusters_at": [{"kind": "rock", "at": Vector2(45, 150), "n": 4, "spread": 5.0}, {"kind": "rock", "at": Vector2(50, 260), "n": 4, "spread": 5.0}],
+		"clusters": 3.0, "mix": {"rock": 4, "tree": 2, "fence": 1}})
 	return out
 
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()

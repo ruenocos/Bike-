@@ -50,6 +50,8 @@ extends CanvasLayer
 
 var _start_flash_timer: float = 0.0
 var _title_timer: float = 0.0
+var _flash_tween: Tween
+var _fade_tween: Tween
 var _penalty_timer: float = 0.0
 var _penalty_total: float = 0.0
 
@@ -86,24 +88,32 @@ func update_rider(delta: float, speed: float, max_speed: float, combo_active: bo
 
 ## A quick warm-white flash over the screen (perfect landings, v0.22).
 func flash_light(strength: float = 0.2, seconds: float = 0.12) -> void:
+	if _flash_tween != null:
+		_flash_tween.kill()
 	light_flash.visible = true
 	light_flash.modulate.a = strength
 	var tween: Tween = create_tween()
+	_flash_tween = tween
 	tween.tween_property(light_flash, "modulate:a", 0.0, seconds).set_ease(Tween.EASE_OUT)
 	tween.tween_callback(light_flash.hide)
 
 
 ## Full black (the game draws it for a frame or two before a stage build).
 func black_out() -> void:
+	if _fade_tween != null:
+		_fade_tween.kill()
 	fade.visible = true
 	fade.modulate.a = 1.0
 
 
 ## Black screen fading out over `seconds` (v0.15: after the stage build).
 func fade_in(seconds: float) -> void:
+	if _fade_tween != null:
+		_fade_tween.kill()
 	fade.visible = true
 	fade.modulate.a = 1.0
 	var tween: Tween = create_tween()
+	_fade_tween = tween
 	tween.tween_property(fade, "modulate:a", 0.0, seconds)
 	tween.tween_callback(fade.hide)
 

@@ -69,14 +69,16 @@ mouse_filter = 2
 theme_override_constants/separation = 14
 alignment = 1
 
-[node name="Name" type="Label" parent="Center/VBox/Cards/Choice1/Text"]
+[node name="Name1" type="Label" parent="Center/VBox/Cards/Choice1/Text"]
+unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"CardTitle"
 text = "UPGRADE"
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="Desc" type="Label" parent="Center/VBox/Cards/Choice1/Text"]
+[node name="Desc1" type="Label" parent="Center/VBox/Cards/Choice1/Text"]
+unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"CardBody"
 text = "Description"
@@ -103,14 +105,16 @@ mouse_filter = 2
 theme_override_constants/separation = 14
 alignment = 1
 
-[node name="Name" type="Label" parent="Center/VBox/Cards/Choice2/Text"]
+[node name="Name2" type="Label" parent="Center/VBox/Cards/Choice2/Text"]
+unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"CardTitle"
 text = "UPGRADE"
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="Desc" type="Label" parent="Center/VBox/Cards/Choice2/Text"]
+[node name="Desc2" type="Label" parent="Center/VBox/Cards/Choice2/Text"]
+unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"CardBody"
 text = "Description"
@@ -137,14 +141,16 @@ mouse_filter = 2
 theme_override_constants/separation = 14
 alignment = 1
 
-[node name="Name" type="Label" parent="Center/VBox/Cards/Choice3/Text"]
+[node name="Name3" type="Label" parent="Center/VBox/Cards/Choice3/Text"]
+unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"CardTitle"
 text = "UPGRADE"
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="Desc" type="Label" parent="Center/VBox/Cards/Choice3/Text"]
+[node name="Desc3" type="Label" parent="Center/VBox/Cards/Choice3/Text"]
+unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"CardBody"
 text = "Description"

@@ -107,7 +107,6 @@ func _process(delta: float) -> void:
 	_dip_speed += (-_dip * 160.0 - _dip_speed * 18.0) * delta
 	_dip += _dip_speed * delta
 	_squash = lerpf(_squash, 0.0, 1.0 - exp(-delta / 0.09))
-	scale = Vector3(1.0 + _squash * 0.5, 1.0 - _squash, 1.0 + _squash * 0.5)
 	_solve()
 
 
@@ -181,10 +180,12 @@ func _solve() -> void:
 	if _bike == null or _pose == null or _limbs.size() < 2:
 		return
 	_bike.rotation.x = deg_to_rad(_pose.bike_pitch_deg)
-	var hips: Vector3 = _pose.hips + Vector3(0.0, minf(_dip, 0.05), 0.0)
+	# Landing squash: the body only (hips sink, torso squashes); the bike,
+	# wheels and limbs keep their shape (limbs follow the hips by IK).
+	var hips: Vector3 = _pose.hips + Vector3(0.0, minf(_dip, 0.05) - _squash * 0.6, 0.0)
 	var pitch: float = deg_to_rad(_pose.torso_pitch_deg + sin(_flail) * bail_flail_deg * signf(_flail))
 	var torso_basis: Basis = Basis(Vector3.RIGHT, -pitch)
-	_torso.transform = Transform3D(torso_basis, hips)
+	_torso.transform = Transform3D(torso_basis.scaled_local(Vector3(1.0 + _squash * 0.4, 1.0 - _squash, 1.0 + _squash * 0.4)), hips)
 	_head.rotation.x = deg_to_rad(-_pose.head_pitch_deg)
 	_pelvis.position = hips
 	var to_bike: Transform3D = _bike.global_transform.affine_inverse()

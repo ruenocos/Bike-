@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="Biome" load_steps=9 format=3]
+[gd_resource type="Resource" script_class="Biome" load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://biomes/biome.gd" id="1_biome"]
+[ext_resource type="PackedScene" path="res://chunks/landscape/set_ice_chute.tscn" id="91_set"]
 [ext_resource type="PackedScene" path="res://chunks/landscape/set_cornice.tscn" id="90_set"]
 [ext_resource type="Resource" path="res://chunks/terrain/cover/snow.tres" id="2_cover"]
 [ext_resource type="PackedScene" path="res://art/nature/megakit/Pine_1.gltf" id="3_m"]
@@ -11,7 +12,7 @@
 
 [resource]
 script = ExtResource("1_biome")
-set_pieces = Array[PackedScene]([ExtResource("90_set")])
+set_pieces = Array[PackedScene]([ExtResource("90_set"), ExtResource("91_set")])
 display_name = "Snowline"
 subtitle = "Thin air above the trees"
 ground_dirt = Color(0.74, 0.78, 0.86, 1)
