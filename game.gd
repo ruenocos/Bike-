@@ -258,7 +258,7 @@ func _process(delta: float) -> void:
 			player_progress, collapse.distance, builder.length, builder.finish_distance,
 			player.shields_left)
 	hud.show_start(start_sprint if in_stage else null)
-	hud.update_rider(player.speed, run_tuning.max_speed if run_tuning != null else 60.0,
+	hud.update_rider(delta, player.speed, run_tuning.max_speed if run_tuning != null else 60.0,
 			player.combo.is_active(), player.combo.get_multiplier(), int(player.combo.points))
 
 

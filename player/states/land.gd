@@ -41,6 +41,11 @@ func enter(msg: Dictionary) -> void:
 		player.tricks.complete_current()
 	player.tricks.cancel()
 
+	# Touched down still holding the No Hander: you get no_hander_grace to let
+	# go (it still counts), then it's a bail (Player._update_no_hander_grace).
+	if player.no_hander:
+		player.start_no_hander_grace()
+
 	# Coming back into a quarter pipe from a lip air is nearly tangent, so it
 	# is always graded even though it's soft.
 	if impact < t.land_min_impact and not mid_trick and not msg.get("lip_air", false):

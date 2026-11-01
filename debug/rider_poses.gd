@@ -3,7 +3,7 @@ extends Node3D
 ## a still and quits). Run windowed: `<exe> --path . res://debug/rider_poses.tscn`.
 
 const RIG: PackedScene = preload("res://player/rider/rider_rig.tscn")
-const POSES: PackedStringArray = ["ride", "tuck", "pedal", "air", "trick", "grind", "bail"]
+const POSES: PackedStringArray = ["ride", "tuck", "pedal", "air", "trick", "grind", "bail", "nohander"]
 
 @export var spacing: float = 1.6
 @export var camera_angle_deg: float = 35.0

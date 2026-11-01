@@ -21,6 +21,8 @@ extends Node3D
 @export var burst_sketchy: float = 0.7
 @export var burst_crash: float = 1.0
 ## Debris spawns this far behind you and flies this much faster than you.
+## Rocks only fly past once the collapse is this close (0..1 of its feel range).
+@export_range(0.0, 1.0, 0.01) var debris_from: float = 0.45
 @export_range(0.0, 60.0, 0.5, "suffix:m") var debris_behind: float = 12.0
 @export_range(0.0, 60.0, 0.5, "suffix:m/s") var debris_overtake: float = 18.0
 
@@ -59,8 +61,8 @@ func _process(_delta: float) -> void:
 		(spray.process_material as ParticleProcessMaterial).direction = (side + Vector3.UP * 0.6).normalized()
 	sparks.emitting = state == &"Grind"
 	var forward: Vector3 = player.velocity.normalized() if player.velocity.length() > 1.0 else player.get_heading_dir()
-	debris.emitting = _collapse > 0.05
-	debris.amount_ratio = _collapse
+	debris.emitting = _collapse > debris_from
+	debris.amount_ratio = clampf((_collapse - debris_from) / maxf(1.0 - debris_from, 0.01), 0.1, 1.0)
 	if debris.emitting:
 		debris.global_position = player.global_position - forward * debris_behind + Vector3.UP * 4.0
 		var mat: ParticleProcessMaterial = debris.process_material as ParticleProcessMaterial

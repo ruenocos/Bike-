@@ -68,7 +68,7 @@ func _process(delta: float) -> void:
 
 
 ## Speed (km/h + a bar to max) and the running combo (v0.17).
-func update_rider(speed: float, max_speed: float, combo_active: bool, multiplier: int, points: int) -> void:
+func update_rider(delta: float, speed: float, max_speed: float, combo_active: bool, multiplier: int, points: int) -> void:
 	speed_value.text = "%d" % roundi(speed * 3.6)
 	var ratio: float = clampf(speed / maxf(max_speed, 1.0), 0.0, 1.0)
 	speed_fill.size.x = (speed_fill.get_parent() as Control).size.x * ratio
@@ -79,7 +79,7 @@ func update_rider(speed: float, max_speed: float, combo_active: bool, multiplier
 		combo_mult.text = "x%d" % multiplier
 		combo_points.text = "%d" % points
 	elif combo_panel.visible:
-		combo_panel.modulate.a = maxf(combo_panel.modulate.a - get_process_delta_time() * 3.0, 0.0)
+		combo_panel.modulate.a = maxf(combo_panel.modulate.a - delta * 3.0, 0.0)
 		combo_panel.visible = combo_panel.modulate.a > 0.0
 
 

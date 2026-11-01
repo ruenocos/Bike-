@@ -65,9 +65,9 @@ Prefer editor-visible setup: scenes, nodes, .tres, @export, @tool previews; code
 - Camera: spring arm, look-ahead on velocity, position damping 0.08 s, rotation 0.2 s; lower and further back than a runner cam.
 
 ## Input map (to set up)
-steer_left/right: left stick X · lean_forward: left stick up = pump (ground only; lean_back unused since v0.6) · pedal: RT · brake: LT · hop: South (hold to charge) · grind: West (unused since v0.9.1: rails catch you when you hop onto them) · menus: A confirm / B back · F3 debug readout · trick_left/right/up/down: right stick · pause: Start
+steer_left/right: left stick X · lean_forward: left stick up = pump (ground only; lean_back unused since v0.6) · pedal: RT · brake: LT · hop: South (hold to charge) · grind: West = No Hander in the air (v0.18; rails catch you by themselves since v0.9.1) · menus: A confirm / B back · F3 debug readout · trick_left/right/up/down: right stick · pause: Start
 
-## Status (2026-11-01, v0.17 on branch `landscape`)
+## Status (2026-11-01, v0.18 on branch `landscape`)
 Done (v0.1): project settings, input map (+ debug_reset on Back/R), test track, Player with Ride/Air/Land/Bail, landing grades, debug overlay, physics interpolation. Feel gate approved by Wons.
 Done (v0.2, phase 2 batch A):
 - tricks/: TrickData resource + 4 starter tricks in tricks/data (up Frontloop, down Pocket, left/right Whirl). TrickRunner (child of Player) reads right-stick flicks (neutral -> >0.7 within 0.15 s), plays them on the Visual around the hips, chains a new flick in the last 30%.
@@ -251,6 +251,11 @@ Done (v0.17 "HUD, camera, fair trees", branch `landscape`, + fixes from the exte
 - Fair falling trees (HazardDirector): never within `keep_clear_set_piece` 150 m of a set piece's entry or exit; only where the crossing is in plain view from the line `view_time` 1.5 s back at 55 m/s (eye height, terrain only); only where the way drops toward the trunk (`min_drop_before` 4 m over ~24 m), never on rising ground.
 - Bots: hop timing now looks at the whole trunk (base to tip), and the autopilot lets go of hop with a real input event (a plain Input.action_release inside the physics tick didn't read as "just released", so its hops before trunks never fired; that was the "bot hits falling trees" problem, not the game). Bail lines in the trace now say the chunk, metres in and the angle off the stage line. Seed 7, three stages: no tree or rail bails left (two greedy-trick bails).
 - Player.is_hop_armed(): a hop held from before a stage starts doesn't fire (place() disarms it); press again.
+Done (v0.18 "No Hander", branch `landscape`, + fixes from the external review of v0.17):
+- No Hander on the free West button (X / Square): hold it in the air (not on a lip air) and the rider lets go of the bars (poses/nohander.tres, arms out). Let go after `no_hander_min_time` 0.3 s for a trick worth `no_hander_score_per_second` 500 × the time held (a combo action, counts as an air trick for the landing boost). Still holding at touchdown: `no_hander_grace` 0.1 s to let go (still counts), then it's a bail ("landed with no hands"). PlayerTuning "No Hander". The bot does one on every third long air.
+- Collapse debris (rocks flying past) only once the collapse is close (RiderVfx `debris_from` 0.45); from further away they looked like tiles floating in the sky.
+- Review fixes: no carve roll or air look-down on the halfpipe camera, and none in Bail / Land; the look-down only ramps in over the last `cam_air_look_down_time` 0.5 s before touchdown (predict_landing), so a long drop isn't pitched down the whole way; HUD combo fade uses the game's delta.
+- Tests: powers test + No Hander let go in the air, let go just after touchdown (grace), held after touchdown (bail).
 Tweak in the editor (v0.9):
 - Any chunk in chunks/landscape/: select Terrain for size/slope/noise/edges and the bend (Bend > heading_curve) / narrowing (width_profile); drag the shaping nodes under Terrain (gullies, ridges, rollers, rail beds, kicker pads: they rebuild live); move props under Terrain/Props then press "Snap props to ground"; RollingBoulder `roll_to` / `trigger_distance` / `roll_time`; TightZone `size`. Lines/Path* are invisible bot/respawn paths: if you move props onto one, the smoke test will say so.
 - Set pieces: chunks/landscape/set_cliff.tscn, set_ravine.tscn, set_bend_kicker.tscn, set_rail_gap.tscn, set_canyon_slot.tscn, set_fork.tscn (Terrain slope_profile for the cliff, the Ravine gully, the big kicker pads, Gates/*). Boost gates: any Gates/Gate* node (speed_boost, score, radius); drag one onto a risky spot. Rerolls: scoring/run_rules.tres.

@@ -52,6 +52,15 @@ extends Resource
 ## Crashes per stage that only glance off (Crash Shield upgrade, v0.13).
 @export_range(0.0, 5.0, 1.0) var crash_shields: float = 0.0
 
+@export_group("No Hander (v0.18)")
+## Hold West (X / Square) in the air: hands off the bars. Points per second
+## held; let go before you touch down or it's a bail.
+@export_range(0.0, 5000.0, 10.0) var no_hander_score_per_second: float = 500.0
+## Shorter holds don't count as a trick (s).
+@export_range(0.0, 2.0, 0.05) var no_hander_min_time: float = 0.3
+## Letting go this soon after touchdown still counts (s); later is a bail.
+@export_range(0.0, 0.5, 0.01) var no_hander_grace: float = 0.1
+
 @export_group("Upgrade powers (v0.13)")
 ## Extra hops in the air (Double Hop upgrade); release hop mid-air.
 @export_range(0.0, 3.0, 1.0) var air_hops: float = 0.0
@@ -241,6 +250,8 @@ extends Resource
 @export_range(0.01, 1.0, 0.01) var cam_carve_roll_time: float = 0.18
 ## Looking down toward the landing while falling (deg at full fall speed).
 @export_range(0.0, 30.0, 0.5) var cam_air_look_down_deg: float = 7.0
+## The look-down only starts this long before touchdown (s).
+@export_range(0.1, 2.0, 0.05) var cam_air_look_down_time: float = 0.5
 ## Falling speed that gives the full look-down (m/s).
 @export_range(1.0, 60.0, 0.5) var cam_air_look_down_speed: float = 25.0
 @export var fov_base: float = 75.0

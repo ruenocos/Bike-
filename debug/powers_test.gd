@@ -8,6 +8,8 @@ extends Node3D
 ##   - a tree first seen too late to fall in time (55 m at 55 m/s) is
 ##     already down: a log the bot hops, never a tree landing on you
 ##   - Double Hop: releasing hop in the air pops you up again
+##   - No Hander (v0.18): held in the air and let go before touchdown it's a
+##     trick; still held at touchdown it's a bail
 ##   - Gate Magnet pulls you through a gate 5 m off your line (without it
 ##     you miss it)
 ##   - meta (v0.14): a run that reaches stage 3 unlocks the Dart and reports
@@ -55,6 +57,9 @@ func _run() -> void:
 	await _slow_rider_case()
 	await _late_sight_case()
 	await _double_hop_case()
+	await _no_hander_case(0)
+	await _no_hander_case(1)
+	await _no_hander_case(2)
 	await _gate_case("gate 5 m off the line, Gate Magnet: pulled through", 10.0, true)
 	await _gate_case("gate 5 m off the line, no magnet: missed", 0.0, false)
 	_save_case()
@@ -249,3 +254,43 @@ func _late_sight_case() -> void:
 		_fail("late sight: crashed (%s)" % _player.last_bail_reason)
 	print("case | tree first seen at 55 m, 55 m/s | fell %s, bails %d" % [fell, _bails])
 	tree.queue_free()
+
+
+func _no_hander_case(mode: int) -> void:
+	# mode 0: let go in the air, 1: let go 3 ticks after touchdown (grace),
+	# 2: keep holding 0.4 s after touchdown (bail).
+	var t: PlayerTuning = TUNING.duplicate() as PlayerTuning
+	await _start(t, 40.0)
+	var tricks: Array[String] = []
+	var on_trick: Callable = func(n: String, _s: int) -> void: tricks.append(n)
+	Events.trick_completed.connect(on_trick)
+	# Drop in from 8 m up for a long air.
+	_player.place(_ground(0.0, -120.0) + Vector3.UP * 8.0, 0.0, 40.0)
+	_player.velocity = Vector3(0.0, 0.0, -40.0)
+	_player.state_machine.transition_to(&"Air", {})
+	_bails = 0
+	await get_tree().physics_frame
+	Input.action_press(&"grind")
+	var after: int = -1
+	for i: int in 60 * 3:
+		await get_tree().physics_frame
+		if mode == 0 and _player.no_hander_time > 0.45:
+			Input.action_release(&"grind")
+		if after < 0 and _player.state_machine.get_state_name() != &"Air":
+			after = 0
+		if after >= 0:
+			after += 1
+			if (mode == 1 and after >= 3) or (mode == 2 and after >= 24):
+				break
+	Input.action_release(&"grind")
+	for i: int in 10:
+		await get_tree().physics_frame
+	Events.trick_completed.disconnect(on_trick)
+	var label: String = ["let go in the air", "let go just after touchdown", "held after touchdown"][mode]
+	if mode < 2 and (not tricks.has("No Hander") or _bails > 0):
+		_fail("no hander, %s: tricks %s, bails %d (%s)" % [label, tricks, _bails, _player.last_bail_reason])
+	if mode == 2 and (_bails == 0 or _player.last_bail_reason != "landed with no hands"):
+		_fail("no hander, %s: should bail (bails %d, %s)" % [label, _bails, _player.last_bail_reason])
+	print("case | no hander, %s | tricks %s, bails %d" % [label, tricks, _bails])
+	for i: int in 90:
+		await get_tree().physics_frame

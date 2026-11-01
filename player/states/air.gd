@@ -29,12 +29,33 @@ func enter(msg: Dictionary) -> void:
 	player.air_tricks = 0
 	player.air_hops_left = int(t.air_hops)
 	_air_time = 0.0
+	player.no_hander = false
+	player.no_hander_time = 0.0
 	_lip_normal = msg.get("lip_normal", Vector3.ZERO)
 	_lip_position = msg.get("lip_position", Vector3.ZERO)
 	player.transition_normal = _lip_normal
 	if _lip_normal != Vector3.ZERO:
 		player.combo.add_points(t.lip_air_score)
 		Events.lip_air.emit()
+
+
+## No Hander (v0.18): hold West in the air (not on a lip air). Letting go
+## after no_hander_min_time banks it as a trick worth the time held; still
+## holding at touchdown is a bail (Land checks player.no_hander).
+func _update_no_hander(delta: float) -> void:
+	var t: PlayerTuning = player.tuning
+	var hold: bool = Input.is_action_pressed(&"grind") and _lip_normal == Vector3.ZERO
+	if hold:
+		player.no_hander = true
+		player.no_hander_time += delta
+	elif player.no_hander:
+		player.no_hander = false
+		if player.no_hander_time >= t.no_hander_min_time:
+			var score: int = roundi(player.no_hander_time * t.no_hander_score_per_second / 10.0) * 10
+			player.combo.add_action(score)
+			player.air_tricks += 1
+			Events.trick_completed.emit("No Hander", score)
+		player.no_hander_time = 0.0
 
 
 func exit() -> void:
@@ -59,6 +80,7 @@ func physics_update(delta: float) -> void:
 		return
 
 	player.tricks.air_update(delta)
+	_update_no_hander(delta)
 
 	player.velocity.y -= t.gravity * delta
 

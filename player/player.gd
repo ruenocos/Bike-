@@ -124,6 +124,11 @@ var crashed: bool = false
 var shields_left: int = 0
 ## Air hops left in this airtime.
 var air_hops_left: int = 0
+## No Hander (v0.18): holding it now, and for how long this time.
+var no_hander: bool = false
+var no_hander_time: float = 0.0
+## Time left to let go after touching down with it held.
+var _no_hander_grace: float = 0.0
 ## A hazard hit waiting for the next physics tick: [what, body] or [].
 var _pending_hazard: Array = []
 ## Sideways pulls asked for this tick (Gate Magnet), applied capped.
@@ -167,6 +172,7 @@ func _physics_process(delta: float) -> void:
 	_lip_timer = maxf(_lip_timer - delta, 0.0)
 	tricks.poll_gesture(delta)
 	_apply_hazard_hit()
+	_update_no_hander_grace(delta)
 	_apply_side_pull(delta)
 	state_machine.physics_update(delta)
 	_update_rail_highlight()
@@ -231,6 +237,36 @@ func has_buffered_hop() -> bool:
 func do_hop() -> void:
 	var hop_dir: Vector3 = Vector3.UP.lerp(ground_normal, tuning.hop_normal_blend).normalized()
 	do_hop_from(ground_dir * speed, hop_dir)
+
+
+## Touched down holding the No Hander: let go within no_hander_grace and it
+## counts, keep holding and it's a bail.
+func start_no_hander_grace() -> void:
+	_no_hander_grace = maxf(tuning.no_hander_grace, 0.001)
+
+
+func _update_no_hander_grace(delta: float) -> void:
+	if _no_hander_grace <= 0.0:
+		return
+	if not Input.is_action_pressed(&"grind"):
+		_no_hander_grace = 0.0
+		no_hander = false
+		if no_hander_time >= tuning.no_hander_min_time:
+			var score: int = roundi(no_hander_time * tuning.no_hander_score_per_second / 10.0) * 10
+			combo.add_action(score)
+			Events.trick_completed.emit("No Hander", score)
+		no_hander_time = 0.0
+		return
+	_no_hander_grace -= delta
+	if _no_hander_grace <= 0.0:
+		_no_hander_grace = 0.0
+		no_hander = false
+		no_hander_time = 0.0
+		if state_machine.get_state_name() == &"Bail" or bail_immunity_timer > 0.0:
+			return
+		speed *= 1.0 - tuning.crash_penalty
+		last_bail_reason = "landed with no hands"
+		state_machine.transition_to(&"Bail", {})
 
 
 ## Something pulls you sideways this tick (`accel` m/s² along `dir`; Gate

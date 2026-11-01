@@ -15,8 +15,9 @@ extends Node3D
 @export var pose_trick: RiderPose
 @export var pose_grind: RiderPose
 @export var pose_bail: RiderPose
+@export var pose_nohander: RiderPose
 ## Editor only: which pose to show.
-@export_enum("ride", "tuck", "pedal", "air", "trick", "grind", "bail") var preview: String = "ride"
+@export_enum("ride", "tuck", "pedal", "air", "trick", "grind", "bail", "nohander") var preview: String = "ride"
 
 @export_group("Feel")
 ## Time to blend into a new pose (s).
@@ -124,6 +125,8 @@ func _drive(delta: float) -> RiderPose:
 		&"Grind":
 			return pose_grind
 		&"Air":
+			if _player.no_hander and pose_nohander != null:
+				return pose_nohander
 			return pose_trick if _player.tricks.is_mid_trick() else pose_air
 	if pedal:
 		return pose_pedal
@@ -159,6 +162,7 @@ func _pick(pose_name: String) -> RiderPose:
 		"trick": return pose_trick
 		"grind": return pose_grind
 		"bail": return pose_bail
+		"nohander": return pose_nohander
 	return pose_ride
 
 

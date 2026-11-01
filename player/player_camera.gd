@@ -210,10 +210,20 @@ func _update_slope_target(grounded: bool) -> void:
 ## Carve roll and the look-down while falling (v0.17).
 func _update_lean(delta: float, speed_ratio: float, grounded: bool) -> void:
 	var t: PlayerTuning = player.tuning
-	var roll_target: float = -player.get_steer() * deg_to_rad(t.cam_carve_roll_deg) * speed_ratio if grounded else 0.0
+	var state: StringName = player.state_machine.get_state_name()
+	# Not on the halfpipe camera, and level while bailing or landing.
+	var calm: float = 1.0 - _transition_blend
+	var riding: bool = grounded and state != &"Bail" and state != &"Land"
+	var roll_target: float = -player.get_steer() * deg_to_rad(t.cam_carve_roll_deg) * speed_ratio * calm if riding else 0.0
 	_roll = lerpf(_roll, roll_target, _damp_weight(t.cam_carve_roll_time, delta))
-	var falling: float = clampf(-player.velocity.y / t.cam_air_look_down_speed, 0.0, 1.0) if not grounded else 0.0
-	_look_down = lerpf(_look_down, falling * deg_to_rad(t.cam_air_look_down_deg), _damp_weight(0.25, delta))
+	# Look down only in the last cam_air_look_down_time before touchdown.
+	var look: float = 0.0
+	if state == &"Air":
+		var landing: Dictionary = player.predict_landing(t.cam_air_look_down_time)
+		if not landing.is_empty():
+			look = 1.0 - float(landing["time"]) / t.cam_air_look_down_time
+		look *= clampf(-player.velocity.y / t.cam_air_look_down_speed, 0.0, 1.0) * calm
+	_look_down = lerpf(_look_down, look * deg_to_rad(t.cam_air_look_down_deg), _damp_weight(0.15, delta))
 
 
 func _damp_weight(time_constant: float, delta: float) -> float:

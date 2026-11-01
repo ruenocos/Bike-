@@ -15,6 +15,7 @@
 [ext_resource type="Resource" path="res://player/rider/poses/grind.tres" id="7_grind"]
 
 [ext_resource type="Resource" path="res://player/rider/poses/bail.tres" id="8_bail"]
+[ext_resource type="Resource" path="res://player/rider/poses/nohander.tres" id="9_nohander"]
 
 [sub_resource type="StandardMaterial3D" id="Mat_frame"]
 albedo_color = Color(0.1, 0.62, 0.66, 1)
@@ -381,6 +382,7 @@ pose_air = ExtResource("5_air")
 pose_trick = ExtResource("6_trick")
 pose_grind = ExtResource("7_grind")
 pose_bail = ExtResource("8_bail")
+pose_nohander = ExtResource("9_nohander")
 
 [node name="Bike" type="Node3D" parent="."]
 
