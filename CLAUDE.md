@@ -67,7 +67,7 @@ Prefer editor-visible setup: scenes, nodes, .tres, @export, @tool previews; code
 ## Input map (to set up)
 steer_left/right: left stick X · lean_forward: left stick up = pump (ground only; lean_back unused since v0.6) · pedal: RT · brake: LT · hop: South (hold to charge) · no_hander: West (X / Square), hold in the air (v0.18/v0.19) · grind: also West, legacy (Player still reads it for the old grind buffer, harmless: rails catch you by themselves since v0.9.1; kept so old test scenes still run) · pause: Start (v0.19 pause menu: Title screen records the run like a run over, Restart run doesn't; the hit-stop timer ignores pause and time scale, so pausing during it can't leave the game frozen) · menus: A confirm / B back · F3 debug readout · trick_left/right/up/down: right stick
 
-## Status (2026-11-01, v0.27 on branch `landscape`)
+## Status (2026-11-01, v0.28 on branch `landscape`)
 Done (v0.1): project settings, input map (+ debug_reset on Back/R), test track, Player with Ride/Air/Land/Bail, landing grades, debug overlay, physics interpolation. Feel gate approved by Wons.
 Done (v0.2, phase 2 batch A):
 - tricks/: TrickData resource + 4 starter tricks in tricks/data (up Frontloop, down Pocket, left/right Whirl). TrickRunner (child of Player) reads right-stick flicks (neutral -> >0.7 within 0.15 s), plays them on the Visual around the hips, chains a new flick in the last 30%.
@@ -289,6 +289,13 @@ Done (v0.25 "light and ink", branch `landscape`, + fixes from the external revie
 - Outlines thin out with distance (vfx/cel/outline.gdshader, Shader Globals `outline_fade_start` 40 m, `outline_fade_end` 150 m: none past that, cheap).
 - Rider rim: RiderRig `rim_color` sets a warm fresnel on the rider and bike materials so they stand out.
 - Review fixes: the bridge short-launch test checks the rider really dropped into the cut (≥ 3 m below the rim between z 200-232); the look-debug switches use BiomeLook's refs. Balance vs the 6-8 stages / 8-12 min lock is a playtest question (levers if needed: collapse curve for stages 3-5 or `trees_per_stage`, never stage length).
+Done (v0.28 "wind", branch `landscape`, + v0.27 review fixes):
+- Tree wind sway, visual only (collision never moves): vfx/cel/includes/sway.gdshaderinc, used by the cel opaque / cut-out shaders and the outline (so ink follows the leaves). Strength is an `instance uniform float sway` that PropModel sets on tree meshes (`tree_sway` 0.003: offset = sway x height^2, ~0.3 m at a 10 m top); world-space phase and the same wind direction as grass.gdshader (0.8, 0.6). Rocks, logs and the rider have sway 0 and don't move.
+- Contact shadows off on moving props (FallingTree and RollingBoulder Model nodes: `contact_shadow = false`), so blobs don't tip or spin with them.
+- Decal budget: ~640-790 contact-shadow decals per stage (`-- --print-stage` prints `CONTACT SHADOWS n`), but each one is culled past 90 m (distance fade), so only the ones near the camera count towards Forward+'s 512 lights + decals in view. Props under 1 m get none.
+- Render layers: the rider and bike are on layer 2 only (props' decals use cull mask 1). Every camera (player, title flyover, autopilot) keeps the default cull mask (all layers); a new camera must include layer 2 or the rider vanishes.
+- Title flyover height fog fixed (it subtracted the 40 m twice).
+
 Done (v0.27 "grounded", branch `landscape`):
 - Contact shadows: every PropModel (trees, rocks, logs) gets a soft Decal blob under it, 1.3x its footprint, in the biome's shadow tint (Biome `contact_shadow` 0.35 = darkness; PropModel `contact_shadow` / `contact_shadow_scale`). Fades out past 70-90 m. The rider and bike draw on render layer 2 only, so the blobs (cull mask 1) never paint onto them. Cost: ~0.05 ms per frame (uncapped 775 -> 744 FPS on seed 7); `-- --debug-nocontact` turns them off to compare.
 - Height fog follows the rider: Biome `height_fog_density` (0.004) / `height_fog_below` (40 m), so the valley below sinks into haze. BiomeLook.follow_height() is called every frame by the game (title camera too). 0.02 was far too thick.

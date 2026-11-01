@@ -56,6 +56,7 @@ script = ExtResource("2_model")
 kind = "tree"
 variants = Array[PackedScene]([ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6")])
 model_scale = Vector3(1.25, 1.25, 1.25)
+contact_shadow = false
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Pivot/Trunk"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0)

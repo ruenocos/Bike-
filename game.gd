@@ -227,6 +227,7 @@ func start_stage() -> void:
 		await get_tree().physics_frame
 	hazards.populate(builder, stage_index, stage_seed)
 	if _print_stage:
+		print("CONTACT SHADOWS %d" % PropModel.contact_shadow_count)
 		for i: int in builder.chunks.size():
 			print("CHUNK %s %.0f-%.0f" % [builder.chunk_paths[i].get_file().get_basename(), builder.chunk_start_distance[i], builder.chunk_end_distance[i]])
 	hud.fade_in(0.45)
@@ -310,7 +311,7 @@ func _update_collapse_feel() -> void:
 func _process(delta: float) -> void:
 	if _in_menu:
 		_fly_menu_camera(delta)
-		biome_look.follow_height(get_viewport().get_camera_3d().global_position.y - 40.0)
+		biome_look.follow_height(get_viewport().get_camera_3d().global_position.y)
 		return
 	biome_look.follow_height(player.global_position.y)
 	# While it waits behind the start pad it isn't a threat yet.

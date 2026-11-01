@@ -10,7 +10,10 @@ global uniform float outline_width;
 global uniform float outline_fade_start;
 global uniform float outline_fade_end;
 
+#include "includes/sway.gdshaderinc"
+
 void vertex() {
+	VERTEX += sway_offset(VERTEX, MODEL_MATRIX, TIME);
 	vec4 view_position = MODELVIEW_MATRIX * vec4(VERTEX, 1.0);
 	float fade = 1.0 - smoothstep(outline_fade_start, outline_fade_end, -view_position.z);
 	vec4 clip_position = PROJECTION_MATRIX * view_position;

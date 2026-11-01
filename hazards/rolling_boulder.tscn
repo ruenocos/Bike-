@@ -19,6 +19,7 @@ script = ExtResource("2_model")
 variants = Array[PackedScene]([ExtResource("3_rock1"), ExtResource("4_rock3")])
 model_scale = Vector3(1.45, 1.45, 1.45)
 yaw_jitter = 0.0
+contact_shadow = false
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Body"]
 shape = SubResource("Shape_boulder")

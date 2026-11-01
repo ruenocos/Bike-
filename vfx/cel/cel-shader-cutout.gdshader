@@ -19,6 +19,7 @@ render_mode depth_draw_always;
 #endif
 
 #include "includes/base-cel-shader.gdshaderinc"
+#include "includes/sway.gdshaderinc"
 
 #if USE_EMISSION
 #include "includes/emission.gdshaderinc"
@@ -79,6 +80,7 @@ uniform vec2 uv_offset = vec2(0,0);
 group_uniforms;
 
 void vertex() {
+	VERTEX += sway_offset(VERTEX, MODEL_MATRIX, TIME);
 	UV = UV * uv_scale.xy + uv_offset.xy;
 	#if !USE_HEIGHT_MAP
 		base_uv = UV;

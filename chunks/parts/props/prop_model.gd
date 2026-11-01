@@ -37,10 +37,15 @@ static var biome: Biome
 ## Small per-prop colour shifts (v0.27, picked from the position) so a
 ## forest isn't one flat colour: value +/- this, hue nudged warm or cool.
 @export_range(0.0, 0.2, 0.01) var color_jitter: float = 0.04
+## Wind sway for trees (v0.28, visual only: vfx/cel/includes/sway.gdshaderinc).
+## Offset = this x height^2 (m), so 0.003 moves a 10 m top ~0.3 m.
+@export_range(0.0, 0.02, 0.0005) var tree_sway: float = 0.003
 
 static var _blob: GradientTexture2D
 ## Off with `-- --debug-nocontact` (frame-time checks).
 static var contact_shadows_on: bool = true
+## Contact-shadow decals alive right now (budget check, --print-stage).
+static var contact_shadow_count: int = 0
 
 var _model: Node3D
 
@@ -83,6 +88,8 @@ func _rebuild() -> void:
 		tint = tint * Color(1.0 + w * color_jitter * 0.75, 1.0, 1.0 - w * color_jitter * 0.75) * (1.0 + v * color_jitter)
 		tint.a = 1.0
 	CelLook.apply(_model, outline, tint)
+	if kind == "tree" and tree_sway > 0.0:
+		_set_sway(_model, tree_sway)
 	if contact_shadow and contact_shadows_on and biome != null and biome.contact_shadow > 0.0 and not Engine.is_editor_hint():
 		_add_contact_shadow()
 
@@ -103,7 +110,12 @@ func _add_contact_shadow() -> void:
 		_blob.width = 64
 		_blob.height = 64
 	var d: Decal = Decal.new()
-	var foot: float = minf(maxf(box.size.x, box.size.z), 9.0) * contact_shadow_scale
+	var size: float = maxf(box.size.x, box.size.z)
+	# Small stones / bushes don't need one (keeps the decal count down:
+	# Forward+ clusters up to 512 lights + decals in view).
+	if size < 1.0:
+		return
+	var foot: float = minf(size, 9.0) * contact_shadow_scale
 	d.size = Vector3(foot, 2.5, foot)
 	d.position = Vector3(box.get_center().x, box.position.y, box.get_center().z)
 	d.texture_albedo = _blob
@@ -114,6 +126,15 @@ func _add_contact_shadow() -> void:
 	d.distance_fade_begin = 70.0
 	d.distance_fade_length = 20.0
 	add_child(d, false, Node.INTERNAL_MODE_BACK)
+	contact_shadow_count += 1
+	d.tree_exiting.connect(func() -> void: contact_shadow_count -= 1)
+
+
+func _set_sway(node: Node, amount: float) -> void:
+	if node is GeometryInstance3D:
+		(node as GeometryInstance3D).set_instance_shader_parameter(&"sway", amount)
+	for child: Node in node.get_children():
+		_set_sway(child, amount)
 
 
 ## The model's bounds in this node's space (all its meshes together).
