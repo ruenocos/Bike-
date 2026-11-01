@@ -23,6 +23,6 @@ cam_tight_height = -0.2
 cam_turn_lead_time = 0.3
 speed_lines_threshold = 0.93
 speed_lines_full = 1.0
-speed_lines_boost_time = 0.7
+speed_lines_boost_time = 0.45
 rail_magnet_radius = 4.0
 rail_magnet_speed = 4.0

@@ -74,6 +74,8 @@ var run_top_speed: float = 0.0
 var run_distance: float = 0.0
 var run_time: float = 0.0
 var _seed_arg: int = -1
+## --debug-greyscale: keep the world without colour (value checks).
+var _greyscale: bool = false
 ## Title screen flyover: metres along the backdrop stage.
 var _menu_flight: float = 0.0
 var _in_menu: bool = false
@@ -140,6 +142,9 @@ func _ready() -> void:
 			hud.flash_light())
 	player.shield_used.connect(func() -> void: hud.flash_message("SHIELD!", Color(0.45, 0.9, 1.0)))
 	player.air_hopped.connect(func() -> void: hud.flash_message("DOUBLE HOP", Color(1.0, 0.9, 0.45)))
+	player.streak_changed.connect(func(count: int) -> void:
+		if count >= 2:
+			hud.flash_message("STREAK x%d" % count, Color(1.0, 0.6, 0.85)))
 	picker.reroll_requested.connect(_on_reroll)
 	var seed_arg: int = -1
 	var args: PackedStringArray = OS.get_cmdline_user_args()
@@ -159,6 +164,8 @@ func _ready() -> void:
 		far_ground.visible = false
 	if args.has("--debug-nomountains"):
 		mountains.visible = false
+	if args.has("--debug-greyscale"):
+		_greyscale = true
 	if args.has("--debug-shadow2x"):
 		biome_look.sun.directional_shadow_max_distance *= 2.0
 	# Bots and quick looks (--seed, --biome, --skip-menu) skip the title screen.
@@ -214,6 +221,9 @@ func start_stage() -> void:
 	for i: int in 3:
 		await get_tree().physics_frame
 	hazards.populate(builder, stage_index, stage_seed)
+	if OS.get_cmdline_user_args().has("--print-stage"):
+		for i: int in builder.chunks.size():
+			print("CHUNK %s %.0f-%.0f" % [builder.chunk_paths[i].get_file().get_basename(), builder.chunk_start_distance[i], builder.chunk_end_distance[i]])
 	hud.fade_in(0.45)
 	player.shields_left = int(run_tuning.crash_shields)
 	var spawn: Transform3D = builder.get_spawn_transform()
@@ -266,6 +276,8 @@ func apply_biome(b: Biome) -> void:
 	TerrainPatch.cover_override = b.ground_cover
 	builder.featured_set_pieces = b.set_pieces
 	biome_look.apply(b)
+	if _greyscale:
+		biome_look.world_environment.environment.adjustment_saturation = 0.0
 	player.vfx.set_tint(b.dust_tint)
 
 
@@ -364,7 +376,12 @@ func _add_stage_stats(distance: float) -> void:
 
 
 ## Start pauses a running stage (the pause menu takes it from there).
+## F4 (debug_greyscale) shows the world without colour, to check that
+## hazards stand out by value alone.
 func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed(&"debug_greyscale"):
+		var env: Environment = biome_look.world_environment.environment
+		env.adjustment_saturation = 0.0 if env.adjustment_saturation > 0.0 else (biome.saturation if biome != null else 1.0)
 	if event.is_action_pressed(&"pause") and in_stage and not get_tree().paused:
 		get_viewport().set_input_as_handled()
 		get_tree().paused = true

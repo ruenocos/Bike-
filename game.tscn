@@ -1,4 +1,4 @@
-[gd_scene load_steps=45 format=3]
+[gd_scene load_steps=46 format=3]
 
 [ext_resource type="Script" path="res://game.gd" id="1_game"]
 [ext_resource type="Script" path="res://biomes/biome.gd" id="30_biome"]
@@ -37,6 +37,7 @@
 [ext_resource type="Resource" path="res://scoring/upgrades/double_hop.tres" id="36_u9"]
 [ext_resource type="Resource" path="res://scoring/upgrades/gate_magnet.tres" id="37_u10"]
 [ext_resource type="Resource" path="res://scoring/upgrades/crash_shield.tres" id="38_u11"]
+[ext_resource type="Resource" path="res://scoring/upgrades/perfect_streak.tres" id="47_u12"]
 [ext_resource type="Script" path="res://player/start_sprint.gd" id="21_sprint"]
 [ext_resource type="Script" path="res://chunks/parts/mountain_ring.gd" id="22_mountains"]
 
@@ -83,7 +84,7 @@ size = Vector2(4000, 4000)
 script = ExtResource("1_game")
 bikes = Array[ExtResource("41_bike")]([ExtResource("42_trail"), ExtResource("43_dart"), ExtResource("44_hopper"), ExtResource("45_tank")])
 biomes = Array[ExtResource("30_biome")]([ExtResource("31_meadow"), ExtResource("32_canyon"), ExtResource("33_snow"), ExtResource("34_quarry")])
-upgrade_pool = Array[ExtResource("12_upgrade")]([ExtResource("13_u1"), ExtResource("14_u2"), ExtResource("15_u3"), ExtResource("16_u4"), ExtResource("17_u5"), ExtResource("18_u6"), ExtResource("19_u7"), ExtResource("20_u8"), ExtResource("36_u9"), ExtResource("37_u10"), ExtResource("38_u11")])
+upgrade_pool = Array[ExtResource("12_upgrade")]([ExtResource("13_u1"), ExtResource("14_u2"), ExtResource("15_u3"), ExtResource("16_u4"), ExtResource("17_u5"), ExtResource("18_u6"), ExtResource("19_u7"), ExtResource("20_u8"), ExtResource("36_u9"), ExtResource("37_u10"), ExtResource("38_u11"), ExtResource("47_u12")])
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_main")

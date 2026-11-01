@@ -25,6 +25,7 @@ tree_scale = 0.85
 outline_color = Color(0.04, 0.03, 0.07, 1)
 dust_tint = Color(0.7, 0.68, 0.8, 1)
 shadow_tint = Color(0.35, 0.3, 0.55, 1)
+shadow_tint_strength = 0.35
 prop_tint = Color(0.72, 0.72, 0.82, 1)
 sky_top = Color(0.1, 0.08, 0.22, 1)
 sky_horizon = Color(0.92, 0.42, 0.4, 1)

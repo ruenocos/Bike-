@@ -15,6 +15,8 @@ extends CharacterBody3D
 
 ## Fell below kill_y or pressed debug reset (only when auto_respawn is off).
 signal fell
+## Perfect Streak (v0.26): the streak grew (count) or ended (0).
+signal streak_changed(count: int)
 ## A crash shield turned a crash into a glance (v0.13).
 signal shield_used
 ## An air hop (Double Hop) fired.
@@ -126,6 +128,8 @@ var shields_left: int = 0
 var air_hops_left: int = 0
 ## No Hander (v0.18): holding it now, and for how long this time.
 var no_hander: bool = false
+## Perfect landings in a row (only counted with the Perfect Streak upgrade).
+var perfect_streak: int = 0
 var no_hander_time: float = 0.0
 ## Time left to let go after touching down with it held.
 var _no_hander_grace: float = 0.0
@@ -327,6 +331,20 @@ func _apply_hazard_hit() -> void:
 	last_bail_reason = "%s came down on you" % what
 	crashed = true
 	state_machine.transition_to(&"Bail", {})
+
+
+## After each graded landing (Land): perfect grows the streak and adds its
+## speed, anything else ends it.
+func update_perfect_streak(perfect: bool) -> void:
+	if tuning.perfect_streak_boost <= 0.0:
+		return
+	if perfect:
+		perfect_streak = mini(perfect_streak + 1, int(tuning.perfect_streak_max))
+		speed = minf(speed + tuning.perfect_streak_boost * perfect_streak, tuning.max_speed)
+		streak_changed.emit(perfect_streak)
+	elif perfect_streak > 0:
+		perfect_streak = 0
+		streak_changed.emit(0)
 
 
 ## Double Hop: a second pop in the air (keeps the speed, resets the fall).

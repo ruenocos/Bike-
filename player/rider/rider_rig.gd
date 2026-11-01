@@ -227,7 +227,11 @@ func _add_rim(node: Node) -> void:
 		for s: int in mi.mesh.get_surface_count():
 			var mat: ShaderMaterial = mi.get_surface_override_material(s) as ShaderMaterial
 			if mat != null:
+				# CelLook's materials are shared (props can use the same
+				# cache entry): the rider gets its own copy.
+				mat = mat.duplicate() as ShaderMaterial
 				mat.set_shader_parameter(&"fresnel", rim_color)
+				mi.set_surface_override_material(s, mat)
 	for child: Node in node.get_children():
 		_add_rim(child)
 
@@ -240,9 +244,7 @@ func set_frame_color(color: Color) -> void:
 			continue
 		var mat: Material = mi.get_surface_override_material(0)
 		if mat is ShaderMaterial:
-			# The cel material is shared by all frame tubes: one set paints them all.
 			(mat as ShaderMaterial).set_shader_parameter(&"color", color)
-			return
 
 
 ## Two-bone reach from `root` toward `target`: [joint, end]. The joint bends

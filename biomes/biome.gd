@@ -37,6 +37,8 @@ extends Resource
 @export var dust_tint: Color = Color.WHITE
 ## Colour of the fill on the shadow side of everything (cel dark band).
 @export var shadow_tint: Color = Color(0.52, 0.55, 0.78)
+## How much of it (0 = plain cel shadows). Keep it low on bright ground.
+@export_range(0.0, 1.0, 0.01) var shadow_tint_strength: float = 0.3
 ## Ink lines around props and the rider (darker = more contrast).
 @export var outline_color: Color = Color(0.16, 0.1, 0.09)
 

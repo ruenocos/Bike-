@@ -67,7 +67,7 @@ Prefer editor-visible setup: scenes, nodes, .tres, @export, @tool previews; code
 ## Input map (to set up)
 steer_left/right: left stick X · lean_forward: left stick up = pump (ground only; lean_back unused since v0.6) · pedal: RT · brake: LT · hop: South (hold to charge) · no_hander: West (X / Square), hold in the air (v0.18/v0.19) · grind: also West, legacy (Player still reads it for the old grind buffer, harmless: rails catch you by themselves since v0.9.1; kept so old test scenes still run) · pause: Start (v0.19 pause menu: Title screen records the run like a run over, Restart run doesn't; the hit-stop timer ignores pause and time scale, so pausing during it can't leave the game frozen) · menus: A confirm / B back · F3 debug readout · trick_left/right/up/down: right stick
 
-## Status (2026-11-01, v0.25 on branch `landscape`)
+## Status (2026-11-01, v0.26 on branch `landscape`)
 Done (v0.1): project settings, input map (+ debug_reset on Back/R), test track, Player with Ride/Air/Land/Bail, landing grades, debug overlay, physics interpolation. Feel gate approved by Wons.
 Done (v0.2, phase 2 batch A):
 - tricks/: TrickData resource + 4 starter tricks in tricks/data (up Frontloop, down Pocket, left/right Whirl). TrickRunner (child of Player) reads right-stick flicks (neutral -> >0.7 within 0.15 s), plays them on the Visual around the hips, chains a new flick in the last 30%.
@@ -289,6 +289,12 @@ Done (v0.25 "light and ink", branch `landscape`, + fixes from the external revie
 - Outlines thin out with distance (vfx/cel/outline.gdshader, Shader Globals `outline_fade_start` 40 m, `outline_fade_end` 150 m: none past that, cheap).
 - Rider rim: RiderRig `rim_color` sets a warm fresnel on the rider and bike materials so they stand out.
 - Review fixes: the bridge short-launch test checks the rider really dropped into the cut (≥ 3 m below the rim between z 200-232); the look-debug switches use BiomeLook's refs. Balance vs the 6-8 stages / 8-12 min lock is a playtest question (levers if needed: collapse curve for stages 3-5 or `trees_per_stage`, never stage length).
+Done (v0.26 "readable at speed", branch `landscape`, + fixes from the external review of v0.25):
+- Speed lines: cruising sits near top speed, so they covered the screen all the time. Held speed now only gives a faint version (PlayerTuning `speed_lines_steady` 0.25 of full), boosts and perfect landings flash the full ones for 0.45 s (`speed_lines_boost_time`), and the middle of the screen stays clear (`speed_lines_clear_radius` 0.68).
+- Perfect Streak upgrade (scoring/upgrades/perfect_streak.tres; PlayerTuning `perfect_streak_boost` / `perfect_streak_max`): each perfect landing in a row adds 1 m/s × the streak (up to 5), any other landing resets it; "STREAK x3" flash.
+- F4 (`debug_greyscale`) toggles the world to greyscale to check hazards stand out by value; `-- --debug-greyscale` keeps it on (captures/v0.26: rider, trees and rail ledges read in value alone in Meadow and Snowline).
+- Review fixes: the rider's rim is on its own material copies (it leaked onto props through CelLook's shared cache); every frame tube gets the bike colour; colour globals are converted from sRGB in the cel include too (`cel_srgb_to_linear`); `shadow_tint_strength` is per biome (Snowline 0.15, Quarry 0.35, others 0.3).
+- `-- --print-stage` prints the stage's chunks with their distances (to find set pieces in recordings).
 Tweak in the editor (v0.9):
 - Any chunk in chunks/landscape/: select Terrain for size/slope/noise/edges and the bend (Bend > heading_curve) / narrowing (width_profile); drag the shaping nodes under Terrain (gullies, ridges, rollers, rail beds, kicker pads: they rebuild live); move props under Terrain/Props then press "Snap props to ground"; RollingBoulder `roll_to` / `trigger_distance` / `roll_time`; TightZone `size`. Lines/Path* are invisible bot/respawn paths: if you move props onto one, the smoke test will say so.
 - Set pieces: chunks/landscape/set_cliff.tscn, set_ravine.tscn, set_bend_kicker.tscn, set_rail_gap.tscn, set_canyon_slot.tscn, set_fork.tscn (Terrain slope_profile for the cliff, the Ravine gully, the big kicker pads, Gates/*). Boost gates: any Gates/Gate* node (speed_boost, score, radius); drag one onto a risky spot. Rerolls: scoring/run_rules.tres.

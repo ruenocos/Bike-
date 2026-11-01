@@ -62,6 +62,11 @@ extends Resource
 @export_range(0.0, 0.5, 0.01) var no_hander_grace: float = 0.1
 
 @export_group("Upgrade powers (v0.13)")
+## Perfect Streak upgrade (v0.26): each perfect landing in a row adds this
+## much speed (m/s × the streak, up to perfect_streak_max); any other landing
+## or a crash ends the streak.
+@export_range(0.0, 5.0, 0.1) var perfect_streak_boost: float = 0.0
+@export_range(1.0, 10.0, 1.0) var perfect_streak_max: float = 5.0
 ## Extra hops in the air (Double Hop upgrade); release hop mid-air.
 @export_range(0.0, 3.0, 1.0) var air_hops: float = 0.0
 ## Upward speed of an air hop (m/s).
@@ -332,6 +337,10 @@ extends Resource
 ## ...and reach full strength at this fraction of max_speed.
 @export var speed_lines_full: float = 0.9
 @export var speed_lines_max_alpha: float = 0.7
+## Lines from held speed alone reach only this much of full (boosts flash full).
+@export_range(0.0, 1.0, 0.01) var speed_lines_steady: float = 0.25
+## Clear circle in the middle of the screen (0.5 = to the screen edge, v0.26).
+@export_range(0.0, 1.0, 0.01) var speed_lines_clear_radius: float = 0.68
 ## Fraction of streak slots lit, from the threshold up to full strength.
 @export var speed_lines_density_min: float = 0.2
 @export var speed_lines_density_max: float = 0.55

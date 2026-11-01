@@ -90,6 +90,8 @@ func enter(msg: Dictionary) -> void:
 		player.last_bail_reason = bail_reason
 	Events.landed.emit(grade)
 
+	if not msg.get("lip_air", false):
+		player.update_perfect_streak(grade == &"perfect")
 	match grade:
 		&"perfect":
 			# No speed bonus coming back from a lip air: the halfpipe would grow every wall.
