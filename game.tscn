@@ -109,15 +109,26 @@ mesh = SubResource("PlaneMesh_far")
 [node name="Mountains" type="Node3D" parent="."]
 script = ExtResource("22_mountains")
 
+[node name="Near" type="Node3D" parent="Mountains"]
+script = ExtResource("22_mountains")
+count = 26
+radius_min = 1300.0
+radius_max = 1700.0
+height_min = 140.0
+height_max = 340.0
+spread = 1.8
+ring_seed = 9
+
 [node name="StartSprint" type="Node" parent="."]
 script = ExtResource("21_sprint")
 
-[node name="BiomeLook" type="Node" parent="." node_paths=PackedStringArray("world_environment", "sun", "far_ground", "mountains")]
+[node name="BiomeLook" type="Node" parent="." node_paths=PackedStringArray("world_environment", "sun", "far_ground", "mountains", "near_mountains")]
 script = ExtResource("39_look")
 world_environment = NodePath("../WorldEnvironment")
 sun = NodePath("../DirectionalLight3D")
 far_ground = NodePath("../FarGround")
 mountains = NodePath("../Mountains")
+near_mountains = NodePath("../Mountains/Near")
 
 [node name="MenuCamera" type="Camera3D" parent="."]
 fov = 62.0

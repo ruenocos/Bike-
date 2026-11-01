@@ -12,6 +12,10 @@ extends Node
 @export var sun: DirectionalLight3D
 @export var far_ground: MeshInstance3D
 @export var mountains: MountainRing
+## A second, nearer ring (v0.29, ~1.5 km) for a middle depth plane: a
+## little darker and less hazy than the far one.
+@export var near_mountains: MountainRing
+@export_range(0.0, 1.0, 0.01) var near_mountains_darken: float = 0.12
 ## Editor only: shows this biome in the scene.
 @export var preview: Biome:
 	set(v):
@@ -66,6 +70,9 @@ func apply(b: Biome) -> void:
 	if mountains != null:
 		mountains.peak_color = b.peak_color
 		mountains.haze_color = b.haze_color
+	if near_mountains != null:
+		near_mountains.peak_color = b.peak_color.darkened(near_mountains_darken)
+		near_mountains.haze_color = b.haze_color.lerp(b.peak_color, 0.25)
 
 
 var _height_fog_below: float = 40.0
