@@ -39,6 +39,9 @@ extends Resource
 @export var shadow_tint: Color = Color(0.52, 0.55, 0.78)
 ## How much of it (0 = plain cel shadows). Keep it low on bright ground.
 @export_range(0.0, 1.0, 0.01) var shadow_tint_strength: float = 0.3
+## Soft dark blob on the ground under trees, rocks and logs (v0.27), in the
+## shadow tint; this is its darkness at the middle (0 = none).
+@export_range(0.0, 1.0, 0.01) var contact_shadow: float = 0.35
 ## Ink lines around props and the rider (darker = more contrast).
 @export var outline_color: Color = Color(0.16, 0.1, 0.09)
 
@@ -48,6 +51,11 @@ extends Resource
 @export var ground_horizon: Color = Color(0.95, 0.69, 0.52)
 @export var fog_color: Color = Color(0.93, 0.72, 0.56)
 @export_range(0.0, 0.01, 0.0001) var fog_density: float = 0.0007
+## Height fog (v0.27): extra fog below the rider, so the valley ahead and
+## below sinks into haze. It sits `height_fog_below` m under the rider and
+## thickens by `height_fog_density` per m further down (0 = off).
+@export_range(0.0, 0.2, 0.001) var height_fog_density: float = 0.004
+@export_range(0.0, 200.0, 1.0) var height_fog_below: float = 40.0
 @export var sun_color: Color = Color(1.0, 0.79, 0.56)
 @export_range(0.0, 4.0, 0.05) var sun_energy: float = 1.5
 ## Sun height above the horizon (deg) and direction (deg around up).

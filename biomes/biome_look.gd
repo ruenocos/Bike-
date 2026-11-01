@@ -44,6 +44,8 @@ func apply(b: Biome) -> void:
 				sky.ground_bottom_color = b.fog_color.darkened(0.08)
 		env.fog_light_color = b.fog_color
 		env.fog_density = b.fog_density
+		env.fog_height_density = b.height_fog_density
+		_height_fog_below = b.height_fog_below
 		env.ambient_light_energy = b.ambient_energy
 		env.adjustment_saturation = b.saturation
 		env.glow_intensity = b.glow_intensity
@@ -64,3 +66,13 @@ func apply(b: Biome) -> void:
 	if mountains != null:
 		mountains.peak_color = b.peak_color
 		mountains.haze_color = b.haze_color
+
+
+var _height_fog_below: float = 40.0
+
+
+## The height fog follows whoever is looking (the rider, or the title
+## camera), so it always starts the same distance below them.
+func follow_height(y: float) -> void:
+	if world_environment != null and world_environment.environment != null:
+		world_environment.environment.fog_height = y - _height_fog_below

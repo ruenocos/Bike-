@@ -167,6 +167,8 @@ func _ready() -> void:
 	if args.has("--debug-nomountains"):
 		mountains.visible = false
 	_print_stage = args.has("--print-stage")
+	if args.has("--debug-nocontact"):
+		PropModel.contact_shadows_on = false
 	if args.has("--debug-greyscale"):
 		_greyscale = true
 	if args.has("--debug-shadow2x"):
@@ -308,7 +310,9 @@ func _update_collapse_feel() -> void:
 func _process(delta: float) -> void:
 	if _in_menu:
 		_fly_menu_camera(delta)
+		biome_look.follow_height(get_viewport().get_camera_3d().global_position.y - 40.0)
 		return
+	biome_look.follow_height(player.global_position.y)
 	# While it waits behind the start pad it isn't a threat yet.
 	var gap: float = player_progress - collapse.distance
 	if collapse.waiting:

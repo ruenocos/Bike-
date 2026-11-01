@@ -87,6 +87,7 @@ func _ready() -> void:
 	if not Engine.is_editor_hint():
 		CelLook.apply(self, outline)
 		_add_rim(self)
+		_set_layer(self)
 		var parent: Node = get_parent()
 		while parent != null and not parent is Player:
 			parent = parent.get_parent()
@@ -219,6 +220,15 @@ func _solve() -> void:
 ## A warm rim on the rider and bike (v0.25) so they stand out from the
 ## ground: a stronger fresnel on their own cel materials.
 @export var rim_color: Color = Color(1.0, 0.86, 0.62, 0.45)
+
+
+## The rider and bike draw on layer 2 only, so props' contact-shadow decals
+## (cull mask 1) don't paint onto them riding past (v0.27).
+func _set_layer(node: Node) -> void:
+	if node is VisualInstance3D:
+		(node as VisualInstance3D).layers = 2
+	for child: Node in node.get_children():
+		_set_layer(child)
 
 
 func _add_rim(node: Node) -> void:

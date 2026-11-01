@@ -30,6 +30,17 @@ static var biome: Biome
 	set(v):
 		outline = v
 		_rebuild()
+## A soft dark blob on the ground under it (v0.27; strength from the biome).
+@export var contact_shadow: bool = true
+## Footprint of that blob compared with the model's own (1.3 = a bit wider).
+@export_range(0.5, 3.0, 0.05) var contact_shadow_scale: float = 1.3
+## Small per-prop colour shifts (v0.27, picked from the position) so a
+## forest isn't one flat colour: value +/- this, hue nudged warm or cool.
+@export_range(0.0, 0.2, 0.01) var color_jitter: float = 0.04
+
+static var _blob: GradientTexture2D
+## Off with `-- --debug-nocontact` (frame-time checks).
+static var contact_shadows_on: bool = true
 
 var _model: Node3D
 
@@ -65,4 +76,54 @@ func _rebuild() -> void:
 	_model.scale = model_scale * size
 	_model.rotation.y = deg_to_rad(float(posmod(h >> 3, 360) - 180) / 180.0 * yaw_jitter)
 	add_child(_model, false, Node.INTERNAL_MODE_BACK)
+	if not Engine.is_editor_hint() and color_jitter > 0.0:
+		# Three steps each way, so the converted materials are still shared.
+		var v: float = float(posmod(h >> 11, 3) - 1)
+		var w: float = float(posmod(h >> 13, 3) - 1)
+		tint = tint * Color(1.0 + w * color_jitter * 0.75, 1.0, 1.0 - w * color_jitter * 0.75) * (1.0 + v * color_jitter)
+		tint.a = 1.0
 	CelLook.apply(_model, outline, tint)
+	if contact_shadow and contact_shadows_on and biome != null and biome.contact_shadow > 0.0 and not Engine.is_editor_hint():
+		_add_contact_shadow()
+
+
+func _add_contact_shadow() -> void:
+	var box: AABB = _model_aabb(_model, Transform3D.IDENTITY)
+	if box.size == Vector3.ZERO:
+		return
+	if _blob == null:
+		var g: Gradient = Gradient.new()
+		g.set_color(0, Color.WHITE)
+		g.set_color(1, Color(1.0, 1.0, 1.0, 0.0))
+		_blob = GradientTexture2D.new()
+		_blob.gradient = g
+		_blob.fill = GradientTexture2D.FILL_RADIAL
+		_blob.fill_from = Vector2(0.5, 0.5)
+		_blob.fill_to = Vector2(1.0, 0.5)
+		_blob.width = 64
+		_blob.height = 64
+	var d: Decal = Decal.new()
+	var foot: float = minf(maxf(box.size.x, box.size.z), 9.0) * contact_shadow_scale
+	d.size = Vector3(foot, 2.5, foot)
+	d.position = Vector3(box.get_center().x, box.position.y, box.get_center().z)
+	d.texture_albedo = _blob
+	d.modulate = Color(biome.shadow_tint.darkened(0.6), biome.contact_shadow)
+	# Not on the rider (layer 2) riding past or hopping a log.
+	d.cull_mask = 1
+	d.distance_fade_enabled = true
+	d.distance_fade_begin = 70.0
+	d.distance_fade_length = 20.0
+	add_child(d, false, Node.INTERNAL_MODE_BACK)
+
+
+## The model's bounds in this node's space (all its meshes together).
+func _model_aabb(node: Node, xf: Transform3D) -> AABB:
+	var box: AABB = AABB()
+	var here: Transform3D = xf * (node as Node3D).transform if node is Node3D else xf
+	if node is MeshInstance3D:
+		box = here * (node as MeshInstance3D).get_aabb()
+	for child: Node in node.get_children():
+		var b: AABB = _model_aabb(child, here)
+		if b.size != Vector3.ZERO:
+			box = b if box.size == Vector3.ZERO else box.merge(b)
+	return box
