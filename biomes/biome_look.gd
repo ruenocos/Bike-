@@ -34,7 +34,9 @@ func apply(b: Biome) -> void:
 			if sky != null:
 				sky.sky_top_color = b.sky_top
 				sky.sky_horizon_color = b.sky_horizon
-				sky.ground_horizon_color = b.ground_horizon
+				# The sky below the horizon = the fog, so nothing far reads
+				# as a band against it.
+				sky.ground_horizon_color = b.fog_color
 		env.fog_light_color = b.fog_color
 		env.fog_density = b.fog_density
 		env.ambient_light_energy = b.ambient_energy
@@ -53,8 +55,7 @@ func apply(b: Biome) -> void:
 			# into the haze instead of reading as a flat table.
 			var far: Color = b.far_ground.lerp(b.fog_color, 0.65)
 			far_mat.set_shader_parameter(&"base_color", far)
-			far_mat.set_shader_parameter(&"line_color", far.darkened(0.03))
-			far_mat.set_shader_parameter(&"major_color", far.darkened(0.05))
+			far_mat.set_shader_parameter(&"fade_color", b.fog_color)
 	if mountains != null:
 		mountains.peak_color = b.peak_color
 		mountains.haze_color = b.haze_color

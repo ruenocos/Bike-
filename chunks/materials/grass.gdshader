@@ -5,9 +5,11 @@ shader_type spatial;
 render_mode cull_disabled;
 
 #include "res://vfx/cel/includes/base-cel-shader.gdshaderinc"
+#include "res://chunks/materials/ground_noise.gdshaderinc"
 
 global uniform vec4 ground_grass;
 global uniform vec4 grass_tip;
+global uniform float ground_variation;
 uniform float sway = 0.12;
 uniform float sway_speed = 1.7;
 uniform float gust_scale = 0.06;
@@ -30,8 +32,9 @@ varying float FRESNEL_STRENGTH;
 
 void vertex() {
 	tip = UV.y;
-	shade = 1.0 + (COLOR.r - 0.5) * variation;
 	vec3 wp = (MODEL_MATRIX * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+	// Same light / dark ground patches as the terrain under the tuft.
+	shade = (1.0 + (COLOR.r - 0.5) * variation) * ground_patches(wp.xz, ground_variation);
 	float t = TIME * sway_speed;
 	float gust = sin(t + wp.x * gust_scale + wp.z * gust_scale * 0.7) + 0.5 * sin(t * 2.3 + wp.z * gust_scale * 2.0);
 	float bend = tip * tip * sway;

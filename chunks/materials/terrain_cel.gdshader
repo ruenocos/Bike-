@@ -7,6 +7,7 @@ shader_type spatial;
 // (GroundCover), rock on steep faces.
 
 #include "res://vfx/cel/includes/base-cel-shader.gdshaderinc"
+#include "res://chunks/materials/ground_noise.gdshaderinc"
 
 global uniform vec4 ground_dirt;
 global uniform vec4 ground_grass;
@@ -43,19 +44,6 @@ void vertex() {
 	grass = COLOR.r;
 }
 
-float hash21(vec2 p) {
-	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
-}
-
-// Smooth value noise, 0..1.
-float value_noise(vec2 p) {
-	vec2 i = floor(p);
-	vec2 f = fract(p);
-	vec2 u = f * f * (3.0 - 2.0 * f);
-	return mix(mix(hash21(i), hash21(i + vec2(1.0, 0.0)), u.x),
-			mix(hash21(i + vec2(0.0, 1.0)), hash21(i + vec2(1.0, 1.0)), u.x), u.y);
-}
-
 float grid_lines(vec2 p, float size, float width) {
 	vec2 g = abs(fract(p / size - 0.5) - 0.5) * size;
 	vec2 fw = fwidth(p);
@@ -76,8 +64,7 @@ void fragment() {
 		float rock = 1.0 - smoothstep(rock_full, rock_from, normalize(world_normal).y);
 		ground = mix(ground, srgb(ground_rock.rgb), rock);
 		// Big soft patches (and a finer layer) so flat colour shows its shape.
-		float patches = value_noise(world_pos.xz * 0.035) * 0.65 + value_noise(world_pos.xz * 0.16) * 0.35;
-		ALBEDO = ground * (1.0 + (patches - 0.5) * 2.0 * ground_variation);
+		ALBEDO = ground * ground_patches(world_pos.xz, ground_variation);
 	} else {
 		float lines = max(grid_lines(uv, cell, line_width), grid_lines(uv, cell * major_every, line_width * 1.6));
 		ALBEDO = mix(base_color, line_color, lines);

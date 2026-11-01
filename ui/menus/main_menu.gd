@@ -23,6 +23,12 @@ var _waiting: bool = false
 @onready var ride_button: Button = %Ride
 @onready var best_label: Label = %Best
 @onready var swatch: ColorRect = %Swatch
+@onready var speed_bar: ProgressBar = %Speed
+@onready var hop_bar: ProgressBar = %Hop
+@onready var tough_bar: ProgressBar = %Tough
+
+## The bars compare bikes on the base tuning with the bike's changes.
+const BASE_TUNING: PlayerTuning = preload("res://player/player_tuning.tres")
 
 
 func _ready() -> void:
@@ -77,6 +83,13 @@ func _show_bike() -> void:
 		else:
 			lines.append("%s  %+d%%" % [label, roundi((m.amount - 1.0) * 100.0)])
 	bike_info.text = "\n".join(lines)
+	var t: PlayerTuning = BASE_TUNING.duplicate() as PlayerTuning
+	b.apply(t)
+	# Rough 0..1 scales: top speed 50-66 m/s, hop height (plus a double hop),
+	# toughness from the crash penalty and shields.
+	speed_bar.value = clampf((t.max_speed - 50.0) / 16.0, 0.05, 1.0)
+	hop_bar.value = clampf((t.hop_max_velocity - 7.0) / 6.0 + t.air_hops * 0.3, 0.05, 1.0)
+	tough_bar.value = clampf((1.0 - t.crash_penalty) * 0.9 + t.crash_shields * 0.3, 0.05, 1.0)
 	lock_label.visible = not open_bike
 	lock_label.text = "LOCKED: %s" % b.unlock_text()
 	if not _waiting:
