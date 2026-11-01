@@ -38,6 +38,7 @@ extends CanvasLayer
 @onready var title_card: Control = $TitleCard
 @onready var shield_label: Label = $ShieldLabel
 @onready var fade: ColorRect = $Fade
+@onready var light_flash: ColorRect = $LightFlash
 @onready var speed_value: Label = $SpeedPanel/Value
 @onready var speed_fill: ColorRect = $SpeedPanel/Bar/Fill
 @onready var combo_panel: Control = $ComboPanel
@@ -81,6 +82,15 @@ func update_rider(delta: float, speed: float, max_speed: float, combo_active: bo
 	elif combo_panel.visible:
 		combo_panel.modulate.a = maxf(combo_panel.modulate.a - delta * 3.0, 0.0)
 		combo_panel.visible = combo_panel.modulate.a > 0.0
+
+
+## A quick warm-white flash over the screen (perfect landings, v0.22).
+func flash_light(strength: float = 0.2, seconds: float = 0.12) -> void:
+	light_flash.visible = true
+	light_flash.modulate.a = strength
+	var tween: Tween = create_tween()
+	tween.tween_property(light_flash, "modulate:a", 0.0, seconds).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(light_flash.hide)
 
 
 ## Full black (the game draws it for a frame or two before a stage build).

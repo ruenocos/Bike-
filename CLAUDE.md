@@ -67,7 +67,7 @@ Prefer editor-visible setup: scenes, nodes, .tres, @export, @tool previews; code
 ## Input map (to set up)
 steer_left/right: left stick X · lean_forward: left stick up = pump (ground only; lean_back unused since v0.6) · pedal: RT · brake: LT · hop: South (hold to charge) · no_hander: West (X / Square), hold in the air (v0.18/v0.19) · grind: also West, legacy (Player still reads it for the old grind buffer, harmless: rails catch you by themselves since v0.9.1; kept so old test scenes still run) · pause: Start (v0.19 pause menu: Title screen records the run like a run over, Restart run doesn't; the hit-stop timer ignores pause and time scale, so pausing during it can't leave the game frozen) · menus: A confirm / B back · F3 debug readout · trick_left/right/up/down: right stick
 
-## Status (2026-11-01, v0.21 on branch `landscape`)
+## Status (2026-11-01, v0.22 on branch `landscape`)
 Done (v0.1): project settings, input map (+ debug_reset on Back/R), test track, Player with Ride/Air/Land/Bail, landing grades, debug overlay, physics interpolation. Feel gate approved by Wons.
 Done (v0.2, phase 2 batch A):
 - tricks/: TrickData resource + 4 starter tricks in tricks/data (up Frontloop, down Pocket, left/right Whirl). TrickRunner (child of Player) reads right-stick flicks (neutral -> >0.7 within 0.15 s), plays them on the Visual around the hips, chains a new flick in the last 30%.
@@ -270,6 +270,12 @@ Done (v0.21 "menus look", branch `landscape`, + fixes from the external review o
 - One panel style across every menu (ui/bike_theme.tres): warm dark panel, thick ink border, drop shadow; chunky buttons with a heavier bottom edge, ink outline on button text, yellow pressed / focus; ProgressBar styles. Title: tilted "BIKE!" wordmark (ink outline, red offset shadow), bike card with Speed / Hop / Toughness bars (worked out from the bike's stat changes on the base tuning).
 - Ground patches: chunks/materials/ground_noise.gdshaderinc (sin-free Hoskins hash, cells wrapped every 289, so it stays clean kilometres from the origin), used by the terrain and the grass tufts (tufts now follow the same light / dark patches).
 - Far ground: its own unshaded shader (chunks/materials/far_ground.gdshader) fading to the biome's fog colour with distance; the sky below the horizon = the fog colour. (The flat band some stills show beyond the valley turned out to be the stage's own distant terrain, partly fogged, not the far ground.)
+Done (v0.22 "rider juice", branch `landscape`, + fixes from the external review of v0.21):
+- Each trick has its own body pose (TrickData `pose`): Frontloop tucks tight (poses/trick_tuck.tres), Pocket is the superman (poses/trick.tres), Whirl Left / Right kick one foot out (trick_kick_left / _right). Tricks without a pose use RiderRig `pose_trick`.
+- Landing squash: the rider squashes on every landing (RiderRig `land_squash` 0.12, x1.4 on a perfect) and springs back with the hip dip.
+- Perfect landings flash the screen warm white for 0.12 s (RunHud.flash_light), inside the existing hit-stop / camera punch.
+- Review fixes: upgrade cards have a title and a body label styled by theme type variations (bike_theme.tres CardTitle / CardBody) instead of one text; the bike card's bar ranges are exports on MainMenu (Stat bars group); fog aerial perspective 0.35 → 0.6 so far terrain melts into the sky.
+- debug/rider_poses.tscn shows the trick poses too.
 Tweak in the editor (v0.9):
 - Any chunk in chunks/landscape/: select Terrain for size/slope/noise/edges and the bend (Bend > heading_curve) / narrowing (width_profile); drag the shaping nodes under Terrain (gullies, ridges, rollers, rail beds, kicker pads: they rebuild live); move props under Terrain/Props then press "Snap props to ground"; RollingBoulder `roll_to` / `trigger_distance` / `roll_time`; TightZone `size`. Lines/Path* are invisible bot/respawn paths: if you move props onto one, the smoke test will say so.
 - Set pieces: chunks/landscape/set_cliff.tscn, set_ravine.tscn, set_bend_kicker.tscn, set_rail_gap.tscn, set_canyon_slot.tscn, set_fork.tscn (Terrain slope_profile for the cliff, the Ravine gully, the big kicker pads, Gates/*). Boost gates: any Gates/Gate* node (speed_boost, score, radius); drag one onto a risky spot. Rerolls: scoring/run_rules.tres.

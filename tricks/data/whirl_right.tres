@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="TrickData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="TrickData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://tricks/trick_data.gd" id="1_trick"]
+[ext_resource type="Resource" path="res://player/rider/poses/trick_kick_right.tres" id="2_pose"]
 
 [resource]
 script = ExtResource("1_trick")
@@ -11,3 +12,4 @@ score = 200
 rotation_axis = Vector3(0, 1, 0)
 rotation_degrees = -360.0
 squash = 0.0
+pose = ExtResource("2_pose")

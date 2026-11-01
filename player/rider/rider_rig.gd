@@ -30,6 +30,9 @@ extends Node3D
 @export_range(0.0, 5.0, 0.05) var pedal_cadence: float = 2.0
 ## Hips drop on landing (m); springs back.
 @export_range(0.0, 0.5, 0.01) var land_dip: float = 0.2
+## The whole rider squashes on landing (0.15 = 15% shorter, a bit wider),
+## harder on a perfect one; springs back with the dip.
+@export_range(0.0, 0.5, 0.01) var land_squash: float = 0.12
 ## Swing of the torso while bailing (deg).
 @export_range(0.0, 90.0, 1.0) var bail_flail_deg: float = 30.0
 @export var wheel_radius: float = 0.3
@@ -50,6 +53,7 @@ var _crank: float = 0.0
 var _wheel_angle: float = 0.0
 var _dip: float = 0.0
 var _dip_speed: float = 0.0
+var _squash: float = 0.0
 var _bars: float = 0.0
 var _flail: float = 0.0
 var _last_state: StringName = &""
@@ -102,6 +106,8 @@ func _process(delta: float) -> void:
 	# Landing dip: a damped spring back to 0.
 	_dip_speed += (-_dip * 160.0 - _dip_speed * 18.0) * delta
 	_dip += _dip_speed * delta
+	_squash = lerpf(_squash, 0.0, 1.0 - exp(-delta / 0.09))
+	scale = Vector3(1.0 + _squash * 0.5, 1.0 - _squash, 1.0 + _squash * 0.5)
 	_solve()
 
 
@@ -111,6 +117,7 @@ func _drive(delta: float) -> RiderPose:
 	if state != _last_state:
 		if state == &"Land":
 			_dip_speed = -land_dip * 14.0
+			_squash = land_squash * (1.4 if _player.last_landing_grade == &"perfect" else 1.0)
 		_last_state = state
 	var speed01: float = clampf(_player.speed / _player.tuning.max_speed, 0.0, 1.0)
 	var pedal: bool = Input.get_action_strength(&"pedal") > 0.1 and state == &"Ride"
@@ -127,7 +134,10 @@ func _drive(delta: float) -> RiderPose:
 		&"Air":
 			if _player.no_hander and pose_nohander != null:
 				return pose_nohander
-			return pose_trick if _player.tricks.is_mid_trick() else pose_air
+			if _player.tricks.is_mid_trick():
+				var own: RiderPose = _player.tricks.current.pose
+				return own if own != null else pose_trick
+			return pose_air
 	if pedal:
 		return pose_pedal
 	var tuck: float = clampf((speed01 - tuck_from) / maxf(1.0 - tuck_from, 0.01), 0.0, 1.0)

@@ -291,6 +291,16 @@ theme_override_font_sizes/font_size = 26
 text = "SHIELD x1"
 horizontal_alignment = 2
 
+[node name="LightFlash" type="ColorRect" parent="."]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 0.96, 0.85, 1)
+
 [node name="Fade" type="ColorRect" parent="."]
 visible = false
 anchors_preset = 15

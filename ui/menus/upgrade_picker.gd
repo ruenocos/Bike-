@@ -29,7 +29,8 @@ func open(choices: Array[UpgradeData], rerolls: int = 0) -> void:
 	for i: int in buttons.size():
 		buttons[i].visible = i < choices.size()
 		if i < choices.size():
-			buttons[i].text = "%s\n\n%s" % [choices[i].display_name.to_upper(), choices[i].description]
+			(buttons[i].get_node(^"Text/Name") as Label).text = choices[i].display_name.to_upper()
+			(buttons[i].get_node(^"Text/Desc") as Label).text = choices[i].description
 	show()
 	for button: Button in buttons:
 		button.disabled = true

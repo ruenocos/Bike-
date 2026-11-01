@@ -4,8 +4,10 @@ extends Node3D
 
 const RIG: PackedScene = preload("res://player/rider/rider_rig.tscn")
 const POSES: PackedStringArray = ["ride", "tuck", "pedal", "air", "trick", "grind", "bail", "nohander"]
+## Trick poses (v0.22) shown after the general ones.
+const TRICK_POSES: PackedStringArray = ["trick_tuck", "trick_kick_left", "trick_kick_right"]
 
-@export var spacing: float = 1.6
+@export var spacing: float = 1.25
 @export var camera_angle_deg: float = 35.0
 
 var _shot: String = ""
@@ -18,14 +20,19 @@ func _ready() -> void:
 			_shot = arg.trim_prefix("--shot=")
 		if arg.begins_with("--angle="):
 			camera_angle_deg = float(arg.trim_prefix("--angle="))
-	for i: int in POSES.size():
+	var names: PackedStringArray = POSES + TRICK_POSES
+	for i: int in names.size():
 		var rig: RiderRig = RIG.instantiate() as RiderRig
-		rig.preview = POSES[i]
-		rig.position = Vector3((i - (POSES.size() - 1) * 0.5) * spacing, 0.0, 0.0)
+		if TRICK_POSES.has(names[i]):
+			rig.pose_trick = load("res://player/rider/poses/%s.tres" % names[i]) as RiderPose
+			rig.preview = "trick"
+		else:
+			rig.preview = names[i]
+		rig.position = Vector3((i - (names.size() - 1) * 0.5) * spacing, 0.0, 0.0)
 		add_child(rig)
 		CelLook.apply(rig, true)
 		var label: Label3D = Label3D.new()
-		label.text = POSES[i]
+		label.text = names[i]
 		label.position = rig.position + Vector3(0.0, 1.9, 0.0)
 		label.pixel_size = 0.004
 		add_child(label)

@@ -135,6 +135,9 @@ func _ready() -> void:
 	start_sprint.launched.connect(_on_launched)
 	Events.bailed.connect(_on_bailed)
 	Events.gate_collected.connect(func(score: int) -> void: hud.flash_gate(score))
+	Events.landed.connect(func(grade: StringName) -> void:
+		if grade == &"perfect" and in_stage:
+			hud.flash_light())
 	player.shield_used.connect(func() -> void: hud.flash_message("SHIELD!", Color(0.45, 0.9, 1.0)))
 	player.air_hopped.connect(func() -> void: hud.flash_message("DOUBLE HOP", Color(1.0, 0.9, 0.45)))
 	picker.reroll_requested.connect(_on_reroll)

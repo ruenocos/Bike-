@@ -101,6 +101,15 @@ corner_radius_bottom_left = 6
 
 [resource]
 default_font_size = 30
+CardTitle/base_type = &"Label"
+CardTitle/colors/font_color = Color(1, 0.8, 0.25, 1)
+CardTitle/colors/font_outline_color = Color(0.03, 0.02, 0.035, 1)
+CardTitle/constants/outline_size = 10
+CardTitle/font_sizes/font_size = 36
+CardBody/base_type = &"Label"
+CardBody/colors/font_color = Color(0.92, 0.9, 0.9, 1)
+CardBody/constants/outline_size = 0
+CardBody/font_sizes/font_size = 26
 Button/colors/font_color = Color(0.95, 0.93, 0.92, 1)
 Button/colors/font_focus_color = Color(1, 1, 1, 1)
 Button/colors/font_hover_color = Color(1, 1, 1, 1)

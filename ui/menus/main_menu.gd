@@ -12,6 +12,14 @@ const STAT_NAMES: Dictionary[StringName, String] = {
 }
 
 @export_range(0.0, 3.0, 0.05, "suffix:s") var input_delay: float = 0.4
+@export_group("Stat bars")
+## Top speed shown empty / full on the Speed bar (m/s).
+@export var speed_range: Vector2 = Vector2(50.0, 66.0)
+## Hop velocity shown empty / full on the Hop bar (m/s); a double hop adds.
+@export var hop_range: Vector2 = Vector2(7.0, 13.0)
+@export_range(0.0, 1.0, 0.01) var double_hop_bonus: float = 0.3
+## Each crash shield adds this much to the Toughness bar.
+@export_range(0.0, 1.0, 0.01) var shield_bonus: float = 0.3
 
 var bikes: Array[BikeData] = []
 var index: int = 0
@@ -85,11 +93,10 @@ func _show_bike() -> void:
 	bike_info.text = "\n".join(lines)
 	var t: PlayerTuning = BASE_TUNING.duplicate() as PlayerTuning
 	b.apply(t)
-	# Rough 0..1 scales: top speed 50-66 m/s, hop height (plus a double hop),
-	# toughness from the crash penalty and shields.
-	speed_bar.value = clampf((t.max_speed - 50.0) / 16.0, 0.05, 1.0)
-	hop_bar.value = clampf((t.hop_max_velocity - 7.0) / 6.0 + t.air_hops * 0.3, 0.05, 1.0)
-	tough_bar.value = clampf((1.0 - t.crash_penalty) * 0.9 + t.crash_shields * 0.3, 0.05, 1.0)
+	# 0..1 over the Stat bars ranges.
+	speed_bar.value = clampf(inverse_lerp(speed_range.x, speed_range.y, t.max_speed), 0.05, 1.0)
+	hop_bar.value = clampf(inverse_lerp(hop_range.x, hop_range.y, t.hop_max_velocity) + t.air_hops * double_hop_bonus, 0.05, 1.0)
+	tough_bar.value = clampf((1.0 - t.crash_penalty) * 0.9 + t.crash_shields * shield_bonus, 0.05, 1.0)
 	lock_label.visible = not open_bike
 	lock_label.text = "LOCKED: %s" % b.unlock_text()
 	if not _waiting:

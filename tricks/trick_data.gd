@@ -17,6 +17,8 @@ enum Direction { UP, DOWN, LEFT, RIGHT }
 @export var score: int = 100
 
 @export_group("Visual")
+## The rider's body during this trick (empty = the rig's general trick pose).
+@export var pose: RiderPose
 ## Axis in the bike's own space: (1,0,0) pitches (flips), (0,1,0) yaws (spins).
 @export var rotation_axis: Vector3 = Vector3.RIGHT
 ## Total rotation over the trick (deg). Negative pitch is nose down (front flip).
