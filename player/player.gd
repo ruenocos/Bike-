@@ -884,6 +884,7 @@ func place(at: Vector3, new_heading: float, new_speed: float) -> void:
 	global_position = at
 	heading = new_heading
 	speed = new_speed
+	perfect_streak = 0
 	ground_normal = Vector3.UP
 	_convex_ref_normal = Vector3.UP
 	up_direction = Vector3.UP

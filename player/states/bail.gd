@@ -11,6 +11,7 @@ func enter(_msg: Dictionary) -> void:
 	_timer = player.tuning.bail_duration
 	player.tricks.cancel()
 	player.combo.drop()
+	player.perfect_streak = 0
 	Events.bailed.emit()
 
 

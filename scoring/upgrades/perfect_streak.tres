@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_upgrade")
 display_name = "Perfect Streak"
-description = "Each perfect landing in a row adds 1 m/s more speed (up to 5 in a row). Anything else resets it."
+description = "Perfect landings in a row add speed: +1 m/s more each time (up to 5 in a row). Any other landing or a crash resets it."
 stat = &"perfect_streak_boost"
 mode = 0
 amount = 1.0

@@ -76,6 +76,8 @@ var run_time: float = 0.0
 var _seed_arg: int = -1
 ## --debug-greyscale: keep the world without colour (value checks).
 var _greyscale: bool = false
+## --print-stage: print each stage's chunks with their distances.
+var _print_stage: bool = false
 ## Title screen flyover: metres along the backdrop stage.
 var _menu_flight: float = 0.0
 var _in_menu: bool = false
@@ -164,6 +166,7 @@ func _ready() -> void:
 		far_ground.visible = false
 	if args.has("--debug-nomountains"):
 		mountains.visible = false
+	_print_stage = args.has("--print-stage")
 	if args.has("--debug-greyscale"):
 		_greyscale = true
 	if args.has("--debug-shadow2x"):
@@ -221,7 +224,7 @@ func start_stage() -> void:
 	for i: int in 3:
 		await get_tree().physics_frame
 	hazards.populate(builder, stage_index, stage_seed)
-	if OS.get_cmdline_user_args().has("--print-stage"):
+	if _print_stage:
 		for i: int in builder.chunks.size():
 			print("CHUNK %s %.0f-%.0f" % [builder.chunk_paths[i].get_file().get_basename(), builder.chunk_start_distance[i], builder.chunk_end_distance[i]])
 	hud.fade_in(0.45)
@@ -380,8 +383,10 @@ func _add_stage_stats(distance: float) -> void:
 ## hazards stand out by value alone.
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"debug_greyscale"):
+		# Flips the flag too, so the next stage's apply_biome keeps it.
+		_greyscale = not _greyscale
 		var env: Environment = biome_look.world_environment.environment
-		env.adjustment_saturation = 0.0 if env.adjustment_saturation > 0.0 else (biome.saturation if biome != null else 1.0)
+		env.adjustment_saturation = 0.0 if _greyscale else (biome.saturation if biome != null else 1.0)
 	if event.is_action_pressed(&"pause") and in_stage and not get_tree().paused:
 		get_viewport().set_input_as_handled()
 		get_tree().paused = true
