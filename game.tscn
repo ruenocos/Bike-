@@ -1,7 +1,9 @@
-[gd_scene load_steps=33 format=3]
+[gd_scene load_steps=38 format=3]
 
 [ext_resource type="Script" path="res://game.gd" id="1_game"]
 [ext_resource type="Script" path="res://biomes/biome.gd" id="30_biome"]
+[ext_resource type="Script" path="res://hazards/hazard_director.gd" id="35_hazards"]
+[ext_resource type="Script" path="res://biomes/biome_look.gd" id="39_look"]
 [ext_resource type="Resource" path="res://biomes/meadow.tres" id="31_meadow"]
 [ext_resource type="Resource" path="res://biomes/canyon.tres" id="32_canyon"]
 [ext_resource type="Resource" path="res://biomes/snow.tres" id="33_snow"]
@@ -25,6 +27,9 @@
 [ext_resource type="Resource" path="res://scoring/upgrades/slick_pegs.tres" id="18_u6"]
 [ext_resource type="Resource" path="res://scoring/upgrades/slow_collapse.tres" id="19_u7"]
 [ext_resource type="Resource" path="res://scoring/upgrades/showboat.tres" id="20_u8"]
+[ext_resource type="Resource" path="res://scoring/upgrades/double_hop.tres" id="36_u9"]
+[ext_resource type="Resource" path="res://scoring/upgrades/gate_magnet.tres" id="37_u10"]
+[ext_resource type="Resource" path="res://scoring/upgrades/crash_shield.tres" id="38_u11"]
 [ext_resource type="Script" path="res://player/start_sprint.gd" id="21_sprint"]
 [ext_resource type="Script" path="res://chunks/parts/mountain_ring.gd" id="22_mountains"]
 
@@ -75,7 +80,7 @@ size = Vector2(4000, 4000)
 [node name="Game" type="Node3D"]
 script = ExtResource("1_game")
 biomes = Array[ExtResource("30_biome")]([ExtResource("31_meadow"), ExtResource("32_canyon"), ExtResource("33_snow"), ExtResource("34_quarry")])
-upgrade_pool = Array[ExtResource("12_upgrade")]([ExtResource("13_u1"), ExtResource("14_u2"), ExtResource("15_u3"), ExtResource("16_u4"), ExtResource("17_u5"), ExtResource("18_u6"), ExtResource("19_u7"), ExtResource("20_u8")])
+upgrade_pool = Array[ExtResource("12_upgrade")]([ExtResource("13_u1"), ExtResource("14_u2"), ExtResource("15_u3"), ExtResource("16_u4"), ExtResource("17_u5"), ExtResource("18_u6"), ExtResource("19_u7"), ExtResource("20_u8"), ExtResource("36_u9"), ExtResource("37_u10"), ExtResource("38_u11")])
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_main")
@@ -102,6 +107,16 @@ script = ExtResource("22_mountains")
 
 [node name="StartSprint" type="Node" parent="."]
 script = ExtResource("21_sprint")
+
+[node name="BiomeLook" type="Node" parent="." node_paths=PackedStringArray("world_environment", "sun", "far_ground", "mountains")]
+script = ExtResource("39_look")
+world_environment = NodePath("../WorldEnvironment")
+sun = NodePath("../DirectionalLight3D")
+far_ground = NodePath("../FarGround")
+mountains = NodePath("../Mountains")
+
+[node name="HazardDirector" type="Node" parent="."]
+script = ExtResource("35_hazards")
 
 [node name="StageStats" type="Node" parent="."]
 script = ExtResource("5_stats")

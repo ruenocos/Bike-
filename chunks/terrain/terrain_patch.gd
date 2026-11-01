@@ -184,7 +184,10 @@ var _cover: Node3D
 var _mesh_arrays: Array = []
 ## Patches waiting for their ground cover (one is built per frame).
 static var _cover_queue: Array[TerrainPatch] = []
-static var _cover_frame: int = -1
+static var _cover_driver: TerrainPatch
+## Queued covers build nearest this point first (the game keeps it on the
+## spawn, then on the rider).
+static var cover_focus: Vector3 = Vector3.ZERO
 ## After the cover is built: instances per layer and the mean grass amount
 ## (also filled headless, where no MultiMesh is made; the tests read it).
 var cover_stats: Dictionary = {}
@@ -215,33 +218,41 @@ func _ready() -> void:
 	child_order_changed.connect(queue_rebuild)
 
 
+## One queued patch at a time drives the queue (the others don't process).
 func _process(_delta: float) -> void:
-	if Engine.is_editor_hint() or not _cover_queue.has(self):
+	if Engine.is_editor_hint() or _cover_driver != self:
 		set_process(false)
 		return
-	var frame: int = Engine.get_process_frames()
-	if _cover_frame == frame:
-		return
-	_cover_frame = frame
-	var eye: Vector3 = Vector3.ZERO
-	var camera: Camera3D = get_viewport().get_camera_3d()
-	if camera != null:
-		eye = camera.global_position
 	var nearest: TerrainPatch = null
 	var best: float = INF
 	for patch: TerrainPatch in _cover_queue:
 		if is_instance_valid(patch) and patch.is_inside_tree():
-			var d: float = patch.global_position.distance_squared_to(eye)
+			var d: float = patch.global_position.distance_squared_to(cover_focus)
 			if d < best:
 				best = d
 				nearest = patch
 	if nearest != null:
 		_cover_queue.erase(nearest)
 		nearest._build_cover()
+	if not _cover_queue.has(self):
+		_hand_off()
+
+
+## Passes driving the queue to another queued patch (or ends it).
+func _hand_off() -> void:
+	set_process(false)
+	_cover_driver = null
+	for patch: TerrainPatch in _cover_queue:
+		if is_instance_valid(patch) and patch.is_inside_tree():
+			_cover_driver = patch
+			patch.set_process(true)
+			return
 
 
 func _exit_tree() -> void:
 	_cover_queue.erase(self)
+	if _cover_driver == self:
+		_hand_off()
 
 
 ## Rebuild once at the end of this frame (many edits in a row = one build).
@@ -268,7 +279,9 @@ func rebuild() -> void:
 		_build_cover.call_deferred()
 	elif not _cover_queue.has(self):
 		_cover_queue.append(self)
-		set_process(true)
+		if _cover_driver == null or not is_instance_valid(_cover_driver):
+			_cover_driver = self
+			set_process(true)
 
 
 ## Swaps a watched Curve: edits to the curve rebuild the terrain.
@@ -702,6 +715,12 @@ func _build_cover() -> void:
 		mask[i] = cover.mask_at(to_world * verts[i], n_world.y)
 		total += mask[i]
 	cover_stats["grass"] = total / maxf(verts.size(), 1.0)
+	# The CPU copy of the colours stays in step with the GPU one (tests read it).
+	var colors: PackedColorArray = PackedColorArray()
+	colors.resize(mask.size())
+	for i: int in mask.size():
+		colors[i] = Color(mask[i], 0.0, 0.0, 1.0)
+	_mesh_arrays[Mesh.ARRAY_COLOR] = colors
 	var headless: bool = DisplayServer.get_name() == "headless"
 	if not headless:
 		_write_mask(mask)
@@ -725,12 +744,7 @@ func _write_mask(mask: PackedFloat32Array) -> void:
 		RenderingServer.mesh_surface_update_attribute_region(mesh.get_rid(), 0, 0, bytes)
 		return
 	# Unexpected layout: rebuild the mesh with the colours instead.
-	var colors: PackedColorArray = PackedColorArray()
-	colors.resize(mask.size())
-	for i: int in mask.size():
-		colors[i] = Color(mask[i], 0.0, 0.0, 1.0)
-	var arrays: Array = _mesh_arrays.duplicate()
-	arrays[Mesh.ARRAY_COLOR] = colors
+	var arrays: Array = _mesh_arrays
 	var rebuilt: ArrayMesh = ArrayMesh.new()
 	rebuilt.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	_mesh_instance.mesh = rebuilt

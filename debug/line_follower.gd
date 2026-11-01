@@ -51,8 +51,8 @@ static func distance_to(line: RideLine, pos: Vector3) -> float:
 	return best
 
 
-## Distance to the start of the next rail straight ahead (within `lane` m
-## sideways of where you're heading), or INF. Rails are ledges you hop onto
+## Distance to the start of the next rail (or a falling tree's trunk, v0.13)
+## straight ahead (within `lane` m sideways of where you're heading), or INF. Rails are ledges you hop onto
 ## (v0.9.1), so the bots charge a hop and let go about speed x 0.3 s before.
 static func rail_ahead(player: Player, lane: float = 5.0) -> float:
 	var going: Vector3 = Vector3(player.velocity.x, 0.0, player.velocity.z)
@@ -70,6 +70,16 @@ static func rail_ahead(player: Player, lane: float = 5.0) -> float:
 		var ahead: float = to.dot(going)
 		if ahead > 0.0 and (to - going * ahead).length() < lane:
 			best = minf(best, ahead)
+	# v0.13: a falling tree's trunk across the way gets hopped like a rail start.
+	for node: Node in player.get_tree().get_nodes_in_group(&"hop_hazards"):
+		var tree: FallingTree = node as FallingTree
+		if tree == null or not tree.is_inside_tree():
+			continue
+		var to_tree: Vector3 = tree.crossing - player.global_position
+		to_tree.y = 0.0
+		var along: float = to_tree.dot(going)
+		if along > 0.0 and (to_tree - going * along).length() < lane + 2.0:
+			best = minf(best, along)
 	return best
 
 

@@ -49,6 +49,21 @@ extends Resource
 @export_range(1.0, 60.0, 0.5) var crash_min_impact: float = 10.0
 ## Speed lost in a crash (0.5 = keep half).
 @export_range(0.0, 1.0, 0.05) var crash_penalty: float = 0.5
+## Crashes per stage that only glance off (Crash Shield upgrade, v0.13).
+@export_range(0.0, 5.0, 1.0) var crash_shields: float = 0.0
+
+@export_group("Upgrade powers (v0.13)")
+## Extra hops in the air (Double Hop upgrade); release hop mid-air.
+@export_range(0.0, 3.0, 1.0) var air_hops: float = 0.0
+## Upward speed of an air hop (m/s).
+@export_range(0.0, 20.0, 0.5) var air_hop_velocity: float = 7.5
+## Only this long after leaving the ground (s), so a hop released over a
+## small bump still buffers for the landing instead.
+@export_range(0.0, 1.0, 0.01) var air_hop_after: float = 0.2
+## Boost gates pull you in from this far (Gate Magnet upgrade, m; 0 = off).
+@export_range(0.0, 40.0, 0.5) var gate_magnet_radius: float = 0.0
+## How hard a gate pulls you sideways (m/s²).
+@export_range(0.0, 60.0, 0.5) var gate_magnet_pull: float = 22.0
 
 @export_group("Pump")
 ## Speed multiplier added per clean pump (0.04 = +4%).

@@ -28,6 +28,8 @@ extends Resource
 @export_range(0.2, 3.0, 0.01) var tree_scale: float = 1.0
 ## Multiplies every prop model's colour (e.g. frosted, sun-bleached).
 @export var prop_tint: Color = Color.WHITE
+## Ink lines around props and the rider (darker = more contrast).
+@export var outline_color: Color = Color(0.16, 0.1, 0.09)
 
 @export_group("Sky and light")
 @export var sky_top: Color = Color(0.17, 0.29, 0.56)

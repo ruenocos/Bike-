@@ -77,6 +77,11 @@ func _on_landed(grade: StringName) -> void:
 			_burst(burst_sketchy)
 
 
+## A dust puff at the rider (air hop, v0.13).
+func puff(size: float) -> void:
+	_burst(size)
+
+
 func _burst(size: float) -> void:
 	burst.global_position = player.global_position
 	burst.amount_ratio = size

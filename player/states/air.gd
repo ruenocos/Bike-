@@ -12,6 +12,8 @@ extends PlayerState
 ## same ramp, and the bike's nose follows the velocity (up, then down).
 
 var _pre_move_velocity: Vector3 = Vector3.ZERO
+## Time since leaving the ground; air hops only after `air_hop_after`.
+var _air_time: float = 0.0
 ## Lip you launched off (horizontal, points into the pipe), or zero.
 var _lip_normal: Vector3 = Vector3.ZERO
 var _lip_position: Vector3 = Vector3.ZERO
@@ -25,6 +27,8 @@ func enter(msg: Dictionary) -> void:
 		player.coyote_timer = 0.0
 	player.leave_surface()
 	player.air_tricks = 0
+	player.air_hops_left = int(t.air_hops)
+	_air_time = 0.0
 	_lip_normal = msg.get("lip_normal", Vector3.ZERO)
 	_lip_position = msg.get("lip_position", Vector3.ZERO)
 	player.transition_normal = _lip_normal
@@ -43,6 +47,9 @@ func physics_update(delta: float) -> void:
 	# Coyote hop: hop pressed just after rolling off an edge.
 	if player.coyote_timer > 0.0 and player.has_buffered_hop():
 		player.do_hop()
+	elif player.air_hops_left > 0 and player.has_buffered_hop() and _air_time > t.air_hop_after:
+		player.air_hop()
+	_air_time += delta
 
 	var snap: RailSnap = player.find_grind_rail()
 	if snap != null:

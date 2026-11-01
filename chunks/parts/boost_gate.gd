@@ -17,6 +17,7 @@ extends Area3D
 		_update_size()
 
 var _taken: bool = false
+var _player: Player
 
 
 func _ready() -> void:
@@ -25,6 +26,36 @@ func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 	body_entered.connect(_on_body_entered)
+
+
+## Gate Magnet upgrade (v0.13): within the player's gate_magnet_radius the
+## gate pulls you sideways toward its centre, and the ring pulses.
+func _physics_process(delta: float) -> void:
+	if Engine.is_editor_hint() or _taken:
+		return
+	if _player == null:
+		_player = get_tree().get_first_node_in_group(&"player") as Player
+		if _player == null:
+			return
+	var reach: float = _player.tuning.gate_magnet_radius
+	if reach <= 0.0:
+		return
+	var to: Vector3 = global_position - _player.global_position
+	var dist: float = to.length()
+	var ring: Node3D = $Ring
+	if dist > reach + radius or dist < 0.5:
+		ring.scale = Vector3.ONE * radius
+		return
+	var going: Vector3 = _player.velocity.normalized() if _player.velocity.length() > 1.0 else -global_basis.z
+	var side: Vector3 = to - going * to.dot(going)
+	if to.dot(going) <= 0.0 or side.length() < 0.05:
+		return
+	var pull: Vector3 = side.normalized() * minf(_player.tuning.gate_magnet_pull * delta, side.length())
+	if _player.state_machine.get_state_name() == &"Air":
+		_player.velocity += pull
+	elif _player.is_on_floor():
+		_player.ground_dir = _player.tangent_dir(_player.ground_dir * _player.speed + pull * 3.0, _player.ground_normal)
+	ring.scale = Vector3.ONE * radius * (1.0 + 0.12 * sin(Time.get_ticks_msec() * 0.02))
 
 
 func _update_size() -> void:

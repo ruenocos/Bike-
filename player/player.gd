@@ -15,6 +15,10 @@ extends CharacterBody3D
 
 ## Fell below kill_y or pressed debug reset (only when auto_respawn is off).
 signal fell
+## A crash shield turned a crash into a glance (v0.13).
+signal shield_used
+## An air hop (Double Hop) fired.
+signal air_hopped
 
 @export var tuning: PlayerTuning = preload("res://player/player_tuning.tres")
 
@@ -115,6 +119,10 @@ var tight_zones: int = 0
 var air_tricks: int = 0
 ## Set by ground_move / check_air_crash when this tick hit an obstacle hard.
 var crashed: bool = false
+## Crash shields left this stage (the game refills them each stage).
+var shields_left: int = 0
+## Air hops left in this airtime.
+var air_hops_left: int = 0
 ## Counts down after a speed boost (perfect landing, landed tricks, sprint
 ## start); the speed lines flash while it's running.
 var boost_timer: float = 0.0
@@ -211,6 +219,15 @@ func has_buffered_hop() -> bool:
 func do_hop() -> void:
 	var hop_dir: Vector3 = Vector3.UP.lerp(ground_normal, tuning.hop_normal_blend).normalized()
 	do_hop_from(ground_dir * speed, hop_dir)
+
+
+## Double Hop: a second pop in the air (keeps the speed, resets the fall).
+func air_hop() -> void:
+	air_hops_left -= 1
+	velocity.y = maxf(velocity.y, 0.0) + tuning.air_hop_velocity
+	jump_buffer_timer = 0.0
+	vfx.puff(0.5)
+	air_hopped.emit()
 
 
 ## Hop on top of a given velocity (the Grind state passes the rail velocity).
@@ -526,7 +543,16 @@ func _check_obstacle_hit(approach: Vector3) -> Hit:
 			continue
 		var result: Hit = Hit.GLANCE
 		var keep: float = approach.length()
-		if impact > tuning.crash_min_impact and _crash_cooldown <= 0.0:
+		if impact > tuning.crash_min_impact and _crash_cooldown <= 0.0 and shields_left > 0:
+			# Crash Shield: smash through at full speed instead (passes
+			# through this obstacle for a moment).
+			shields_left -= 1
+			_crash_cooldown = 0.8
+			_shield_through(collider as PhysicsBody3D)
+			shield_used.emit()
+			speed = approach.length()
+			return Hit.GLANCE
+		elif impact > tuning.crash_min_impact and _crash_cooldown <= 0.0:
 			result = Hit.CRASH
 			keep *= 1.0 - tuning.crash_penalty
 			last_bail_reason = "hit %s at %.0f m/s" % [_obstacle_name(collider), impact]
@@ -541,11 +567,23 @@ func _check_obstacle_hit(approach: Vector3) -> Hit:
 ## "Tree", "Rock", ... from the obstacle's scene file (or its node name).
 func _obstacle_name(collider: Node) -> String:
 	var node: Node = collider
-	if not node.scene_file_path.is_empty():
-		return node.scene_file_path.get_file().get_basename().capitalize()
-	if node.get_parent() != null and not node.get_parent().scene_file_path.is_empty():
-		return node.get_parent().scene_file_path.get_file().get_basename().capitalize()
-	return String(node.name)
+	for i: int in 4:
+		if node == null:
+			break
+		if not node.scene_file_path.is_empty():
+			return node.scene_file_path.get_file().get_basename().capitalize()
+		node = node.get_parent()
+	return String(collider.name)
+
+
+## Crash Shield: ignore this body for a moment so you ride through it.
+func _shield_through(body: PhysicsBody3D) -> void:
+	if body == null:
+		return
+	add_collision_exception_with(body)
+	await get_tree().create_timer(0.6, false, true).timeout
+	if is_instance_valid(body):
+		remove_collision_exception_with(body)
 
 
 ## Air version: call after the Air move with the velocity before it.

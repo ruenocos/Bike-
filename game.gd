@@ -53,8 +53,8 @@ extends Node3D
 @onready var far_ground: Node3D = $FarGround
 @onready var start_sprint: StartSprint = $StartSprint
 @onready var mountains: MountainRing = $Mountains
-@onready var world_environment: WorldEnvironment = $WorldEnvironment
-@onready var sun: DirectionalLight3D = $DirectionalLight3D
+@onready var biome_look: BiomeLook = $BiomeLook
+@onready var hazards: HazardDirector = $HazardDirector
 
 ## The look of the current stage.
 var biome: Biome
@@ -95,6 +95,8 @@ func _ready() -> void:
 	start_sprint.launched.connect(_on_launched)
 	Events.bailed.connect(_on_bailed)
 	Events.gate_collected.connect(func(score: int) -> void: hud.flash_gate(score))
+	player.shield_used.connect(func() -> void: hud.flash_message("SHIELD!", Color(0.45, 0.9, 1.0)))
+	player.air_hopped.connect(func() -> void: hud.flash_message("DOUBLE HOP", Color(1.0, 0.9, 0.45)))
 	picker.reroll_requested.connect(_on_reroll)
 	var seed_arg: int = -1
 	var args: PackedStringArray = OS.get_cmdline_user_args()
@@ -131,10 +133,15 @@ func start_stage() -> void:
 	player.global_position = Vector3(0.0, 100000.0, 0.0)
 	if not biomes.is_empty():
 		apply_biome(biomes[(stage_index + biome_offset) % biomes.size()])
-	builder.build(_rng.randi(), middle_chunks, stage_index)
+	var stage_seed: int = _rng.randi()
+	builder.build(stage_seed, middle_chunks, stage_index)
+	# Grass builds nearest the start first (the rider is parked far away).
+	TerrainPatch.cover_focus = builder.get_spawn_transform().origin
 	# CSG builds its collision a frame or two after entering the tree.
 	for i: int in 3:
 		await get_tree().physics_frame
+	hazards.populate(builder, stage_index, stage_seed)
+	player.shields_left = int(run_tuning.crash_shields)
 	var spawn: Transform3D = builder.get_spawn_transform()
 	var forward: Vector3 = -spawn.basis.z
 	player.set_physics_process(true)
@@ -145,7 +152,8 @@ func start_stage() -> void:
 	var lowest: float = INF
 	for p: Vector3 in builder.line_points:
 		lowest = minf(lowest, p.y)
-	_far_ground_y = lowest - 120.0
+	# Deep under the valley so the fog swallows it (higher, it read as a table).
+	_far_ground_y = lowest - 320.0
 	var drop_in: Node3D = builder.chunks[0].get_node_or_null(^"DropIn") as Node3D
 	_drop_in_distance = builder.nearest_distance(drop_in.global_position) if drop_in != null else player_progress + 30.0
 	collapse.reset(builder, player_progress, stage_index, run_tuning.collapse_speed_scale)
@@ -167,43 +175,21 @@ func _physics_process(delta: float) -> void:
 	collapse.advance(delta, player_progress)
 	builder.free_behind(player_progress)
 	far_ground.global_position = Vector3(player.global_position.x, _far_ground_y, player.global_position.z)
+	TerrainPatch.cover_focus = player.global_position
 	# The mountain ring stays on the horizon at the rider's height.
 	mountains.global_position = Vector3(player.global_position.x, track_y - 200.0, player.global_position.z)
 	_update_out_of_bounds(delta)
 	_update_collapse_feel()
 
 
-## Recolours the world for a stage: ground palette (global shader
-## parameters), what grows and which trees / rocks stand there (read by the
-## chunks as they're built), sky, fog, sun and the far mountains.
+## Recolours the world for a stage: what grows and which trees / rocks stand
+## there (read by the chunks as they're built) and, through BiomeLook, the
+## ground palette, sky, fog, sun, far ground and mountains.
 func apply_biome(b: Biome) -> void:
 	biome = b
 	PropModel.biome = b
 	TerrainPatch.cover_override = b.ground_cover
-	RenderingServer.global_shader_parameter_set(&"ground_dirt", b.ground_dirt)
-	RenderingServer.global_shader_parameter_set(&"ground_grass", b.ground_grass)
-	RenderingServer.global_shader_parameter_set(&"ground_rock", b.ground_rock)
-	RenderingServer.global_shader_parameter_set(&"grass_tip", b.grass_tip)
-	var env: Environment = world_environment.environment
-	var sky: ProceduralSkyMaterial = env.sky.sky_material as ProceduralSkyMaterial
-	if sky != null:
-		sky.sky_top_color = b.sky_top
-		sky.sky_horizon_color = b.sky_horizon
-		sky.ground_horizon_color = b.ground_horizon
-	env.fog_light_color = b.fog_color
-	env.fog_density = b.fog_density
-	env.ambient_light_energy = b.ambient_energy
-	env.adjustment_saturation = b.saturation
-	sun.light_color = b.sun_color
-	sun.light_energy = b.sun_energy
-	sun.rotation = Vector3(deg_to_rad(-b.sun_elevation), deg_to_rad(b.sun_heading), 0.0)
-	var far_mat: ShaderMaterial = (far_ground as MeshInstance3D).mesh.surface_get_material(0) as ShaderMaterial
-	if far_mat != null:
-		far_mat.set_shader_parameter(&"base_color", b.far_ground)
-		far_mat.set_shader_parameter(&"line_color", b.far_ground.darkened(0.06))
-		far_mat.set_shader_parameter(&"major_color", b.far_ground.darkened(0.12))
-	mountains.peak_color = b.peak_color
-	mountains.haze_color = b.haze_color
+	biome_look.apply(b)
 
 
 ## Past the valley crests (sideways from the centerline): count down, then
@@ -233,7 +219,8 @@ func _process(_delta: float) -> void:
 	if collapse.waiting:
 		gap = maxf(gap, hud.meter_range)
 	hud.update_run(stage_index + 1, stats.time, player.combo.run_total, gap,
-			player_progress, collapse.distance, builder.length, builder.finish_distance)
+			player_progress, collapse.distance, builder.length, builder.finish_distance,
+			player.shields_left)
 	hud.show_start(start_sprint if in_stage else null)
 
 

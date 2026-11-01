@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="UpgradeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scoring/upgrade_data.gd" id="1_upgrade"]
+
+[resource]
+script = ExtResource("1_upgrade")
+display_name = "Gate Magnet"
+description = "Boost gates pull you in from 10 m away."
+stat = &"gate_magnet_radius"
+mode = 0
+amount = 10.0

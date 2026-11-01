@@ -36,6 +36,7 @@ extends CanvasLayer
 @onready var sweet_zone: ColorRect = $StartPanel/MeterBack/SweetZone
 @onready var needle: ColorRect = $StartPanel/MeterBack/Needle
 @onready var title_card: Control = $TitleCard
+@onready var shield_label: Label = $ShieldLabel
 @onready var title_stage: Label = $TitleCard/StageNo
 @onready var title_name: Label = $TitleCard/Name
 @onready var title_sub: Label = $TitleCard/Sub
@@ -96,6 +97,13 @@ func flash_start(grade: StringName) -> void:
 	_start_flash_timer = flash_time
 
 
+## A short centre flash in a colour (upgrade powers: SHIELD!, DOUBLE HOP).
+func flash_message(text: String, color: Color) -> void:
+	start_flash.text = text
+	start_flash.modulate = color
+	_start_flash_timer = flash_time * 0.7
+
+
 ## "BOOST +300" when riding through a boost gate.
 func flash_gate(score: int) -> void:
 	start_flash.text = "BOOST  +%d" % score
@@ -118,7 +126,9 @@ func flash_penalty(seconds: float) -> void:
 
 
 func update_run(stage: int, time: float, score: int, gap: float, player_progress: float,
-		collapse_distance: float, stage_length: float, finish_distance: float) -> void:
+		collapse_distance: float, stage_length: float, finish_distance: float, shields: int = 0) -> void:
+	shield_label.visible = shields > 0
+	shield_label.text = "SHIELD x%d" % shields
 	stage_label.text = "STAGE %d" % stage
 	time_label.text = "%d:%05.2f" % [floori(time / 60.0), fmod(time, 60.0)]
 	score_label.text = "%d" % score
