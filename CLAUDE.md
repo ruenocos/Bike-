@@ -67,7 +67,7 @@ Prefer editor-visible setup: scenes, nodes, .tres, @export, @tool previews; code
 ## Input map (to set up)
 steer_left/right: left stick X · lean_forward: left stick up = pump (ground only; lean_back unused since v0.6) · pedal: RT · brake: LT · hop: South (hold to charge) · grind: West (unused since v0.9.1: rails catch you when you hop onto them) · menus: A confirm / B back · F3 debug readout · trick_left/right/up/down: right stick · pause: Start
 
-## Status (2026-11-01, v0.9.1 on branch `landscape`)
+## Status (2026-11-01, v0.9.2 on branch `landscape`)
 Done (v0.1): project settings, input map (+ debug_reset on Back/R), test track, Player with Ride/Air/Land/Bail, landing grades, debug overlay, physics interpolation. Feel gate approved by Wons.
 Done (v0.2, phase 2 batch A):
 - tricks/: TrickData resource + 4 starter tricks in tricks/data (up Frontloop, down Pocket, left/right Whirl). TrickRunner (child of Player) reads right-stick flicks (neutral -> >0.7 within 0.15 s), plays them on the Visual around the hips, chains a new flick in the last 30%.
@@ -197,9 +197,15 @@ Done (v0.9.1 fixes, branch `landscape`, after Wons's v0.9 playtest: "fun", liked
 - Stage 2 a bit harder: StageBuilder `tier_bias` 0.5 → 0.75 (harder chunks more often each stage), on top of the collapse curve step.
 - Generated corridors stay on the flat floor (clear of the edge banks); a path that started on the bank launched the bot into a bail.
 - Crashes: a head-on hit (e.g. the end face of a rail ledge) bounced you backwards up the hill and left you stuck behind it while the collapse caught up. Now you always keep going: slide along the obstacle, veer sideways around it on a head-on hit. Softer costs so one crash costs time, not the run: `crash_penalty` 0.5 → 0.35 (keep 65%), Game `bail_time_cost` 1.5 → 1.0 s, Collapse `penalty_min_gap` 20 → 40 m, stage 1 collapse max 44 → 42 m/s. (Seed 10: a 59 m/s rail crash in stage 1 now drops the gap 170 → 69 m and you recover.)
+Done (v0.9.2 "more set pieces", branch `landscape`): three more hand-laid set pieces (author_landscape.gd `set_pieces()`; StageBuilder `set_pieces` now holds 6):
+- set_rail_gap: a rail (hop on) whose last 16 m kicks up to 3 m high, launching you over a 30 m wide, 8 m deep gully through a high gate; or go round through trees on the right. Bot: hops on, grinds, clears the gap, takes the gate.
+- set_canyon_slot: the valley pinches to ~50 m (a ~19 m floor between the banks) and kinks left / right (r 82 m), rocks at the floor's edges, a gate in the middle.
+- set_fork: a raised causeway on the left (6 m up, steep sides, 3 gates on top; fall off and you lose the line) or a sunken low line on the right through two rock walls.
+- Authoring: new spec keys `rails_at` (Vector3(x, d, height above ground) key points, smoothed bed under them), `ridges_at`, `lines_at` (raised / sunk LINE shapes with heights above the plain slope). The rail Ledge now reaches 4 m down so raised rails still meet the ground.
+- Record: seed 37 (canyon slot + rail gap in stage 1), seed 30 (fork).
 Tweak in the editor (v0.9):
 - Any chunk in chunks/landscape/: select Terrain for size/slope/noise/edges and the bend (Bend > heading_curve) / narrowing (width_profile); drag the shaping nodes under Terrain (gullies, ridges, rollers, rail beds, kicker pads: they rebuild live); move props under Terrain/Props then press "Snap props to ground"; RollingBoulder `roll_to` / `trigger_distance` / `roll_time`; TightZone `size`. Lines/Path* are invisible bot/respawn paths: if you move props onto one, the smoke test will say so.
-- Set pieces: chunks/landscape/set_cliff.tscn, set_ravine.tscn, set_bend_kicker.tscn (Terrain slope_profile for the cliff, the Ravine gully, the big kicker pads, Gates/*). Boost gates: any Gates/Gate* node (speed_boost, score, radius); drag one onto a risky spot. Rerolls: scoring/run_rules.tres.
+- Set pieces: chunks/landscape/set_cliff.tscn, set_ravine.tscn, set_bend_kicker.tscn, set_rail_gap.tscn, set_canyon_slot.tscn, set_fork.tscn (Terrain slope_profile for the cliff, the Ravine gully, the big kicker pads, Gates/*). Boost gates: any Gates/Gate* node (speed_boost, score, radius); drag one onto a risky spot. Rerolls: scoring/run_rules.tres.
 - game.tscn: Game (middle_chunks, oob/penalty times, rules), StageBuilder (set_pieces, set_pieces_per_stage), StartSprint (fill time, sweet zone, boosts), Collapse (difficulty arrays, penalties, feel), StageBuilder (chunk lists, tier_bias).
 - player/player_tuning.tres: Steering, Crashes, trick boost (Combo group), Camera open/tight + turn lead, Speed lines (incl. boost flash).
 - Particles: Player/RiderVfx (thresholds) and its child nodes' process materials. Mood: game.tscn WorldEnvironment (sky, fog, glow), DirectionalLight3D (sun angle / colour), FarGround/Mountains (MountainRing), chunks/materials/terrain.tres (ground colours).

@@ -40,6 +40,9 @@ signal finished
 	preload("res://chunks/landscape/set_cliff.tscn"),
 	preload("res://chunks/landscape/set_ravine.tscn"),
 	preload("res://chunks/landscape/set_bend_kicker.tscn"),
+	preload("res://chunks/landscape/set_rail_gap.tscn"),
+	preload("res://chunks/landscape/set_canyon_slot.tscn"),
+	preload("res://chunks/landscape/set_fork.tscn"),
 ]
 @export var set_pieces_per_stage: Vector2i = Vector2i(1, 2)
 @export_range(0, 20) var middle_count: int = 8
