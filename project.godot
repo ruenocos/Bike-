@@ -134,3 +134,26 @@ common/physics_interpolation=true
 
 rendering_device/driver.windows="d3d12"
 anti_aliasing/quality/msaa_3d=2
+
+[shader_globals]
+
+diffuse_curve={
+"type": "sampler2D",
+"value": "res://vfx/cel/diffuse_curve.tres"
+}
+fresnel_smoothness={
+"type": "float",
+"value": 0.05
+}
+specular_smoothness={
+"type": "float",
+"value": 0.05
+}
+outline_width={
+"type": "float",
+"value": 2.0
+}
+outline_color={
+"type": "color",
+"value": Color(0.16, 0.1, 0.09, 1)
+}

@@ -67,7 +67,7 @@ Prefer editor-visible setup: scenes, nodes, .tres, @export, @tool previews; code
 ## Input map (to set up)
 steer_left/right: left stick X · lean_forward: left stick up = pump (ground only; lean_back unused since v0.6) · pedal: RT · brake: LT · hop: South (hold to charge) · grind: West (unused since v0.9.1: rails catch you when you hop onto them) · menus: A confirm / B back · F3 debug readout · trick_left/right/up/down: right stick · pause: Start
 
-## Status (2026-11-01, v0.9.2 on branch `landscape`)
+## Status (2026-11-01, v0.10 on branch `landscape`)
 Done (v0.1): project settings, input map (+ debug_reset on Back/R), test track, Player with Ride/Air/Land/Bail, landing grades, debug overlay, physics interpolation. Feel gate approved by Wons.
 Done (v0.2, phase 2 batch A):
 - tricks/: TrickData resource + 4 starter tricks in tricks/data (up Frontloop, down Pocket, left/right Whirl). TrickRunner (child of Player) reads right-stick flicks (neutral -> >0.7 within 0.15 s), plays them on the Visual around the hips, chains a new flick in the last 30%.
@@ -203,14 +203,22 @@ Done (v0.9.2 "more set pieces", branch `landscape`): three more hand-laid set pi
 - set_fork: a raised causeway on the left (6 m up, steep sides, 3 gates on top; fall off and you lose the line) or a sunken low line on the right through two rock walls.
 - Authoring: new spec keys `rails_at` (Vector3(x, d, height above ground) key points, smoothed bed under them), `ridges_at`, `lines_at` (raised / sunk LINE shapes with heights above the plain slope). The rail Ledge now reaches 4 m down so raised rails still meet the ground.
 - Record: seed 37 (canyon slot + rail gap in stage 1), seed 30 (fork).
+Done (v0.10 "visual direction, first pass", branch `landscape`; sources and licences in CREDITS.md):
+- Cel look: eldskald godot4-cel-shader (MIT) in vfx/cel/ (base, cut-out for leaves, inverted-hull outline). Its global uniforms live in Project Settings > Shader Globals: `diffuse_curve` (vfx/cel/diffuse_curve.tres, the 3 light bands), `specular_smoothness`, `fresnel_smoothness`, `outline_color` (warm dark brown), `outline_width`. CelLook (vfx/cel/cel_look.gd) turns an imported model's StandardMaterial3D into cel ShaderMaterials (albedo + texture carried over, cached per source material).
+- Real props: tree / rock / log / fence scenes (chunks/parts/props/) keep their simple collision shapes; the look is a PropModel child (prop_model.gd, @tool): `variants` (model scenes), `model_scale`, `yaw_jitter`, `outline`. The variant and rotation come from a hash of the prop's position, so a chunk always looks the same. Trees: Quaternius Stylized Nature MegaKit pines 1-5 + common trees 1-3 (CC0); rocks: MegaKit medium rocks 1-3; logs and fences: Kenney Nature Kit (CC0). Models in art/nature/megakit and art/props/kenney (.gltf/.bin/.png/.glb all in LFS).
+- Terrain: chunks/materials/terrain_cel.gdshader (banded light + the old warm earth and faint grid) used by terrain.tres, feature.tres, transition.tres. Golden hour, fog and mountains unchanged. Sky3D not used (the procedural sky already does the job; one less addon on 4.7 D3D12).
+- Checks: import, quit, terrain, landing 42/42, feel 16/16, smoke, line, menu 4/4 all pass; real time 59-60 fps with the models and outlines.
+- Record: `<exe> --path . --write-movie <abs>/v0.10.avi --fixed-fps 30 --quit-after 2450 res://game.tscn -- --autopilot --seed=7 --autopilot-shots=<abs dir>` (captures/v0.10).
 Tweak in the editor (v0.9):
 - Any chunk in chunks/landscape/: select Terrain for size/slope/noise/edges and the bend (Bend > heading_curve) / narrowing (width_profile); drag the shaping nodes under Terrain (gullies, ridges, rollers, rail beds, kicker pads: they rebuild live); move props under Terrain/Props then press "Snap props to ground"; RollingBoulder `roll_to` / `trigger_distance` / `roll_time`; TightZone `size`. Lines/Path* are invisible bot/respawn paths: if you move props onto one, the smoke test will say so.
 - Set pieces: chunks/landscape/set_cliff.tscn, set_ravine.tscn, set_bend_kicker.tscn, set_rail_gap.tscn, set_canyon_slot.tscn, set_fork.tscn (Terrain slope_profile for the cliff, the Ravine gully, the big kicker pads, Gates/*). Boost gates: any Gates/Gate* node (speed_boost, score, radius); drag one onto a risky spot. Rerolls: scoring/run_rules.tres.
 - game.tscn: Game (middle_chunks, oob/penalty times, rules), StageBuilder (set_pieces, set_pieces_per_stage), StartSprint (fill time, sweet zone, boosts), Collapse (difficulty arrays, penalties, feel), StageBuilder (chunk lists, tier_bias).
 - player/player_tuning.tres: Steering, Crashes, trick boost (Combo group), Camera open/tight + turn lead, Speed lines (incl. boost flash).
-- Particles: Player/RiderVfx (thresholds) and its child nodes' process materials. Mood: game.tscn WorldEnvironment (sky, fog, glow), DirectionalLight3D (sun angle / colour), FarGround/Mountains (MountainRing), chunks/materials/terrain.tres (ground colours).
+- Particles: Player/RiderVfx (thresholds) and its child nodes' process materials. Mood: game.tscn WorldEnvironment (sky, fog, glow), DirectionalLight3D (sun angle / colour), FarGround/Mountains (MountainRing), chunks/materials/terrain.tres (ground colours, terrain_cel.gdshader).
+- Look (v0.10): a prop scene's Model node (PropModel: variants, scale, outline); light bands in vfx/cel/diffuse_curve.tres; outline colour / width in Project Settings > Shader Globals.
 
 ## Next tasks, in order
+0. Playtest v0.10 look: do the cel bands, outlines and real trees/rocks read well at speed, are obstacles still easy to spot, does it still feel golden hour. Next visual steps if wanted: rider model, grass/bushes decoration, cel on the boulder and rails.
 1. Playtest v0.8.1 (branch `landscape`) with gamepad: the bends (switchbacks, fast S, gorge) at speed, finding your own way through the open valleys, steering at speed through the slalom/canyon, sprint start timing, out-of-bounds respawn, crash feel, collapse shake/rumble, camera open vs tight, stage length (~70 s) and whether 6-8 stages ends a typical run. Merge to main only when Wons says "merge it".
 2. Bends are capped by the valley width (a bend tighter than the local half width folds the ground); for hairpins tighter than ~90 m radius the valley must narrow more, or a different mesh approach is needed.
 3. The collapse is only visible looking back; consider a rear-view glance / rumble audio / debris flying past when it's close.
