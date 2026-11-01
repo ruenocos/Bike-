@@ -57,6 +57,11 @@ extends Node3D
 @onready var far_ground: Node3D = $FarGround
 @onready var start_sprint: StartSprint = $StartSprint
 @onready var mountains: MountainRing = $Mountains
+## The nearer ring (v0.29.1): its own place (top_level), so it has parallax.
+@onready var near_mountains: MountainRing = $Mountains/Near
+## Middle of the current stage: the near ring's height, and the point it
+## stays between with the rider.
+var _near_anchor: Vector3 = Vector3.ZERO
 @onready var biome_look: BiomeLook = $BiomeLook
 @onready var menu_camera: Camera3D = $MenuCamera
 @onready var hazards: HazardDirector = $HazardDirector
@@ -164,6 +169,7 @@ func _ready() -> void:
 		biome_look.world_environment.environment.fog_enabled = false
 	if args.has("--debug-nofar"):
 		far_ground.visible = false
+	near_mountains.top_level = true
 	if args.has("--debug-nomountains"):
 		mountains.visible = false
 	_print_stage = args.has("--print-stage")
@@ -226,6 +232,7 @@ func start_stage() -> void:
 	for i: int in 3:
 		await get_tree().physics_frame
 	hazards.populate(builder, stage_index, stage_seed)
+	_near_anchor = builder.transform_at_distance(builder.length * 0.5).origin
 	if _print_stage:
 		print("CONTACT SHADOWS %d" % PropModel.contact_shadow_count)
 		for i: int in builder.chunks.size():
@@ -269,6 +276,11 @@ func _physics_process(delta: float) -> void:
 	TerrainPatch.cover_focus = player.global_position
 	# The mountain ring stays on the horizon at the rider's height.
 	mountains.global_position = Vector3(player.global_position.x, track_y - 200.0, player.global_position.z)
+	# The near ring moves at half the rider's speed around the stage's middle
+	# and keeps that height, so it slides past (parallax) and never rises
+	# and sinks with the rider; at ~1.5 km it stays out of reach.
+	var near_at: Vector3 = _near_anchor.lerp(player.global_position, 0.5)
+	near_mountains.global_position = Vector3(near_at.x, _near_anchor.y - 200.0, near_at.z)
 	_update_out_of_bounds(delta)
 	_update_collapse_feel()
 
