@@ -25,6 +25,8 @@ extends Node3D
 @export_range(0.0, 60.0, 0.5, "suffix:m/s") var debris_overtake: float = 18.0
 
 @onready var player: Player = get_parent() as Player
+var _tinted: StandardMaterial3D
+
 @onready var dust: GPUParticles3D = $DustTrail
 @onready var spray: GPUParticles3D = $CarveSpray
 @onready var sparks: GPUParticles3D = $GrindSparks
@@ -81,8 +83,14 @@ func _on_landed(grade: StringName) -> void:
 ## the biome sets it: blue-ish on snow so it doesn't vanish into white).
 func set_tint(color: Color) -> void:
 	var quad: QuadMesh = dust.draw_pass_1 as QuadMesh
-	if quad != null and quad.material is StandardMaterial3D:
-		(quad.material as StandardMaterial3D).albedo_color = color
+	if quad == null or not quad.material is StandardMaterial3D:
+		return
+	if _tinted == null:
+		# Our own copy, so the scene's shared material stays as it is.
+		_tinted = (quad.material as StandardMaterial3D).duplicate() as StandardMaterial3D
+		for particles: GPUParticles3D in [dust, spray, burst]:
+			particles.material_override = _tinted
+	_tinted.albedo_color = color
 
 
 ## A dust puff at the rider (air hop, v0.13).

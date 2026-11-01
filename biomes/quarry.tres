@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="Biome" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="Biome" load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://biomes/biome.gd" id="1_biome"]
+[ext_resource type="PackedScene" path="res://chunks/landscape/set_ramp_yard.tscn" id="90_set"]
 [ext_resource type="Resource" path="res://chunks/terrain/cover/quarry.tres" id="2_cover"]
 [ext_resource type="PackedScene" path="res://art/nature/megakit/DeadTree_1.gltf" id="3_m"]
 [ext_resource type="PackedScene" path="res://art/nature/megakit/DeadTree_2.gltf" id="4_m"]
@@ -8,6 +9,7 @@
 
 [resource]
 script = ExtResource("1_biome")
+set_pieces = Array[PackedScene]([ExtResource("90_set")])
 display_name = "Ash Quarry"
 subtitle = "The old dig site, after dark"
 ground_dirt = Color(0.38, 0.35, 0.37, 1)

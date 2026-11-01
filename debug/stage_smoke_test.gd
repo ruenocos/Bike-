@@ -44,6 +44,11 @@ func _run() -> void:
 	var scenes: Array[PackedScene] = [builder.start_chunk, builder.finish_chunk]
 	scenes.append_array(builder.middle_chunks)
 	scenes.append_array(builder.set_pieces)
+	# v0.16: the biomes' own set pieces.
+	for biome_path: String in ["meadow", "canyon", "snow", "quarry"]:
+		for scene: PackedScene in (load("res://biomes/%s.tres" % biome_path) as Biome).set_pieces:
+			if not scenes.has(scene):
+				scenes.append(scene)
 	for scene: PackedScene in scenes:
 		await _check_lines(scene)
 	var joins: int = 0

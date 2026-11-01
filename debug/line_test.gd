@@ -41,6 +41,11 @@ func _run() -> void:
 	var builder: StageBuilder = StageBuilder.new()
 	var scenes: Array[PackedScene] = builder.middle_chunks.duplicate()
 	scenes.append_array(builder.set_pieces)
+	# v0.16: the biomes' own set pieces.
+	for biome_path: String in ["meadow", "canyon", "snow", "quarry"]:
+		for scene: PackedScene in (load("res://biomes/%s.tres" % biome_path) as Biome).set_pieces:
+			if not scenes.has(scene):
+				scenes.append(scene)
 	scenes.append(builder.finish_chunk)
 	builder.free()
 	_player = PLAYER.instantiate() as Player

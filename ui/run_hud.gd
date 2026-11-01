@@ -62,12 +62,17 @@ func _process(delta: float) -> void:
 		_penalty_total = 0.0
 
 
-## Black screen fading out over `seconds` (v0.15: covers the stage build).
+## Full black (the game draws it for a frame or two before a stage build).
+func black_out() -> void:
+	fade.visible = true
+	fade.modulate.a = 1.0
+
+
+## Black screen fading out over `seconds` (v0.15: after the stage build).
 func fade_in(seconds: float) -> void:
 	fade.visible = true
 	fade.modulate.a = 1.0
 	var tween: Tween = create_tween()
-	tween.tween_interval(0.1)
 	tween.tween_property(fade, "modulate:a", 0.0, seconds)
 	tween.tween_callback(fade.hide)
 

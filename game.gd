@@ -158,8 +158,11 @@ func start_stage() -> void:
 	if not biomes.is_empty():
 		apply_biome(biomes[(stage_index + biome_offset) % biomes.size()])
 	hud.visible = true
-	# A short fade hides the frame or two the stage build takes.
-	hud.fade_in(0.45)
+	# Black first (drawn for two frames), then the blocking build, then the
+	# fade out once the stage is ready.
+	hud.black_out()
+	await get_tree().process_frame
+	await get_tree().process_frame
 	var stage_seed: int = _rng.randi()
 	builder.build(stage_seed, middle_chunks, stage_index)
 	# Grass builds nearest the start first (the rider is parked far away).
@@ -168,6 +171,7 @@ func start_stage() -> void:
 	for i: int in 3:
 		await get_tree().physics_frame
 	hazards.populate(builder, stage_index, stage_seed)
+	hud.fade_in(0.45)
 	player.shields_left = int(run_tuning.crash_shields)
 	var spawn: Transform3D = builder.get_spawn_transform()
 	var forward: Vector3 = -spawn.basis.z
@@ -335,7 +339,7 @@ func _open_main_menu() -> void:
 func _on_ride(b: BikeData) -> void:
 	_in_menu = false
 	menu_camera.current = false
-	(player.camera_rig.get_node(^"SpringArm3D/Camera3D") as Camera3D).current = true
+	player.camera_rig.make_current()
 	bike = b
 	start_run(_seed_arg)
 

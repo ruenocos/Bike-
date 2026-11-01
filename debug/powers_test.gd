@@ -5,6 +5,8 @@ extends Node3D
 ##     you ride into it; hopping it (the bots' hop timing) clears it
 ##   - Crash Shield smashes through it at full speed
 ##   - a tree coming down on a slow rider is a crash too (its falling trunk)
+##   - a tree first seen too late to fall in time (55 m at 55 m/s) is
+##     already down: a log the bot hops, never a tree landing on you
 ##   - Double Hop: releasing hop in the air pops you up again
 ##   - Gate Magnet pulls you through a gate 5 m off your line (without it
 ##     you miss it)
@@ -51,6 +53,7 @@ func _run() -> void:
 	await _tree_case("falling tree, bot hop timing: clears it", true, 0, false)
 	await _tree_case("falling tree, Crash Shield: smash through at full speed", false, 1, false)
 	await _slow_rider_case()
+	await _late_sight_case()
 	await _double_hop_case()
 	await _gate_case("gate 5 m off the line, Gate Magnet: pulled through", 10.0, true)
 	await _gate_case("gate 5 m off the line, no magnet: missed", 0.0, false)
@@ -220,4 +223,29 @@ func _slow_rider_case() -> void:
 		_fail("tree onto a slow rider: no crash (rider at z %.1f, tree down %s)" % [_player.global_position.z, tree.down])
 	Input.action_release(&"brake")
 	print("case | tree falls on a slow rider | bails %d (%s)" % [_bails, _player.last_bail_reason])
+	tree.queue_free()
+
+
+func _late_sight_case() -> void:
+	await _start(TUNING.duplicate() as PlayerTuning, 55.0)
+	var cross: Vector3 = _ground(0.0, -320.0)
+	var tree: FallingTree = TREE.instantiate() as FallingTree
+	tree.can_see = func() -> bool: return _player.global_position.distance_to(cross) < 55.0
+	add_child(tree)
+	tree.global_position = _ground(5.0, -320.0)
+	tree.look_at(Vector3(cross.x, tree.global_position.y, cross.z), Vector3.UP)
+	tree.crossing = cross
+	var fell: bool = false
+	for i: int in 60 * 8:
+		await get_tree().physics_frame
+		LineFollower.hop_for_rails(_player)
+		fell = fell or tree.falling
+		if _player.global_position.z < -360.0:
+			break
+	Input.action_release(&"hop")
+	if fell:
+		_fail("late sight: the tree fell instead of being already down")
+	if _bails > 0:
+		_fail("late sight: crashed (%s)" % _player.last_bail_reason)
+	print("case | tree first seen at 55 m, 55 m/s | fell %s, bails %d" % [fell, _bails])
 	tree.queue_free()

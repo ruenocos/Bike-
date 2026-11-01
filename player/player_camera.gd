@@ -63,6 +63,11 @@ func _ready() -> void:
 
 
 ## Jumps straight to the rider (after a teleport: respawn, new stage).
+## Makes this the active camera (after the title screen's flyover camera).
+func make_current() -> void:
+	(get_node(^"SpringArm3D/Camera3D") as Camera3D).current = true
+
+
 func snap() -> void:
 	global_position = player.global_position
 	rotation = Vector3(0.0, player.heading, 0.0)

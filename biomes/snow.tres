@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="Biome" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="Biome" load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://biomes/biome.gd" id="1_biome"]
+[ext_resource type="PackedScene" path="res://chunks/landscape/set_cornice.tscn" id="90_set"]
 [ext_resource type="Resource" path="res://chunks/terrain/cover/snow.tres" id="2_cover"]
 [ext_resource type="PackedScene" path="res://art/nature/megakit/Pine_1.gltf" id="3_m"]
 [ext_resource type="PackedScene" path="res://art/nature/megakit/Pine_2.gltf" id="4_m"]
@@ -10,9 +11,10 @@
 
 [resource]
 script = ExtResource("1_biome")
+set_pieces = Array[PackedScene]([ExtResource("90_set")])
 display_name = "Snowline"
 subtitle = "Thin air above the trees"
-ground_dirt = Color(0.76, 0.8, 0.88, 1)
+ground_dirt = Color(0.68, 0.72, 0.8, 1)
 ground_grass = Color(0.5, 0.56, 0.52, 1)
 ground_rock = Color(0.34, 0.36, 0.43, 1)
 grass_tip = Color(0.74, 0.78, 0.7, 1)
@@ -28,7 +30,7 @@ sky_top = Color(0.22, 0.38, 0.7, 1)
 sky_horizon = Color(0.78, 0.82, 0.9, 1)
 ground_horizon = Color(0.8, 0.84, 0.92, 1)
 fog_color = Color(0.74, 0.79, 0.88, 1)
-fog_density = 0.0006
+fog_density = 0.0004
 sun_color = Color(1, 0.95, 0.86, 1)
 sun_energy = 1.2
 sun_elevation = 24.0

@@ -223,11 +223,11 @@ static func set_pieces() -> Array[Dictionary]:
 		"kickers_at": [{"name": "YardKicker1Pad", "at": Vector2(-30, 90), "aim": Vector2(-30, 170), "scale": Vector3(1.1, 1.3, 1.0), "gate_ahead": 28.0, "gate_up": 6.0},
 			{"name": "YardKicker2Pad", "at": Vector2(25, 150), "aim": Vector2(25, 230), "scale": Vector3(1.1, 1.3, 1.0), "gate_ahead": 28.0, "gate_up": 6.0},
 			{"name": "YardKicker3Pad", "at": Vector2(-20, 255), "aim": Vector2(-20, 335), "scale": Vector3(1.2, 1.5, 1.0), "gate_ahead": 34.0, "gate_up": 8.0}],
-		"rails_at": [{"name": "YardRail1", "points": [Vector3(0, 95, 0.75), Vector3(0, 150, 0.75)]},
+		"rails_at": [{"name": "YardRail1", "points": [Vector3(-8, 95, 0.75), Vector3(-8, 150, 0.75)]},
 			{"name": "YardRail2", "points": [Vector3(40, 262, 0.75), Vector3(40, 312, 0.75)]}],
 		"paths": [[Vector2(0, 0), Vector2(-28, 50), Vector2(-30, 85), Vector2(-30, 200), Vector2(-20, 240), Vector2(-20, 330), Vector2(0, 400)],
 			[Vector2(0, 0), Vector2(22, 60), Vector2(25, 140), Vector2(25, 225), Vector2(40, 255), Vector2(40, 330), Vector2(0, 400)],
-			[Vector2(0, 0), Vector2(0, 340), Vector2(0, 400)]],
+			[Vector2(0, 0), Vector2(8, 60), Vector2(10, 340), Vector2(0, 400)]],
 		"clusters": 3.0, "mix": {"rock": 4, "tree": 2, "fence": 1}})
 	return out
 

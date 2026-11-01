@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="Biome" load_steps=9 format=3]
+[gd_resource type="Resource" script_class="Biome" load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://biomes/biome.gd" id="1_biome"]
+[ext_resource type="PackedScene" path="res://chunks/landscape/set_mesa_launch.tscn" id="90_set"]
 [ext_resource type="Resource" path="res://chunks/terrain/cover/canyon.tres" id="2_cover"]
 [ext_resource type="PackedScene" path="res://art/nature/megakit/DeadTree_1.gltf" id="3_m"]
 [ext_resource type="PackedScene" path="res://art/nature/megakit/DeadTree_2.gltf" id="4_m"]
@@ -11,6 +12,7 @@
 
 [resource]
 script = ExtResource("1_biome")
+set_pieces = Array[PackedScene]([ExtResource("90_set")])
 display_name = "Red Rock Canyon"
 subtitle = "Dry wind, hard ground"
 ground_dirt = Color(0.58, 0.44, 0.36, 1)

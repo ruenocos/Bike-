@@ -17,6 +17,9 @@ extends Node3D
 @export_range(0.0, 20.0, 0.5) var warn_shake_deg: float = 4.0
 ## How long it has been down when you reach it at your current speed (s).
 @export_range(0.0, 5.0, 0.05, "suffix:s") var reaction_time: float = 1.0
+## Seen with less than fall_time + this left before you get there (s), it
+## doesn't fall at all: it's already down (a log to hop).
+@export_range(0.0, 2.0, 0.05, "suffix:s") var min_fall_margin: float = 0.3
 ## Never later than this (m), whatever the speed.
 @export_range(5.0, 500.0, 1.0, "suffix:m") var min_trigger_distance: float = 45.0
 ## Editor preview: 0 = standing, 1 = down.
@@ -33,6 +36,8 @@ var down: bool = false
 var _t: float = 0.0
 var _warn: float = 0.0
 var _player: Player
+## Line-of-sight check (tests swap it before adding the tree).
+var can_see: Callable
 
 @onready var pivot: Node3D = $Pivot
 @onready var dust: CPUParticles3D = $Dust
@@ -42,6 +47,8 @@ var _player: Player
 
 func _ready() -> void:
 	add_to_group(&"hop_hazards")
+	if not can_see.is_valid():
+		can_see = _can_see
 	_set_fall(preview_fall if Engine.is_editor_hint() else 0.0)
 	if crossing == Vector3.ZERO:
 		crossing = global_position - global_basis.z * 5.0
@@ -63,8 +70,13 @@ func _physics_process(delta: float) -> void:
 		# Only when it's ahead of you.
 		if heading.length() < 1.0 or to.dot(heading) <= 0.0:
 			return
-		if to.length() < _player.speed * (fall_time + reaction_time) and _can_see():
-			falling = true
+		if to.length() < _player.speed * (fall_time + reaction_time) and can_see.call():
+			# Seen in time to fall and land before you arrive? Else it's down.
+			if to.length() / maxf(_player.speed, 1.0) > fall_time + min_fall_margin:
+				falling = true
+			else:
+				_set_fall(1.0)
+				down = true
 		elif to.length() < min_trigger_distance:
 			# Never in view in time (behind a crest): it's simply already
 			# down, a log to hop, never a tree landing on you unseen.
