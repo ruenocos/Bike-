@@ -65,9 +65,9 @@ Prefer editor-visible setup: scenes, nodes, .tres, @export, @tool previews; code
 - Camera: spring arm, look-ahead on velocity, position damping 0.08 s, rotation 0.2 s; lower and further back than a runner cam.
 
 ## Input map (to set up)
-steer_left/right: left stick X · lean_forward: left stick up = pump (ground only; lean_back unused since v0.6) · pedal: RT · brake: LT · hop: South (hold to charge) · grind: West = No Hander in the air (v0.18; rails catch you by themselves since v0.9.1) · menus: A confirm / B back · F3 debug readout · trick_left/right/up/down: right stick · pause: Start
+steer_left/right: left stick X · lean_forward: left stick up = pump (ground only; lean_back unused since v0.6) · pedal: RT · brake: LT · hop: South (hold to charge) · no_hander: West = No Hander in the air (v0.18/v0.19; the old `grind` action is also on West but unused: rails catch you by themselves since v0.9.1) · pause: Start (v0.19 pause menu) · menus: A confirm / B back · F3 debug readout · trick_left/right/up/down: right stick
 
-## Status (2026-11-01, v0.18 on branch `landscape`)
+## Status (2026-11-01, v0.19 on branch `landscape`)
 Done (v0.1): project settings, input map (+ debug_reset on Back/R), test track, Player with Ride/Air/Land/Bail, landing grades, debug overlay, physics interpolation. Feel gate approved by Wons.
 Done (v0.2, phase 2 batch A):
 - tricks/: TrickData resource + 4 starter tricks in tricks/data (up Frontloop, down Pocket, left/right Whirl). TrickRunner (child of Player) reads right-stick flicks (neutral -> >0.7 within 0.15 s), plays them on the Visual around the hips, chains a new flick in the last 30%.
@@ -256,6 +256,11 @@ Done (v0.18 "No Hander", branch `landscape`, + fixes from the external review of
 - Collapse debris (rocks flying past) only once the collapse is close (RiderVfx `debris_from` 0.45); from further away they looked like tiles floating in the sky.
 - Review fixes: no carve roll or air look-down on the halfpipe camera, and none in Bail / Land; the look-down only ramps in over the last `cam_air_look_down_time` 0.5 s before touchdown (predict_landing), so a long drop isn't pitched down the whole way; HUD combo fade uses the game's delta.
 - Tests: powers test + No Hander let go in the air, let go just after touchdown (grace), held after touchdown (bail).
+Done (v0.19 "pause and run stats", branch `landscape`, + fixes from the external review of v0.18):
+- Pause menu (ui/menus/pause_menu.tscn, PauseMenu, process mode Always): Start pauses a running stage; Resume (or Start / B), Restart run, Title screen.
+- Run over shows the whole run: best combo, tricks, boost gates, distance (km), top speed (km/h), time riding, plus the bests and NEW BEST / unlock lines.
+- No Hander on its own InputMap action `no_hander` (West); one scoring path Player.finish_no_hander() (uses `trick_score_scale`, so Showboat counts; counts toward the landing trick boost only while in the air); a rail catching you mid No Hander banks it.
+- Tests: menu test + pause menu (A resumes, down down A → title screen).
 Tweak in the editor (v0.9):
 - Any chunk in chunks/landscape/: select Terrain for size/slope/noise/edges and the bend (Bend > heading_curve) / narrowing (width_profile); drag the shaping nodes under Terrain (gullies, ridges, rollers, rail beds, kicker pads: they rebuild live); move props under Terrain/Props then press "Snap props to ground"; RollingBoulder `roll_to` / `trigger_distance` / `roll_time`; TightZone `size`. Lines/Path* are invisible bot/respawn paths: if you move props onto one, the smoke test will say so.
 - Set pieces: chunks/landscape/set_cliff.tscn, set_ravine.tscn, set_bend_kicker.tscn, set_rail_gap.tscn, set_canyon_slot.tscn, set_fork.tscn (Terrain slope_profile for the cliff, the Ravine gully, the big kicker pads, Gates/*). Boost gates: any Gates/Gate* node (speed_boost, score, radius); drag one onto a risky spot. Rerolls: scoring/run_rules.tres.

@@ -31,6 +31,11 @@ func open(stage: int, run_score: int, upgrades: int, report: Dictionary = {}) ->
 		news.append("NEW BEST SCORE!")
 	for b: BikeData in report.get("unlocked", []):
 		news.append("Unlocked: %s" % b.display_name)
+	var st: Dictionary = report.get("stats", {})
+	if not st.is_empty():
+		stats_label.text += "\n\nBest combo      %d\nTricks          %d\nBoost gates     %d\nDistance        %.1f km\nTop speed       %d km/h\nTime riding     %d:%02d" % [
+			st["best_combo"], st["tricks"], st["gates"], st["km"], roundi(st["top_speed"]),
+			floori(st["time"] / 60.0), int(st["time"]) % 60]
 	news_label.text = "\n".join(news)
 	news_label.visible = not news.is_empty()
 	show()

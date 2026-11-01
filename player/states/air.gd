@@ -43,19 +43,12 @@ func enter(msg: Dictionary) -> void:
 ## after no_hander_min_time banks it as a trick worth the time held; still
 ## holding at touchdown is a bail (Land checks player.no_hander).
 func _update_no_hander(delta: float) -> void:
-	var t: PlayerTuning = player.tuning
-	var hold: bool = Input.is_action_pressed(&"grind") and _lip_normal == Vector3.ZERO
+	var hold: bool = Input.is_action_pressed(&"no_hander") and _lip_normal == Vector3.ZERO
 	if hold:
 		player.no_hander = true
 		player.no_hander_time += delta
 	elif player.no_hander:
-		player.no_hander = false
-		if player.no_hander_time >= t.no_hander_min_time:
-			var score: int = roundi(player.no_hander_time * t.no_hander_score_per_second / 10.0) * 10
-			player.combo.add_action(score)
-			player.air_tricks += 1
-			Events.trick_completed.emit("No Hander", score)
-		player.no_hander_time = 0.0
+		player.finish_no_hander()
 
 
 func exit() -> void:

@@ -53,6 +53,7 @@ extends Node3D
 @onready var picker: UpgradePicker = $Menus/UpgradePicker
 @onready var run_over: RunOver = $Menus/RunOver
 @onready var main_menu: MainMenu = $Menus/MainMenu
+@onready var pause_menu: PauseMenu = $Menus/PauseMenu
 @onready var far_ground: Node3D = $FarGround
 @onready var start_sprint: StartSprint = $StartSprint
 @onready var mountains: MountainRing = $Mountains
@@ -66,6 +67,12 @@ var biome: Biome
 var bike: BikeData
 ## Boost gates collected this run, all stages (for the lifetime total).
 var run_gates: int = 0
+## Run stats for the run-over screen (v0.19).
+var run_tricks: int = 0
+var run_best_combo: int = 0
+var run_top_speed: float = 0.0
+var run_distance: float = 0.0
+var run_time: float = 0.0
 var _seed_arg: int = -1
 ## Title screen flyover: metres along the backdrop stage.
 var _menu_flight: float = 0.0
@@ -106,6 +113,17 @@ func _ready() -> void:
 	run_over.restart.connect(start_run)
 	run_over.to_menu.connect(_open_main_menu)
 	main_menu.ride.connect(_on_ride)
+	pause_menu.resumed.connect(_unpause)
+	pause_menu.restart.connect(func() -> void:
+		_unpause()
+		in_stage = false
+		start_run(_seed_arg))
+	pause_menu.to_menu.connect(func() -> void:
+		_unpause()
+		_open_main_menu())
+	Events.trick_completed.connect(func(_n: String, _s: int) -> void:
+		if in_stage:
+			run_tricks += 1)
 	start_sprint.launched.connect(_on_launched)
 	Events.bailed.connect(_on_bailed)
 	Events.gate_collected.connect(func(score: int) -> void: hud.flash_gate(score))
@@ -143,6 +161,11 @@ func start_run(new_seed: int = -1) -> void:
 		player.rider.set_frame_color(bike.frame_color)
 	player.tuning = run_tuning
 	run_gates = 0
+	run_tricks = 0
+	run_best_combo = 0
+	run_top_speed = 0.0
+	run_distance = 0.0
+	run_time = 0.0
 	upgrades_taken.clear()
 	rerolls = rules.start_rerolls
 	player.combo.drop()
@@ -200,6 +223,7 @@ func _physics_process(delta: float) -> void:
 	if not in_stage:
 		return
 	player_progress = builder.progress_at(player.global_position)
+	run_top_speed = maxf(run_top_speed, player.speed)
 	var track_y: float = builder.transform_at_distance(player_progress).origin.y
 	player.kill_y = track_y - fall_margin
 	start_sprint.tick(delta, player_progress > _drop_in_distance)
@@ -304,12 +328,32 @@ func _on_finished() -> void:
 	player.combo.bank()
 	stats.stop()
 	run_gates += stats.gates
+	_add_stage_stats(builder.finish_distance)
 	collapse.stop()
 	_freeze_player()
 	var earned: int = rules.earned(stats.gates, stats.score)
 	rerolls = mini(rerolls + earned, rules.max_rerolls)
 	summary.open(stage_index + 1, stats.time, stats.best_combo, stats.score, player.combo.run_total,
 			stats.gates, stats.gates_total, earned, rerolls)
+
+
+func _add_stage_stats(distance: float) -> void:
+	run_best_combo = maxi(run_best_combo, stats.best_combo)
+	run_distance += maxf(distance, 0.0)
+	run_time += stats.time
+
+
+## Start pauses a running stage (the pause menu takes it from there).
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed(&"pause") and in_stage and not get_tree().paused:
+		get_viewport().set_input_as_handled()
+		get_tree().paused = true
+		Input.stop_joy_vibration(0)
+		pause_menu.open()
+
+
+func _unpause() -> void:
+	get_tree().paused = false
 
 
 ## The title screen over the empty sky (the stage is built on Ride).
@@ -404,7 +448,10 @@ func _on_caught() -> void:
 	player.combo.drop()
 	_freeze_player()
 	run_gates += stats.gates
+	_add_stage_stats(player_progress)
 	var report: Dictionary = Save.record_run(stage_index + 1, player.combo.run_total, run_gates, bikes)
+	report["stats"] = {"best_combo": run_best_combo, "tricks": run_tricks, "gates": run_gates,
+		"km": run_distance / 1000.0, "top_speed": run_top_speed * 3.6, "time": run_time}
 	run_over.open(stage_index + 1, player.combo.run_total, upgrades_taken.size(), report)
 
 
@@ -450,5 +497,5 @@ func _freeze_player() -> void:
 	player.vfx.set_collapse_proximity(0.0)
 	Input.stop_joy_vibration(0)
 	hud.show_out_of_bounds(-1.0)
-	for action: StringName in [&"hop", &"pedal", &"brake", &"grind", &"steer_left", &"steer_right"]:
+	for action: StringName in [&"hop", &"pedal", &"brake", &"grind", &"no_hander", &"steer_left", &"steer_right"]:
 		Input.action_release(action)

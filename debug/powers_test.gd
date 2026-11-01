@@ -270,19 +270,19 @@ func _no_hander_case(mode: int) -> void:
 	_player.state_machine.transition_to(&"Air", {})
 	_bails = 0
 	await get_tree().physics_frame
-	Input.action_press(&"grind")
+	Input.action_press(&"no_hander")
 	var after: int = -1
 	for i: int in 60 * 3:
 		await get_tree().physics_frame
 		if mode == 0 and _player.no_hander_time > 0.45:
-			Input.action_release(&"grind")
+			Input.action_release(&"no_hander")
 		if after < 0 and _player.state_machine.get_state_name() != &"Air":
 			after = 0
 		if after >= 0:
 			after += 1
 			if (mode == 1 and after >= 3) or (mode == 2 and after >= 24):
 				break
-	Input.action_release(&"grind")
+	Input.action_release(&"no_hander")
 	for i: int in 10:
 		await get_tree().physics_frame
 	Events.trick_completed.disconnect(on_trick)

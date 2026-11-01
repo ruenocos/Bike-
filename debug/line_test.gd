@@ -73,7 +73,7 @@ func _run() -> void:
 			rides += 1
 		chunk.queue_free()
 		await get_tree().physics_frame
-	for action: StringName in [&"pedal", &"grind", &"steer_left", &"steer_right"]:
+	for action: StringName in [&"pedal", &"grind", &"no_hander", &"steer_left", &"steer_right"]:
 		Input.action_release(action)
 	print("LINE TEST rode %d lines" % rides)
 	for f: String in _failures:

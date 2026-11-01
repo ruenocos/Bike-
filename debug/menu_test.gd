@@ -4,6 +4,7 @@ extends Node
 ##   - stage summary: A continues
 ##   - upgrade picker: A picks the focused card; d-pad down reaches REROLL and A rerolls
 ##   - run over: A restarts, d-pad down + A goes to the title screen
+##   - pause menu (v0.19): A resumes, d-pad down twice + A goes to the title
 ##   - title screen (v0.14): d-pad right shows the next bike, A on a locked
 ##	 bike does nothing, back to the first bike and A rides on it
 ## Found in v0.9.1: ui_accept had no pad button, so A did nothing in menus.
@@ -46,7 +47,8 @@ func _run() -> void:
 	var picker: UpgradePicker = (load("res://ui/menus/upgrade_picker.tscn") as PackedScene).instantiate() as UpgradePicker
 	var run_over: RunOver = (load("res://ui/menus/run_over.tscn") as PackedScene).instantiate() as RunOver
 	var title: MainMenu = (load("res://ui/menus/main_menu.tscn") as PackedScene).instantiate() as MainMenu
-	for menu: Control in [summary, picker, run_over, title]:
+	var pause: PauseMenu = (load("res://ui/menus/pause_menu.tscn") as PackedScene).instantiate() as PauseMenu
+	for menu: Control in [summary, picker, run_over, title, pause]:
 		layer.add_child(menu)
 	var got: Dictionary[String, int] = {"continued": 0, "picked": 0, "reroll": 0, "restart": 0, "menu": 0, "ride": 0}
 	var rode: Array[BikeData] = []
@@ -86,6 +88,20 @@ func _run() -> void:
 	await _button(JOY_BUTTON_DPAD_DOWN)
 	await _button(JOY_BUTTON_A)
 	_check(got["menu"] == 1, "run over: d-pad down + A goes to the title screen")
+
+	var paused: Dictionary[String, int] = {"resumed": 0, "menu": 0}
+	pause.resumed.connect(func() -> void: paused["resumed"] += 1)
+	pause.to_menu.connect(func() -> void: paused["menu"] += 1)
+	pause.open()
+	await get_tree().create_timer(0.5).timeout
+	await _button(JOY_BUTTON_A)
+	_check(paused["resumed"] == 1, "pause menu: A resumes")
+	pause.open()
+	await get_tree().create_timer(0.5).timeout
+	await _button(JOY_BUTTON_DPAD_DOWN)
+	await _button(JOY_BUTTON_DPAD_DOWN)
+	await _button(JOY_BUTTON_A)
+	_check(paused["menu"] == 1, "pause menu: d-pad down twice + A goes to the title screen")
 
 	var bikes: Array[BikeData] = [load("res://player/bikes/trail.tres"), load("res://player/bikes/dart.tres")]
 	title.open(bikes, 0)

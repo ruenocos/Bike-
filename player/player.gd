@@ -245,17 +245,26 @@ func start_no_hander_grace() -> void:
 	_no_hander_grace = maxf(tuning.no_hander_grace, 0.001)
 
 
+## Ends a No Hander that was let go in time: long enough holds score
+## (time × no_hander_score_per_second × trick_score_scale, a combo action);
+## in the air it also counts toward the landing's trick boost.
+func finish_no_hander() -> void:
+	_no_hander_grace = 0.0
+	no_hander = false
+	if no_hander_time >= tuning.no_hander_min_time:
+		var score: int = roundi(no_hander_time * tuning.no_hander_score_per_second * tuning.trick_score_scale / 10.0) * 10
+		combo.add_action(score)
+		if state_machine.get_state_name() == &"Air":
+			air_tricks += 1
+		Events.trick_completed.emit("No Hander", score)
+	no_hander_time = 0.0
+
+
 func _update_no_hander_grace(delta: float) -> void:
 	if _no_hander_grace <= 0.0:
 		return
-	if not Input.is_action_pressed(&"grind"):
-		_no_hander_grace = 0.0
-		no_hander = false
-		if no_hander_time >= tuning.no_hander_min_time:
-			var score: int = roundi(no_hander_time * tuning.no_hander_score_per_second / 10.0) * 10
-			combo.add_action(score)
-			Events.trick_completed.emit("No Hander", score)
-		no_hander_time = 0.0
+	if not Input.is_action_pressed(&"no_hander"):
+		finish_no_hander()
 		return
 	_no_hander_grace -= delta
 	if _no_hander_grace <= 0.0:

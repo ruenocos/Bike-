@@ -15,6 +15,9 @@ var _snap_gap: Vector3 = Vector3.ZERO
 
 
 func enter(msg: Dictionary) -> void:
+	# Caught by a rail mid No Hander: it counts (hands back on for the grind).
+	if player.no_hander:
+		player.finish_no_hander()
 	var t: PlayerTuning = player.tuning
 	var snap: RailSnap = msg["snap"]
 	_rail = snap.rail

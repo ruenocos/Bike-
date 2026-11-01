@@ -1,10 +1,11 @@
-[gd_scene load_steps=44 format=3]
+[gd_scene load_steps=45 format=3]
 
 [ext_resource type="Script" path="res://game.gd" id="1_game"]
 [ext_resource type="Script" path="res://biomes/biome.gd" id="30_biome"]
 [ext_resource type="Script" path="res://hazards/hazard_director.gd" id="35_hazards"]
 [ext_resource type="Script" path="res://biomes/biome_look.gd" id="39_look"]
 [ext_resource type="PackedScene" path="res://ui/menus/main_menu.tscn" id="40_main_menu"]
+[ext_resource type="PackedScene" path="res://ui/menus/pause_menu.tscn" id="46_pause"]
 [ext_resource type="Script" path="res://player/bikes/bike_data.gd" id="41_bike"]
 [ext_resource type="Resource" path="res://player/bikes/trail.tres" id="42_trail"]
 [ext_resource type="Resource" path="res://player/bikes/dart.tres" id="43_dart"]
@@ -146,3 +147,5 @@ layer = 20
 [node name="RunOver" parent="Menus" instance=ExtResource("10_run_over")]
 
 [node name="MainMenu" parent="Menus" instance=ExtResource("40_main_menu")]
+
+[node name="PauseMenu" parent="Menus" instance=ExtResource("46_pause")]
