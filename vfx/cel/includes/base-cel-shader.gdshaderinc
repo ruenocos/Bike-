@@ -11,6 +11,11 @@ float is_lit(vec3 light, vec3 normal, float attenuation) {
 	return attenuation * diffuse_sample(light, normal);
 }
 
+// Bike! (v0.25): the shadow side gets a coloured fill (per biome, Shader
+// Globals shadow_tint / shadow_tint_strength) instead of only grey ambient.
+global uniform vec4 shadow_tint : source_color;
+global uniform float shadow_tint_strength;
+
 vec3 diffuse_light(
 		vec3 albedo,
 		vec3 light_color,
@@ -18,7 +23,8 @@ vec3 diffuse_light(
 		vec3 normal,
 		float attenuation
 ) {
-	return albedo * light_color * is_lit(light, normal, attenuation);
+	float lit = is_lit(light, normal, attenuation);
+	return albedo * light_color * lit + albedo * shadow_tint.rgb * (1.0 - lit) * shadow_tint_strength;
 }
 
 vec3 specular_light(

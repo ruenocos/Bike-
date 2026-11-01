@@ -35,6 +35,8 @@ extends Resource
 @export var prop_tint: Color = Color.WHITE
 ## Multiplies the rider's dust / spray / landing puffs.
 @export var dust_tint: Color = Color.WHITE
+## Colour of the fill on the shadow side of everything (cel dark band).
+@export var shadow_tint: Color = Color(0.52, 0.55, 0.78)
 ## Ink lines around props and the rider (darker = more contrast).
 @export var outline_color: Color = Color(0.16, 0.1, 0.09)
 

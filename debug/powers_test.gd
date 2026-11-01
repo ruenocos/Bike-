@@ -305,7 +305,9 @@ func _bridge_short_case() -> void:
 	add_child(chunk)
 	for i: int in 4:
 		await get_tree().physics_frame
+	# Path1 is the bridge side (x -26, over the BridgeIn / BridgeOut ramps).
 	var line: RideLine = chunk.get_node("Lines/Path1") as RideLine
+	var cut_rim: float = (chunk.get_node("Terrain") as TerrainPatch).height_at_local(Vector3(-26.0, 0.0, -170.0)) + chunk.global_position.y
 	var pts: PackedVector3Array = line.get_global_points()
 	var k: int = int(pts.size() * 0.4)
 	var dir: Vector3 = (pts[k + 2] - pts[k]).normalized()
@@ -316,11 +318,16 @@ func _bridge_short_case() -> void:
 	_player.velocity = dir * 25.0
 	_player.state_machine.transition_to(&"Air", {})
 	_bails = 0
-	var end_d: float = 0.0
+	var lowest: float = INF
 	for i: int in 60 * 10:
 		await get_tree().physics_frame
 		LineFollower.steer(_player, line, 12.0)
+		var local_z: float = -(chunk.to_local(_player.global_position).z)
+		if local_z > 200.0 and local_z < 232.0:
+			lowest = minf(lowest, _player.global_position.y)
 	var far: int = line.nearest_index(_player.global_position)
+	if lowest > cut_rim - 3.0:
+		_fail("bridge gap, short: never dropped into the cut (lowest %.1f, rim %.1f)" % [lowest, cut_rim])
 	if far < int(pts.size() * 0.75) or _bails > 0:
 		_fail("bridge gap, short: stuck in the cut (reached %d%% of the way, bails %d, %s, speed %.1f)" % [roundi(100.0 * far / pts.size()), _bails, _player.last_bail_reason, _player.speed])
 	print("case | bridge gap, 25 m/s short launch | reached %d%% of the way, bails %d" % [roundi(100.0 * far / pts.size()), _bails])

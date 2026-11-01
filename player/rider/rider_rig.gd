@@ -86,6 +86,7 @@ func _ready() -> void:
 	_pose = _pick(preview).duplicate() if _pick(preview) != null else RiderPose.new()
 	if not Engine.is_editor_hint():
 		CelLook.apply(self, outline)
+		_add_rim(self)
 		var parent: Node = get_parent()
 		while parent != null and not parent is Player:
 			parent = parent.get_parent()
@@ -213,6 +214,22 @@ func _solve() -> void:
 		_segment(parts[3], shoulder, arm[0])
 		_segment(parts[4], arm[0], arm[1])
 		(parts[5] as Node3D).position = arm[1]
+
+
+## A warm rim on the rider and bike (v0.25) so they stand out from the
+## ground: a stronger fresnel on their own cel materials.
+@export var rim_color: Color = Color(1.0, 0.86, 0.62, 0.45)
+
+
+func _add_rim(node: Node) -> void:
+	var mi: MeshInstance3D = node as MeshInstance3D
+	if mi != null:
+		for s: int in mi.mesh.get_surface_count():
+			var mat: ShaderMaterial = mi.get_surface_override_material(s) as ShaderMaterial
+			if mat != null:
+				mat.set_shader_parameter(&"fresnel", rim_color)
+	for child: Node in node.get_children():
+		_add_rim(child)
 
 
 ## Paints the frame tubes (the bike's colour, v0.14).

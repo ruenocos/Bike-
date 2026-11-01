@@ -182,3 +182,19 @@ ground_variation={
 "type": "float",
 "value": 0.06
 }
+shadow_tint={
+"type": "color",
+"value": Color(0.52, 0.55, 0.78, 1)
+}
+shadow_tint_strength={
+"type": "float",
+"value": 0.3
+}
+outline_fade_start={
+"type": "float",
+"value": 40.0
+}
+outline_fade_end={
+"type": "float",
+"value": 150.0
+}

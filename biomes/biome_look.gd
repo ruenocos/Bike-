@@ -26,6 +26,7 @@ func apply(b: Biome) -> void:
 	RenderingServer.global_shader_parameter_set(&"ground_rock", b.ground_rock)
 	RenderingServer.global_shader_parameter_set(&"grass_tip", b.grass_tip)
 	RenderingServer.global_shader_parameter_set(&"outline_color", b.outline_color)
+	RenderingServer.global_shader_parameter_set(&"shadow_tint", b.shadow_tint)
 	RenderingServer.global_shader_parameter_set(&"ground_variation", b.ground_variation)
 	if world_environment != null and world_environment.environment != null:
 		var env: Environment = world_environment.environment

@@ -19,6 +19,7 @@ far_ground = Color(0.46, 0.41, 0.33, 1)
 trees = Array[PackedScene]([])
 rocks = Array[PackedScene]([])
 tree_scale = 1.0
+shadow_tint = Color(0.52, 0.55, 0.78, 1)
 prop_tint = Color(1, 1, 1, 1)
 sky_top = Color(0.17, 0.29, 0.56, 1)
 sky_horizon = Color(1, 0.72, 0.5, 1)
