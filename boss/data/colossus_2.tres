@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="BossData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://boss/boss_data.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+display_name = "COLOSSUS"
+subtitle = "Bigger, angrier, two rings per slam."
+tint = Color(1, 0.78, 0.7, 1)
+model_scale = 3.4
+max_health = 220.0
+time_limit = 160.0
+walk_speed = 6.0
+attack_interval = 3.8
+shockwave_speed = 28.0
+shockwave_rings = 2
+mortar_count = 7
+mortar_delay = 1.35
+charge_speed = 30.0
+charge_weight = 0.9
+score = 8000
+reward_rerolls = 1

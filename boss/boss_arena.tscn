@@ -1,0 +1,59 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://boss/boss_arena.gd" id="1_arena"]
+[ext_resource type="Shader" path="res://vfx/cel/cel-shader-base.gdshader" id="2_cel"]
+[ext_resource type="Texture2D" path="res://boss/textures/arena_tile.png" id="3_tile"]
+[ext_resource type="Texture2D" path="res://boss/textures/arena_stripe.png" id="4_stripe"]
+[ext_resource type="Shader" path="res://vfx/cel/outline.gdshader" id="5_outline"]
+
+[sub_resource type="ShaderMaterial" id="Mat_rock_line"]
+render_priority = 0
+shader = ExtResource("5_outline")
+shader_parameter/color = Color(0.36, 0.3, 0.27, 1)
+shader_parameter/local_mix = 0.7
+
+[sub_resource type="ShaderMaterial" id="Mat_floor"]
+render_priority = 0
+shader = ExtResource("2_cel")
+shader_parameter/color = Color(1, 1, 1, 1)
+shader_parameter/base_texture = ExtResource("3_tile")
+shader_parameter/specular = Color(0.15, 0.15, 0.15, 0.2)
+shader_parameter/fresnel = Color(0.35, 0.28, 0.2, 0.25)
+
+[sub_resource type="ShaderMaterial" id="Mat_stripe"]
+render_priority = 0
+shader = ExtResource("2_cel")
+shader_parameter/color = Color(1, 1, 1, 1)
+shader_parameter/base_texture = ExtResource("4_stripe")
+shader_parameter/specular = Color(0.15, 0.15, 0.15, 0.2)
+shader_parameter/fresnel = Color(0.35, 0.28, 0.2, 0.25)
+
+[sub_resource type="ShaderMaterial" id="Mat_rock"]
+render_priority = 0
+next_pass = SubResource("Mat_rock_line")
+shader = ExtResource("2_cel")
+shader_parameter/color = Color(0.36, 0.3, 0.27, 1)
+shader_parameter/specular = Color(0.1, 0.1, 0.1, 0.1)
+shader_parameter/fresnel = Color(0.35, 0.28, 0.2, 0.25)
+
+[node name="BossArena" type="Node3D"]
+script = ExtResource("1_arena")
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+material_override = SubResource("Mat_floor")
+
+[node name="Stripe" type="MeshInstance3D" parent="."]
+material_override = SubResource("Mat_stripe")
+
+[node name="Rock" type="MeshInstance3D" parent="."]
+material_override = SubResource("Mat_rock")
+cast_shadow = 0
+
+[node name="Body" type="StaticBody3D" parent="."]
+
+[node name="Shape" type="CollisionShape3D" parent="Body"]
+
+[node name="Spawn" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 22.1, 118)
+
+[node name="BossSpot" type="Marker3D" parent="."]
