@@ -16,7 +16,7 @@ extends CanvasLayer
 ## 0 = a soft pale wash, 1 = the full flip to ink and paper.
 @export_range(0.0, 1.0, 0.01) var ink_flip: float = 0.0
 ## Width of the radial lines (1 = thick wedges).
-@export_range(0.0, 1.0, 0.01) var line_width: float = 0.4
+@export_range(0.0, 1.0, 0.01) var line_width: float = 0.25
 ## Cannon shots (hops): gentler still, they happen often.
 @export_range(0, 8) var cannon_frames: int = 1
 @export_range(0.0, 1.0, 0.01) var cannon_strength: float = 0.15
@@ -25,7 +25,7 @@ extends CanvasLayer
 @export_range(0.05, 1.0, 0.01, "suffix:s") var impact_lines_time: float = 0.12
 @export_range(0.05, 1.0, 0.01, "suffix:s") var boost_lines_time: float = 0.32
 ## Peak strength of the lines per event.
-@export_range(0.0, 1.0, 0.01) var perfect_lines: float = 0.6
+@export_range(0.0, 1.0, 0.01) var perfect_lines: float = 0.45
 @export_range(0.0, 1.0, 0.01) var good_lines: float = 0.35
 @export_range(0.0, 1.0, 0.01) var boost_lines: float = 0.6
 
