@@ -42,19 +42,20 @@ extends Resource
 @export_range(0.0, 1.0, 0.05) var boost_kick: float = 1.0
 
 @export_group("Radial blur")
-## Blur strength at max speed (0..1). Starts at blur_from.
-@export_range(0.0, 1.0, 0.01) var blur_max: float = 0.75
-@export_range(0.0, 1.0, 0.01) var blur_from: float = 0.35
+## Blur strength at max speed (0..1). Starts at blur_from. v0.32.1: 0.75 -> 0.4
+## (at full speed it smeared most of the screen, the terrain ahead went to mush).
+@export_range(0.0, 1.0, 0.01) var blur_max: float = 0.4
+@export_range(0.0, 1.0, 0.01) var blur_from: float = 0.5
 ## Extra blur at a full kick.
-@export_range(0.0, 1.0, 0.01) var blur_kick: float = 0.35
+@export_range(0.0, 1.0, 0.01) var blur_kick: float = 0.25
 ## How far each pixel smears toward the centre at strength 1 (fraction of its
 ## distance to the centre). 0.12 = a long Haste-style smear.
 @export_range(0.0, 0.4, 0.005) var blur_length: float = 0.12
 ## Clear ellipse around the point you ride toward (screen fractions, x/y).
-@export var blur_clear: Vector2 = Vector2(0.2, 0.16)
+@export var blur_clear: Vector2 = Vector2(0.3, 0.24)
 ## How quickly the blur ramps from the clear ellipse to full (ellipse radii).
-@export_range(0.1, 4.0, 0.05) var blur_feather: float = 1.4
+@export_range(0.1, 4.0, 0.05) var blur_feather: float = 1.8
 ## Extra blur toward the bottom of the screen, where the ground rushes past.
-@export_range(0.0, 2.0, 0.05) var blur_bottom_boost: float = 0.8
+@export_range(0.0, 2.0, 0.05) var blur_bottom_boost: float = 0.6
 ## The blur converges on where you're heading; this smooths that point.
 @export_range(0.01, 1.0, 0.01, "suffix:s") var blur_center_smoothing: float = 0.15
