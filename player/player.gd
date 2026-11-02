@@ -284,6 +284,13 @@ func finish_no_hander() -> void:
 	no_hander_time = 0.0
 
 
+## Forgets the No Hander: the hold, its time and a touchdown's grace.
+func clear_no_hander() -> void:
+	no_hander = false
+	no_hander_time = 0.0
+	_no_hander_grace = 0.0
+
+
 func _update_no_hander_grace(delta: float) -> void:
 	if _no_hander_grace <= 0.0:
 		return
@@ -695,6 +702,7 @@ func _check_obstacle_hit(approach: Vector3) -> Hit:
 		if collider == null or not collider.is_in_group(&"obstacles"):
 			continue
 		if tuning.crushes_props and collider.is_in_group(&"crushable"):
+			_keep_going(approach)
 			crush_prop(collider as CollisionObject3D, approach.length())
 			return Hit.GLANCE
 		var normal: Vector3 = collision.get_normal()
@@ -722,6 +730,7 @@ func _check_obstacle_hit(approach: Vector3) -> Hit:
 			_crash_cooldown = 0.8
 			_shield_through(collider as PhysicsBody3D)
 			shield_used.emit()
+			_keep_going(approach)
 			speed = approach.length()
 			return Hit.GLANCE
 		elif impact > tuning.crash_min_impact and _crash_cooldown <= 0.0:
@@ -734,6 +743,14 @@ func _check_obstacle_hit(approach: Vector3) -> Hit:
 		speed = keep
 		return result
 	return Hit.NONE
+
+
+## Through an obstacle without a bounce: carries on the way it was going. In the
+## air ground_dir is left over from the last ground tick, and check_air_crash
+## flies along it.
+func _keep_going(approach: Vector3) -> void:
+	if approach.length_squared() > 0.0001:
+		ground_dir = approach.normalized()
 
 
 ## Rolls over something crushable: it stops colliding and flattens, you lose
@@ -937,6 +954,18 @@ func update_visual(delta: float, steer: float, up_target: Vector3, forward: Vect
 	visual.position = base * pivot - full * pivot + contact
 
 
+## Adds speed now, in any state, up to speed_cap (if any); returns what was gained. In
+## the air `speed` doesn't move you and landing replaces it, so the flight
+## gets the boost too.
+func add_speed(amount: float) -> float:
+	var before: float = speed
+	speed = tuning.capped(speed + amount)
+	var gained: float = speed - before
+	if state_machine.get_state_name() == &"Air" and velocity.length() > 1.0:
+		velocity += velocity.normalized() * gained
+	return gained
+
+
 ## Speed lines flash for speed_lines_boost_time (a boost just happened).
 func flash_boost() -> void:
 	boost_timer = tuning.speed_lines_boost_time
@@ -982,8 +1011,11 @@ func place(at: Vector3, new_heading: float, new_speed: float) -> void:
 	respawn_hint = null
 	crashed = false
 	_crash_cooldown = 0.0
+	_pending_hazard = []
 	air_tricks = 0
 	_steer_smoothed = 0.0
+	clear_no_hander()
 	tricks.cancel()
+	tricks.tricks_this_air = 0
 	reset_physics_interpolation()
 	camera_rig.snap()

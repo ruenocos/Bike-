@@ -29,8 +29,7 @@ func enter(msg: Dictionary) -> void:
 	player.air_tricks = 0
 	player.air_hops_left = int(t.air_hops)
 	_air_time = 0.0
-	player.no_hander = false
-	player.no_hander_time = 0.0
+	player.clear_no_hander()
 	_lip_normal = msg.get("lip_normal", Vector3.ZERO)
 	_lip_position = msg.get("lip_position", Vector3.ZERO)
 	player.transition_normal = _lip_normal

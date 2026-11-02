@@ -26,6 +26,9 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	cooldown = maxf(cooldown - delta, 0.0)
+	# Frozen = a menu is up (Game._freeze_player): nothing to fire.
+	if not player.is_physics_processing():
+		return
 	var wants: bool = Input.is_action_just_pressed(&"cannon_blast")
 	if _auto and player.is_grounded() and player.speed < player.tuning.max_speed * 0.85:
 		wants = true
@@ -38,12 +41,11 @@ func blast() -> bool:
 	if cooldown > 0.0 or player.state_machine.get_state_name() == &"Bail":
 		return false
 	cooldown = player.tuning.blast_cooldown
-	var before: float = player.speed
-	player.speed = player.tuning.capped(player.speed + player.tuning.blast_speed)
+	var gained: float = player.add_speed(player.tuning.blast_speed)
 	player.flash_boost()
 	Events.cannon_fired.emit(&"boost")
-	if player.speed > before:
-		Events.speed_gained.emit(player.speed - before)
+	if gained > 0.0:
+		Events.speed_gained.emit(gained)
 	rig.fire()
 	vfx.puff(0.6)
 	return true
