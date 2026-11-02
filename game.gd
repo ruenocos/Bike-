@@ -284,8 +284,9 @@ func _physics_process(delta: float) -> void:
 	# The near ring moves at half the rider's speed around the stage's middle
 	# and keeps that height, so it slides past (parallax) and never rises
 	# and sinks with the rider; at ~1.5 km it stays out of reach.
-	var near_at: Vector3 = _near_anchor.lerp(player.global_position, 0.5)
-	near_mountains.global_position = Vector3(near_at.x, _near_anchor.y - 200.0, near_at.z)
+	if near_mountains.visible:
+		var near_at: Vector3 = _near_anchor.lerp(player.global_position, 0.5)
+		near_mountains.global_position = Vector3(near_at.x, _near_anchor.y - 200.0, near_at.z)
 	_update_out_of_bounds(delta)
 	_update_collapse_feel()
 
