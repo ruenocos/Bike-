@@ -26,6 +26,9 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	cooldown = maxf(cooldown - delta, 0.0)
+	# Frozen = a menu is up (Game._freeze_player): nothing to fire.
+	if not player.is_physics_processing():
+		return
 	var wants: bool = Input.is_action_just_pressed(&"cannon_blast")
 	if _auto and player.is_grounded() and player.speed < player.tuning.max_speed * 0.85:
 		wants = true
