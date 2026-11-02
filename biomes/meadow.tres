@@ -1,5 +1,6 @@
-[gd_resource type="Resource" script_class="Biome" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="Biome" load_steps=6 format=3]
 
+[ext_resource type="Resource" path="res://sky/looks/meadow.tres" id="80_sky"]
 [ext_resource type="Script" path="res://biomes/biome.gd" id="1_biome"]
 [ext_resource type="PackedScene" path="res://chunks/landscape/set_log_rhythm.tscn" id="91_set"]
 [ext_resource type="PackedScene" path="res://chunks/landscape/set_river_logs.tscn" id="90_set"]
@@ -25,6 +26,7 @@ height_fog_density = 0.0015
 glow_intensity = 0.5
 outline_color = Color(0.14, 0.05, 0.2, 1)
 prop_tint = Color(1, 1, 1, 1)
+sky_look = ExtResource("80_sky")
 sky_top = Color(0.17, 0.29, 0.56, 1)
 sky_horizon = Color(1, 0.72, 0.5, 1)
 ground_horizon = Color(0.95, 0.69, 0.52, 1)

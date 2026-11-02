@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="SkyLook" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://sky/sky_look.gd" id="1_look"]
+[ext_resource type="Shader" path="res://sky/anime_sky.gdshader" id="2_sky"]
+[ext_resource type="Texture2D" path="res://sky/cloud_noise.tres" id="3_noise"]
+[ext_resource type="Texture2D" path="res://sky/painted/fs_sky_101.png" id="4_pano"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
+shader = ExtResource("2_sky")
+shader_parameter/cloud_noise = ExtResource("3_noise")
+shader_parameter/panorama = ExtResource("4_pano")
+shader_parameter/use_panorama = true
+shader_parameter/panorama_sun_u = 132.5
+shader_parameter/panorama_exposure = 1.0
+shader_parameter/panorama_saturation = 1.2
+shader_parameter/panorama_contrast = 1.05
+shader_parameter/sun_side_strength = 0.3
+shader_parameter/sun_size = 0.0
+shader_parameter/halo_strength = 0.1
+shader_parameter/ring_strength = 0.0
+shader_parameter/cloud_coverage = 0.0
+shader_parameter/wall_height = 0.0
+shader_parameter/structure_rim_width = 0.3
+shader_parameter/structure_haze = 0.55
+shader_parameter/ground_color = Color(0.9, 0.8, 0.68, 1)
+shader_parameter/horizon_color = Color(0.95, 0.83, 0.68, 1)
+shader_parameter/sun_side_color = Color(1.0, 0.85, 0.6, 1)
+shader_parameter/halo_color = Color(1.0, 0.95, 0.8, 1)
+shader_parameter/structure_color = Color(0.55, 0.6, 0.8, 1)
+shader_parameter/structure_rim = Color(1.0, 0.95, 0.85, 1)
+shader_parameter/structure_glow = Color(0.6, 1.0, 1.0, 1)
+shader_parameter/structure_glow_strength = 0.4
+shader_parameter/ring = Vector3(0.0, 0.0, 0.0)
+shader_parameter/spire = Vector3(-22.0, 44.0, 5.0)
+shader_parameter/shards = Vector3(28.0, 18.0, 14.0)
+shader_parameter/shard_count = 7.0
+shader_parameter/shard_size = 4.0
+
+[resource]
+script = ExtResource("1_look")
+material = SubResource("ShaderMaterial_sky")
+fog_sky_affect = 0.0
+sea_light = Color(1, 0.97, 0.92, 1)
+sea_shadow = Color(0.86, 0.86, 0.95, 1)
+sea_gap = Color(0.72, 0.74, 0.9, 1)
+sea_coverage = 0.72
+sea_rim = Color(1, 0.95, 0.85, 1)

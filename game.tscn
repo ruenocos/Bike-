@@ -26,7 +26,8 @@
 [ext_resource type="PackedScene" path="res://ui/menus/stage_summary.tscn" id="8_summary"]
 [ext_resource type="PackedScene" path="res://ui/menus/upgrade_picker.tscn" id="9_picker"]
 [ext_resource type="PackedScene" path="res://ui/menus/run_over.tscn" id="10_run_over"]
-[ext_resource type="Shader" path="res://chunks/materials/far_ground.gdshader" id="11_grid"]
+[ext_resource type="Shader" path="res://chunks/materials/cloud_sea.gdshader" id="11_grid"]
+[ext_resource type="Texture2D" path="res://sky/cloud_noise.tres" id="12_noise"]
 [ext_resource type="Script" path="res://scoring/upgrade_data.gd" id="12_upgrade"]
 [ext_resource type="Resource" path="res://scoring/upgrades/clean_landings.tres" id="13_u1"]
 [ext_resource type="Resource" path="res://scoring/upgrades/long_fuse.tres" id="14_u2"]
@@ -76,11 +77,14 @@ adjustment_saturation = 1.12
 [sub_resource type="ShaderMaterial" id="Mat_far"]
 render_priority = 0
 shader = ExtResource("11_grid")
+shader_parameter/cloud_noise = ExtResource("12_noise")
 shader_parameter/base_color = Color(0.46, 0.41, 0.33, 1)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_far"]
 material = SubResource("Mat_far")
-size = Vector2(4000, 4000)
+size = Vector2(12000, 12000)
+subdivide_width = 160
+subdivide_depth = 160
 
 [node name="Game" type="Node3D"]
 script = ExtResource("1_game")
@@ -115,6 +119,7 @@ mesh = SubResource("PlaneMesh_far")
 script = ExtResource("22_mountains")
 
 [node name="Near" type="Node3D" parent="Mountains"]
+visible = false
 script = ExtResource("22_mountains")
 count = 26
 radius_min = 1300.0

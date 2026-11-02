@@ -49,6 +49,9 @@ extends Resource
 @export var outline_color: Color = Color(0.16, 0.1, 0.09)
 
 @export_group("Sky and light")
+## The painted / anime sky (sky/looks/*.tres). Empty = the old procedural
+## sky from sky_top / sky_horizon below.
+@export var sky_look: SkyLook
 @export var sky_top: Color = Color(0.17, 0.29, 0.56)
 @export var sky_horizon: Color = Color(1.0, 0.72, 0.5)
 @export var ground_horizon: Color = Color(0.95, 0.69, 0.52)
@@ -81,3 +84,6 @@ extends Resource
 @export_group("Mountains")
 @export var peak_color: Color = Color(0.36, 0.38, 0.52)
 @export var haze_color: Color = Color(0.86, 0.66, 0.56)
+## Snow caps on the distant ranges, above this share of their height
+## (1 = none).
+@export_range(0.0, 1.0, 0.01) var mountain_snow_line: float = 1.0

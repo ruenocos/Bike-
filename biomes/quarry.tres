@@ -1,5 +1,6 @@
-[gd_resource type="Resource" script_class="Biome" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="Biome" load_steps=9 format=3]
 
+[ext_resource type="Resource" path="res://sky/looks/quarry.tres" id="80_sky"]
 [ext_resource type="Script" path="res://biomes/biome.gd" id="1_biome"]
 [ext_resource type="PackedScene" path="res://chunks/landscape/set_bridge_gap.tscn" id="91_set"]
 [ext_resource type="PackedScene" path="res://chunks/landscape/set_ramp_yard.tscn" id="90_set"]
@@ -28,6 +29,7 @@ shadow_tint = Color(0.35, 0.12, 0.8, 1)
 shadow_tint_strength = 0.7
 height_fog_density = 0.002
 prop_tint = Color(0.72, 0.72, 0.82, 1)
+sky_look = ExtResource("80_sky")
 sky_top = Color(0.1, 0.08, 0.22, 1)
 sky_horizon = Color(0.92, 0.42, 0.4, 1)
 ground_horizon = Color(0.6, 0.32, 0.36, 1)

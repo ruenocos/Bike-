@@ -40,7 +40,18 @@ func apply(b: Biome) -> void:
 	RenderingServer.global_shader_parameter_set(&"ground_variation", b.ground_variation)
 	if world_environment != null and world_environment.environment != null:
 		var env: Environment = world_environment.environment
-		if env.sky != null:
+		if env.sky != null and b.sky_look != null and b.sky_look.material != null:
+			if _fallback_sky == null and env.sky.sky_material is ProceduralSkyMaterial:
+				_fallback_sky = env.sky.sky_material
+				_fallback_fog_sky_affect = env.fog_sky_affect
+			env.sky.sky_material = b.sky_look.material
+			# Below the horizon the sky is the fog, so the far valley melts in.
+			b.sky_look.material.set_shader_parameter(&"ground_color", b.fog_color)
+			env.fog_sky_affect = b.sky_look.fog_sky_affect
+		elif env.sky != null:
+			if _fallback_sky != null:
+				env.sky.sky_material = _fallback_sky
+				env.fog_sky_affect = _fallback_fog_sky_affect
 			var sky: ProceduralSkyMaterial = env.sky.sky_material as ProceduralSkyMaterial
 			if sky != null:
 				sky.sky_top_color = b.sky_top
@@ -73,15 +84,32 @@ func apply(b: Biome) -> void:
 			var far: Color = b.far_ground.lerp(b.fog_color, 0.65)
 			far_mat.set_shader_parameter(&"base_color", far)
 			far_mat.set_shader_parameter(&"fade_color", b.fog_color)
+			if b.sky_look != null:
+				far_mat.set_shader_parameter(&"cloud_light", b.sky_look.sea_light)
+				far_mat.set_shader_parameter(&"cloud_shadow", b.sky_look.sea_shadow)
+				far_mat.set_shader_parameter(&"base_color", b.sky_look.sea_gap)
+				far_mat.set_shader_parameter(&"rim_color", b.sky_look.sea_rim)
+				far_mat.set_shader_parameter(&"coverage", b.sky_look.sea_coverage)
+			if sun != null:
+				far_mat.set_shader_parameter(&"sun_direction", sun.transform.basis.z)
 	if mountains != null:
 		mountains.peak_color = b.peak_color
 		mountains.haze_color = b.haze_color
+		# Sun-facing faces and ridge rims take the sun's colour.
+		mountains.lit_color = b.peak_color.lerp(b.sun_color, 0.75)
+		mountains.rim_color = b.sun_color.lightened(0.35)
+		mountains.snow_line = b.mountain_snow_line
+		if sun != null:
+			mountains.sun_direction = sun.transform.basis.z
 	if near_mountains != null:
 		near_mountains.peak_color = b.peak_color.darkened(near_mountains_darken)
 		near_mountains.haze_color = b.haze_color.lerp(b.peak_color, 0.25)
 
 
 var _height_fog_below: float = 40.0
+## The scene's own procedural sky, kept for biomes without a sky look.
+var _fallback_sky: Material
+var _fallback_fog_sky_affect: float = 0.5
 
 
 ## The height fog follows whoever is looking (the rider, or the title
