@@ -188,6 +188,9 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	# Rail ledges live on physics layer 9 (rails/rail.tscn): only a vehicle
+	# whose ledges crash it collides with them; the tank rolls over them.
+	set_collision_mask_value(9, tuning.rail_ledges_crash)
 	_update_hop_input(delta)
 	_update_grind_input(delta)
 	bail_immunity_timer = maxf(bail_immunity_timer - delta, 0.0)
@@ -643,11 +646,24 @@ func ground_move(delta: float, input_enabled: bool) -> void:
 	_gravity_body = _touching_group(&"gravity_surfaces")
 	on_gravity_surface = _gravity_body != null
 	_check_convex_release()
+	_check_wall_release()
 
 	_update_heading(ground_dir)
 	_update_transition()
 	_slope_trend = lerpf(_slope_trend, ground_dir.y, 1.0 - exp(-delta / 0.2))
 	update_visual(delta, steer, ground_normal, ground_dir)
+
+
+## Plain ground steeper than max_wall_ride_deg (a chasm or cliff wall, not
+## a transition / gravity ring) doesn't hold you: let go and fall.
+func _check_wall_release() -> void:
+	if _ground_released or tuning.max_wall_ride_deg >= 90.0 or not is_on_floor():
+		return
+	if _on_transition_body or on_gravity_surface:
+		return
+	if get_floor_normal().y < cos(deg_to_rad(tuning.max_wall_ride_deg)):
+		_ground_released = true
+		floor_snap_length = 0.0
 
 
 ## Floor snapping would let the sphere roll over any edge and ride down the

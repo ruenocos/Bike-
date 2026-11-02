@@ -37,7 +37,7 @@ const END_CLEAR: float = 32.0
 ## Rails sit this high on a ledge you have to hop onto (v0.9.1).
 const RAIL_HEIGHT: float = 0.75
 ## Obstacle footprint radius by kind (m), for spacing and corridor clearance.
-const RADIUS: Dictionary = {"tree": 0.6, "rock": 1.8, "log": 5.0, "fence": 3.2, "barrier": 1.6}
+const RADIUS: Dictionary = {"tree": 0.6, "rock": 2.5, "log": 5.0, "fence": 3.2, "barrier": 1.6}
 ## Per tier (index = difficulty): corridor clear half-width, clusters per
 ## 10 000 m2, kicker scale, wander strength.
 const CLEAR: Array[float] = [9.0, 9.0, 7.0, 5.5]

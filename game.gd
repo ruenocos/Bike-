@@ -36,8 +36,14 @@ extends Node3D
 @export_range(0.0, 60.0, 1.0, "suffix:m/s") var respawn_min_speed: float = 25.0
 
 @export_group("Out of bounds and penalties")
-## Seconds past the valley crests before you're put back on a line.
-@export_range(0.5, 10.0, 0.1, "suffix:s") var oob_time: float = 3.0
+## Out of bounds only means under the map (Wons, v0.33: "do not let the out
+## of bounds unless u go below the map"): riding over the crests and off
+## into the outside strip is allowed. Once you're `below_map_margin` under
+## the ground (off the edge, falling) for `oob_time`, you're put back.
+## `crest_out_of_bounds` brings back the old sideways rule.
+@export_range(0.0, 10.0, 0.05, "suffix:s") var oob_time: float = 0.3
+@export_range(1.0, 60.0, 0.5, "suffix:m") var below_map_margin: float = 8.0
+@export var crest_out_of_bounds: bool = false
 ## Time cost of an out-of-bounds or fall respawn (s): added to the stage
 ## clock, and the collapse gains this many seconds of its speed.
 @export_range(0.0, 20.0, 0.1, "suffix:s") var respawn_time_cost: float = 3.0
@@ -304,10 +310,13 @@ func apply_biome(b: Biome) -> void:
 	player.vfx.set_tint(b.dust_tint)
 
 
-## Past the valley crests (sideways from the centerline): count down, then
-## put the rider back on the nearest ride line.
+## Under the map (or, with crest_out_of_bounds, past the valley crests):
+## count down, then put the rider back on the nearest ride line.
 func _update_out_of_bounds(delta: float) -> void:
-	if builder.out_of_bounds(player.global_position, player_progress):
+	var out: bool = builder.below_map(player.global_position, player_progress, below_map_margin)
+	if crest_out_of_bounds:
+		out = out or builder.out_of_bounds(player.global_position, player_progress)
+	if out:
 		oob_timer += delta
 		if oob_timer >= oob_time:
 			_respawn_on_line()
