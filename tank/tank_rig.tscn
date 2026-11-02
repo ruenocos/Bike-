@@ -1,9 +1,11 @@
-[gd_scene load_steps=117 format=3]
+[gd_scene load_steps=119 format=3]
 
 [ext_resource type="Script" path="res://tank/tank_rig.gd" id="1_rig"]
 [ext_resource type="Script" path="res://tank/tank_tread.gd" id="2_tread"]
 [ext_resource type="PackedScene" path="res://tank/crew_member.tscn" id="3_crew"]
 [ext_resource type="Script" path="res://tank/teacup.gd" id="4_cup"]
+[ext_resource type="PackedScene" path="res://assets/characters/vroid_cc0/shino.glb" id="5_shino"]
+[ext_resource type="PackedScene" path="res://assets/characters/vroid_cc0/fumiriya.glb" id="6_fumiriya"]
 
 [sub_resource type="StandardMaterial3D" id="M1"]
 albedo_color = Color(0.3, 0.32, 0.35, 1)
@@ -765,15 +767,19 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.8)
 
 [node name="Commander" parent="Body/Turret" instance=ExtResource("3_crew")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, 0.95, 0.38)
+model = ExtResource("5_shino")
+model_scale = 1.25
+hips_height = 0.12
 
 [node name="CrewL" parent="Body" instance=ExtResource("3_crew")]
-transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, -0.62, 1.68, 0.95)
-hair_stream_deg = 55.0
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -1.28, 1.6, 1.0)
+model = ExtResource("6_fumiriya")
+pose = 1
+model_scale = 1.0
 
 [node name="CrewR" parent="Body" instance=ExtResource("3_crew")]
-transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 0.62, 1.68, 1.15)
-lean_deg = 26.0
-scarf_color = Color(1, 0.75, 0.2, 1)
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 1.02, 1.5, 1.2)
+pose = 1
 
 [node name="Teacup" type="Node3D" parent="Body"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.52, 1.3)

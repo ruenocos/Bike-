@@ -62,6 +62,11 @@ static func _outline_material(surface: ShaderMaterial) -> ShaderMaterial:
 	return line
 
 
+## An ink pass for a surface CelLook left without one (cut-outs).
+static func make_outline(surface: ShaderMaterial) -> ShaderMaterial:
+	return _outline_material(surface)
+
+
 static func set_outline_local_mix(amount: float) -> void:
 	outline_local_mix = amount
 	for line: ShaderMaterial in _outlines:

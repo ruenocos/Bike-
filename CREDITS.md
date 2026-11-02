@@ -87,3 +87,6 @@ Every sound is cut from these CC0 packs by `audio/tools/cut_samples.py` (trim, m
 | `collapse/crack_3.wav` | Impact Sounds | Kenney | CC0 | https://kenney.nl/assets/impact-sounds | pitched down |
 | `collapse/crack_4.wav` | Impact Sounds | Kenney | CC0 | https://kenney.nl/assets/impact-sounds | pitched down |
 | `collapse/crack_5.wav` | Impact Sounds | Kenney | CC0 | https://kenney.nl/assets/impact-sounds | pitched down |
+
+## Characters (tank crew)
+- Sendagaya Shino and Sakurada Fumiriya, VRoid Studio sample models by pixiv / VRoid, CC0 as released by VRoid: https://opengameart.org/content/vroid-studio-cc0-models (their terms: https://vroid.pixiv.help/hc/en-us/articles/4402614652569-Do-VRoid-Studio-s-sample-models-come-with-conditions-of-use ). VRM 0.x files renamed to .glb in assets/characters/vroid_cc0/; clothes recoloured at runtime. Credit isn't required.
