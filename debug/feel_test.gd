@@ -239,7 +239,8 @@ func _finish() -> void:
 	var ok: bool = true
 	if s.has("grind") and not _grinds.has(String(s["grind"])):
 		ok = false
-	if s.get("crash", false) and _crashes == 0:
+	# The tank rolls over rail ledges (rail_ledges_crash off): no crash, no grind.
+	if s.get("crash", false) and _crashes == 0 and _player.tuning.rail_ledges_crash:
 		ok = false
 	if s.get("no_grind", false) and not _grinds.is_empty():
 		ok = false

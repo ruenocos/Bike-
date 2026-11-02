@@ -5,7 +5,7 @@
 [ext_resource type="PackedScene" path="res://art/nature/megakit/Rock_Medium_2.gltf" id="3"]
 [ext_resource type="PackedScene" path="res://art/nature/megakit/Rock_Medium_3.gltf" id="4"]
 [sub_resource type="SphereShape3D" id="Shape_rock"]
-radius = 1.5
+radius = 2.1
 
 [node name="Rock" type="StaticBody3D" groups=["obstacles"]]
 
@@ -13,9 +13,9 @@ radius = 1.5
 script = ExtResource("1_model")
 kind = "rock"
 variants = Array[PackedScene]([ExtResource("2"), ExtResource("3"), ExtResource("4")])
-model_scale = Vector3(1.05, 1.05, 1.05)
+model_scale = Vector3(1.47, 1.47, 1.47)
 outline = true
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.42, 0)
 shape = SubResource("Shape_rock")
