@@ -75,6 +75,13 @@ extends Node3D
 		band_height_scale = v
 		_rebuild()
 
+## Plain haze below the range's foot (m), so it sinks into the clouds
+## instead of floating.
+@export_range(0.0, 5000.0, 10.0, "suffix:m") var skirt_depth: float = 1500.0:
+	set(v):
+		skirt_depth = v
+		_rebuild()
+
 var _instance: MeshInstance3D
 var _material: ShaderMaterial
 
@@ -108,8 +115,9 @@ func _rebuild() -> void:
 	# The band is taller than the old cones: its peaks stand above the
 	# haze, which covers the lower part.
 	var h: float = height_max * band_height_scale
-	_instance.scale = Vector3(r, h, r)
-	_instance.position = Vector3(0.0, h * 0.5 - 60.0, 0.0)
+	# Plus a haze skirt hanging far below, into the sea of clouds.
+	_instance.scale = Vector3(r, h + skirt_depth, r)
+	_instance.position = Vector3(0.0, (h + skirt_depth) * 0.5 - 60.0 - skirt_depth, 0.0)
 	_update_material()
 
 
@@ -130,3 +138,4 @@ func _update_material() -> void:
 	_material.set_shader_parameter(&"height_max", 1.0)
 	_material.set_shader_parameter(&"steepness", 11.0 / spread)
 	_material.set_shader_parameter(&"ring_seed", float(ring_seed))
+	_material.set_shader_parameter(&"skirt", skirt_depth / (height_max * band_height_scale + skirt_depth))

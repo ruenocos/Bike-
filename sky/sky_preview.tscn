@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://sky/sky_preview.gd" id="1_prev"]
 [ext_resource type="Script" path="res://biomes/biome.gd" id="2_biome"]
@@ -7,7 +7,8 @@
 [ext_resource type="Resource" path="res://biomes/snow.tres" id="5_snow"]
 [ext_resource type="Resource" path="res://biomes/quarry.tres" id="6_quarry"]
 [ext_resource type="Script" path="res://biomes/biome_look.gd" id="7_look"]
-[ext_resource type="Shader" path="res://chunks/materials/far_ground.gdshader" id="11_grid"]
+[ext_resource type="Shader" path="res://chunks/materials/cloud_sea.gdshader" id="11_grid"]
+[ext_resource type="Texture2D" path="res://sky/cloud_noise.tres" id="12_noise"]
 [ext_resource type="Script" path="res://chunks/parts/mountain_ring.gd" id="22_mountains"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
@@ -43,11 +44,14 @@ adjustment_saturation = 1.12
 [sub_resource type="ShaderMaterial" id="Mat_far"]
 render_priority = 0
 shader = ExtResource("11_grid")
+shader_parameter/cloud_noise = ExtResource("12_noise")
 shader_parameter/base_color = Color(0.46, 0.41, 0.33, 1)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_far"]
 material = SubResource("Mat_far")
-size = Vector2(4000, 4000)
+size = Vector2(12000, 12000)
+subdivide_width = 160
+subdivide_depth = 160
 
 [node name="SkyPreview" type="Node3D"]
 script = ExtResource("1_prev")

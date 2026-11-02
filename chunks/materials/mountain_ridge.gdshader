@@ -37,6 +37,10 @@ uniform float back_haze : hint_range(0.0, 1.0, 0.01) = 0.55;
 /// The front range's height as a share of the band.
 uniform float front_height : hint_range(0.1, 1.0, 0.01) = 0.62;
 
+/// Share of the band (from the bottom) that is a plain haze skirt reaching
+/// far down, so the range never floats over the sea of clouds.
+uniform float skirt : hint_range(0.0, 0.95, 0.01) = 0.0;
+
 varying vec3 local_pos;
 varying vec3 world_pos;
 
@@ -85,7 +89,9 @@ void fragment() {
 	// CylinderMesh: y from -0.5 to 0.5 (scaled by the node), so read the
 	// band height from the mesh's own extent via the model scale.
 	float az = atan(local_pos.x, local_pos.z) / TAU + 0.5;
-	float y = local_pos.y + 0.5;
+	float y = (local_pos.y + 0.5 - skirt) / (1.0 - skirt);
+	bool skirt_px = y < 0.0;
+	y = max(y, 0.0);
 	float x = az * peaks;
 	float fh = back_height > 0.0 ? front_height : 1.0;
 	vec3 big = ridge(x, peaks, height_min * fh, height_max * fh, steepness, ring_seed);
@@ -136,5 +142,5 @@ void fragment() {
 	if (back) {
 		t *= 1.0 - back_haze;
 	}
-	ALBEDO = mix(haze_color, c, t);
+	ALBEDO = skirt_px ? haze_color : mix(haze_color, c, t);
 }

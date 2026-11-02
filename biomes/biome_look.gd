@@ -84,6 +84,14 @@ func apply(b: Biome) -> void:
 			var far: Color = b.far_ground.lerp(b.fog_color, 0.65)
 			far_mat.set_shader_parameter(&"base_color", far)
 			far_mat.set_shader_parameter(&"fade_color", b.fog_color)
+			if b.sky_look != null:
+				far_mat.set_shader_parameter(&"cloud_light", b.sky_look.sea_light)
+				far_mat.set_shader_parameter(&"cloud_shadow", b.sky_look.sea_shadow)
+				far_mat.set_shader_parameter(&"base_color", b.sky_look.sea_gap)
+				far_mat.set_shader_parameter(&"rim_color", b.sky_look.sea_rim)
+				far_mat.set_shader_parameter(&"coverage", b.sky_look.sea_coverage)
+			if sun != null:
+				far_mat.set_shader_parameter(&"sun_direction", sun.transform.basis.z)
 	if mountains != null:
 		mountains.peak_color = b.peak_color
 		mountains.haze_color = b.haze_color
