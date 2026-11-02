@@ -33,8 +33,11 @@ static var biome: Biome
 ## Ink line thickness on logs, fences and boulders (px; not scenery trees and
 ## rocks), so what you can hit stands out (v0.30).
 @export_range(0.0, 8.0, 0.25) var hazard_outline: float = 3.0
-## Trees shorter than this are "crushable": the tank flattens them (v0.31).
-@export_range(0.0, 40.0, 0.5, "suffix:m") var small_tree_height: float = 7.0
+## This share of trees (picked from the position) grow as saplings, this much
+## smaller, and are "crushable": the tank flattens them. Small = safe to hit,
+## readable at speed (v0.31). Moving trees (no contact shadow) never are.
+@export_range(0, 100) var sapling_percent: int = 30
+@export_range(0.2, 1.0, 0.01) var sapling_scale: float = 0.55
 ## A soft dark blob on the ground under it (v0.27; strength from the biome).
 @export var contact_shadow: bool = true
 ## Footprint of that blob compared with the model's own (1.3 = a bit wider).
@@ -82,6 +85,10 @@ func _rebuild() -> void:
 	var scene: PackedScene = pool[absi(h) % pool.size()]
 	if scene == null:
 		return
+	var sapling: bool = kind == "tree" and contact_shadow and not Engine.is_editor_hint() and posmod(h >> 17, 100) < sapling_percent
+	if sapling:
+		size *= sapling_scale
+		get_parent().add_to_group(&"crushable")
 	_model = scene.instantiate() as Node3D
 	_model.scale = model_scale * size
 	_model.rotation.y = deg_to_rad(float(posmod(h >> 3, 360) - 180) / 180.0 * yaw_jitter)
@@ -95,8 +102,6 @@ func _rebuild() -> void:
 	CelLook.apply(_model, outline, tint)
 	if kind == "none":
 		CelLook.keep_outline(_model, hazard_outline)
-	if kind == "tree" and _model_aabb(_model, Transform3D.IDENTITY).size.y < small_tree_height:
-		get_parent().add_to_group(&"crushable")
 	if kind == "tree" and tree_sway > 0.0:
 		_set_sway(_model, tree_sway)
 	if contact_shadow and contact_shadows_on and biome != null and biome.contact_shadow > 0.0 and not Engine.is_editor_hint():

@@ -236,6 +236,7 @@ func start_stage() -> void:
 	_near_anchor = builder.transform_at_distance(builder.length * 0.5).origin
 	if _print_stage:
 		print("CONTACT SHADOWS %d" % PropModel.contact_shadow_count)
+		print("CRUSHABLE %d / OBSTACLES %d" % [get_tree().get_nodes_in_group(&"crushable").size(), get_tree().get_nodes_in_group(&"obstacles").size()])
 		for i: int in builder.chunks.size():
 			print("CHUNK %s %.0f-%.0f" % [builder.chunk_paths[i].get_file().get_basename(), builder.chunk_start_distance[i], builder.chunk_end_distance[i]])
 	hud.fade_in(0.45)

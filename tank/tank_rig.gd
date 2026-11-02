@@ -12,8 +12,8 @@ extends Node3D
 @export_group("Look")
 ## Ink line thickness (px).
 @export_range(0.0, 8.0, 0.25) var line_width: float = 3.5
-@export var rim_color: Color = Color(1.0, 0.95, 0.8, 0.7)
-@export var highlight_color: Color = Color(0.9, 0.9, 0.9, 0.5)
+@export var rim_color: Color = Color(0.9, 0.85, 0.75, 0.25)
+@export var highlight_color: Color = Color(0.6, 0.6, 0.65, 0.5)
 @export_group("Feel")
 ## Extra tread speed on the outer side per unit of steering (m/s).
 @export_range(0.0, 40.0, 0.5, "suffix:m/s") var carve_tread_speed: float = 14.0
