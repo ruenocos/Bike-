@@ -41,6 +41,13 @@ Prefer editor-visible setup: scenes, nodes, .tres, @export, @tool previews; code
 - One .tres per data item (tricks/data/, scoring/upgrades/). HUD, menus and the collapse are scenes laid out with nodes and a Theme (ui/bike_theme.tres).
 - Expose tuning with @export (+ @export_range, groups, doc comments). Use @tool where a live editor preview or a button helps (Chunk "Rebuild TrackLine from keys", Rail "Rebuild posts").
 
+## Audio
+- Real CC0 pack samples only, no synthesized or generated sounds (Wons: "try to use sound packs though i dont like when u think up sounds"). audio/tools/cut_samples.py only trims, mixes, pitches, filters and crossfades downloaded samples; the packs stay outside the repo (`../sound-packs/`). Every file in audio/sfx/ has a row in CREDITS.md. The repo is public, so nothing whose licence forbids redistribution (e.g. the Sonniss bundle).
+- audio/vehicle_audio.tscn (VehicleAudio, instanced in game.tscn and debug/test_track.tscn): players as visible nodes, shared layers (wind, landing notes, bail muffle, collapse by distance) as exports. Only reads speed, grounded / air, Events and Player signals; gameplay code never plays a sound. Silent in headless runs.
+- audio/sound_sets/tank.tres (VehicleSoundSet): every vehicle-specific stream and level. No cannon on hops (Wons); the cannon blast is only for a cannon boost.
+- Optional signals connect through `Events.has_signal()`: prop_crushed, trick_started, cannon_fired, tread_grind_started / _ended. They light up by themselves once the tank branch adds them. Until then hops are detected from a jump in upward speed.
+- Buses: default_bus_layout.tres (Audio panel at the bottom of the editor). Loops are OGG with loop=true in their .import.
+
 ## Design decisions
 - No manual balance (v0.6, Wons: "prob just remove the balance"): the left stick Y does nothing in the air. The bike's nose follows the flight path and settles onto the predicted landing surface in the last `air_land_blend_time`. Landing grade (angle you meet the ground at) stays. Difficulty comes from line choice, hop timing and trick greed. Left-stick-forward pump on the ground stays (timing, not balance).
 - Difficulty through mechanics, not length (v0.7, Wons: "I don't want to make levels more difficult through more length, but through harder mechanics, sharp turns, more obstacles, evading things etc."). Every stage has the same chunk count (Game `middle_chunks`); later stages pick higher-`difficulty` chunks more often (StageBuilder `tier_bias`) and get a faster collapse.

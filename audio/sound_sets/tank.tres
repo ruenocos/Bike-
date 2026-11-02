@@ -1,0 +1,187 @@
+[gd_resource type="Resource" script_class="VehicleSoundSet" format=3]
+
+[ext_resource type="Script" path="res://audio/vehicle_sound_set.gd" id="e0"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/tread_slow.ogg" id="e1"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/tread_fast.ogg" id="e2"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/engine_idle.ogg" id="e3"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/engine_high.ogg" id="e4"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/hop_1.wav" id="e5"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/hop_2.wav" id="e6"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/hop_3.wav" id="e7"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/hop_4.wav" id="e8"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/boost_1.wav" id="e9"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/boost_2.wav" id="e10"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/boost_3.wav" id="e11"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/cannon_blast_1.wav" id="e12"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/cannon_blast_2.wav" id="e13"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/cannon_blast_3.wav" id="e14"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/land_perfect_1.wav" id="e15"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/land_perfect_2.wav" id="e16"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/land_perfect_3.wav" id="e17"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/land_perfect_4.wav" id="e18"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/land_good_1.wav" id="e19"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/land_good_2.wav" id="e20"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/land_good_3.wav" id="e21"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/land_good_4.wav" id="e22"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/land_sketchy_1.wav" id="e23"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/land_sketchy_2.wav" id="e24"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/land_sketchy_3.wav" id="e25"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/land_sketchy_4.wav" id="e26"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/crash_1.wav" id="e27"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/crash_2.wav" id="e28"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/crash_3.wav" id="e29"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/crash_4.wav" id="e30"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/grind_loop.ogg" id="e31"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/grind_catch_1.wav" id="e32"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/grind_catch_2.wav" id="e33"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/grind_catch_3.wav" id="e34"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/grind_catch_4.wav" id="e35"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/crush_1.wav" id="e36"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/crush_2.wav" id="e37"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/crush_3.wav" id="e38"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/crush_4.wav" id="e39"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/turret_1.wav" id="e40"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/turret_2.wav" id="e41"]
+[ext_resource type="AudioStream" path="res://audio/sfx/tank/turret_3.wav" id="e42"]
+
+[sub_resource type="AudioStreamRandomizer" id="hop"]
+streams_count = 4
+random_pitch = 1.05
+random_volume_offset_db = 2.0
+stream_0/stream = ExtResource("e5")
+stream_0/weight = 1.0
+stream_1/stream = ExtResource("e6")
+stream_1/weight = 1.0
+stream_2/stream = ExtResource("e7")
+stream_2/weight = 1.0
+stream_3/stream = ExtResource("e8")
+stream_3/weight = 1.0
+
+[sub_resource type="AudioStreamRandomizer" id="boost"]
+streams_count = 3
+random_pitch = 1.05
+random_volume_offset_db = 2.0
+stream_0/stream = ExtResource("e9")
+stream_0/weight = 1.0
+stream_1/stream = ExtResource("e10")
+stream_1/weight = 1.0
+stream_2/stream = ExtResource("e11")
+stream_2/weight = 1.0
+
+[sub_resource type="AudioStreamRandomizer" id="cannon_boost"]
+streams_count = 3
+random_pitch = 1.05
+random_volume_offset_db = 2.0
+stream_0/stream = ExtResource("e12")
+stream_0/weight = 1.0
+stream_1/stream = ExtResource("e13")
+stream_1/weight = 1.0
+stream_2/stream = ExtResource("e14")
+stream_2/weight = 1.0
+
+[sub_resource type="AudioStreamRandomizer" id="land_perfect"]
+streams_count = 4
+random_pitch = 1.05
+random_volume_offset_db = 2.0
+stream_0/stream = ExtResource("e15")
+stream_0/weight = 1.0
+stream_1/stream = ExtResource("e16")
+stream_1/weight = 1.0
+stream_2/stream = ExtResource("e17")
+stream_2/weight = 1.0
+stream_3/stream = ExtResource("e18")
+stream_3/weight = 1.0
+
+[sub_resource type="AudioStreamRandomizer" id="land_good"]
+streams_count = 4
+random_pitch = 1.05
+random_volume_offset_db = 2.0
+stream_0/stream = ExtResource("e19")
+stream_0/weight = 1.0
+stream_1/stream = ExtResource("e20")
+stream_1/weight = 1.0
+stream_2/stream = ExtResource("e21")
+stream_2/weight = 1.0
+stream_3/stream = ExtResource("e22")
+stream_3/weight = 1.0
+
+[sub_resource type="AudioStreamRandomizer" id="land_sketchy"]
+streams_count = 4
+random_pitch = 1.05
+random_volume_offset_db = 2.0
+stream_0/stream = ExtResource("e23")
+stream_0/weight = 1.0
+stream_1/stream = ExtResource("e24")
+stream_1/weight = 1.0
+stream_2/stream = ExtResource("e25")
+stream_2/weight = 1.0
+stream_3/stream = ExtResource("e26")
+stream_3/weight = 1.0
+
+[sub_resource type="AudioStreamRandomizer" id="crash"]
+streams_count = 4
+random_pitch = 1.05
+random_volume_offset_db = 2.0
+stream_0/stream = ExtResource("e27")
+stream_0/weight = 1.0
+stream_1/stream = ExtResource("e28")
+stream_1/weight = 1.0
+stream_2/stream = ExtResource("e29")
+stream_2/weight = 1.0
+stream_3/stream = ExtResource("e30")
+stream_3/weight = 1.0
+
+[sub_resource type="AudioStreamRandomizer" id="grind_catch"]
+streams_count = 4
+random_pitch = 1.05
+random_volume_offset_db = 2.0
+stream_0/stream = ExtResource("e32")
+stream_0/weight = 1.0
+stream_1/stream = ExtResource("e33")
+stream_1/weight = 1.0
+stream_2/stream = ExtResource("e34")
+stream_2/weight = 1.0
+stream_3/stream = ExtResource("e35")
+stream_3/weight = 1.0
+
+[sub_resource type="AudioStreamRandomizer" id="crush"]
+streams_count = 4
+random_pitch = 1.05
+random_volume_offset_db = 2.0
+stream_0/stream = ExtResource("e36")
+stream_0/weight = 1.0
+stream_1/stream = ExtResource("e37")
+stream_1/weight = 1.0
+stream_2/stream = ExtResource("e38")
+stream_2/weight = 1.0
+stream_3/stream = ExtResource("e39")
+stream_3/weight = 1.0
+
+[sub_resource type="AudioStreamRandomizer" id="trick_spin"]
+streams_count = 3
+random_pitch = 1.05
+random_volume_offset_db = 2.0
+stream_0/stream = ExtResource("e40")
+stream_0/weight = 1.0
+stream_1/stream = ExtResource("e41")
+stream_1/weight = 1.0
+stream_2/stream = ExtResource("e42")
+stream_2/weight = 1.0
+
+[resource]
+script = ExtResource("e0")
+motion_loop = ExtResource("e1")
+motion_loop_fast = ExtResource("e2")
+engine_loop = ExtResource("e3")
+engine_loop_high = ExtResource("e4")
+hop = SubResource("hop")
+boost = SubResource("boost")
+cannon_boost = SubResource("cannon_boost")
+landing_perfect = SubResource("land_perfect")
+landing_good = SubResource("land_good")
+landing_sketchy = SubResource("land_sketchy")
+crash = SubResource("crash")
+grind_loop = ExtResource("e31")
+grind_catch = SubResource("grind_catch")
+crush = SubResource("crush")
+trick_spin = SubResource("trick_spin")

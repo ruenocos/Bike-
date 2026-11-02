@@ -1,0 +1,210 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://audio/vehicle_audio.gd" id="e0"]
+[ext_resource type="Resource" path="res://audio/sound_sets/tank.tres" id="e1"]
+[ext_resource type="AudioStream" path="res://audio/sfx/wind/wind_low.ogg" id="e2"]
+[ext_resource type="AudioStream" path="res://audio/sfx/wind/wind_mid.ogg" id="e3"]
+[ext_resource type="AudioStream" path="res://audio/sfx/wind/wind_high.ogg" id="e4"]
+[ext_resource type="AudioStream" path="res://audio/sfx/feedback/note_perfect_1.wav" id="e5"]
+[ext_resource type="AudioStream" path="res://audio/sfx/feedback/note_perfect_2.wav" id="e6"]
+[ext_resource type="AudioStream" path="res://audio/sfx/feedback/note_perfect_3.wav" id="e7"]
+[ext_resource type="AudioStream" path="res://audio/sfx/feedback/note_good_1.wav" id="e8"]
+[ext_resource type="AudioStream" path="res://audio/sfx/feedback/note_good_2.wav" id="e9"]
+[ext_resource type="AudioStream" path="res://audio/sfx/feedback/note_sketchy_1.wav" id="e10"]
+[ext_resource type="AudioStream" path="res://audio/sfx/feedback/note_sketchy_2.wav" id="e11"]
+[ext_resource type="AudioStream" path="res://audio/sfx/feedback/trick_1.wav" id="e12"]
+[ext_resource type="AudioStream" path="res://audio/sfx/feedback/trick_2.wav" id="e13"]
+[ext_resource type="AudioStream" path="res://audio/sfx/feedback/trick_3.wav" id="e14"]
+[ext_resource type="AudioStream" path="res://audio/sfx/feedback/gate_1.wav" id="e15"]
+[ext_resource type="AudioStream" path="res://audio/sfx/feedback/gate_2.wav" id="e16"]
+[ext_resource type="AudioStream" path="res://audio/sfx/feedback/banked_1.wav" id="e17"]
+[ext_resource type="AudioStream" path="res://audio/sfx/feedback/banked_2.wav" id="e18"]
+[ext_resource type="AudioStream" path="res://audio/sfx/collapse/rumble.ogg" id="e19"]
+[ext_resource type="AudioStream" path="res://audio/sfx/collapse/debris.ogg" id="e20"]
+[ext_resource type="AudioStream" path="res://audio/sfx/collapse/roar.ogg" id="e21"]
+[ext_resource type="AudioStream" path="res://audio/sfx/collapse/crack_1.wav" id="e22"]
+[ext_resource type="AudioStream" path="res://audio/sfx/collapse/crack_2.wav" id="e23"]
+[ext_resource type="AudioStream" path="res://audio/sfx/collapse/crack_3.wav" id="e24"]
+[ext_resource type="AudioStream" path="res://audio/sfx/collapse/crack_4.wav" id="e25"]
+[ext_resource type="AudioStream" path="res://audio/sfx/collapse/crack_5.wav" id="e26"]
+
+[sub_resource type="AudioStreamRandomizer" id="note_perfect"]
+streams_count = 3
+random_pitch = 1.0
+random_volume_offset_db = 1.0
+stream_0/stream = ExtResource("e5")
+stream_0/weight = 1.0
+stream_1/stream = ExtResource("e6")
+stream_1/weight = 1.0
+stream_2/stream = ExtResource("e7")
+stream_2/weight = 1.0
+
+[sub_resource type="AudioStreamRandomizer" id="note_good"]
+streams_count = 2
+random_pitch = 1.0
+random_volume_offset_db = 1.0
+stream_0/stream = ExtResource("e8")
+stream_0/weight = 1.0
+stream_1/stream = ExtResource("e9")
+stream_1/weight = 1.0
+
+[sub_resource type="AudioStreamRandomizer" id="note_sketchy"]
+streams_count = 2
+random_pitch = 1.0
+random_volume_offset_db = 1.0
+stream_0/stream = ExtResource("e10")
+stream_0/weight = 1.0
+stream_1/stream = ExtResource("e11")
+stream_1/weight = 1.0
+
+[sub_resource type="AudioStreamRandomizer" id="trick"]
+streams_count = 3
+random_pitch = 1.0
+random_volume_offset_db = 1.0
+stream_0/stream = ExtResource("e12")
+stream_0/weight = 1.0
+stream_1/stream = ExtResource("e13")
+stream_1/weight = 1.0
+stream_2/stream = ExtResource("e14")
+stream_2/weight = 1.0
+
+[sub_resource type="AudioStreamRandomizer" id="gate"]
+streams_count = 2
+random_pitch = 1.0
+random_volume_offset_db = 1.0
+stream_0/stream = ExtResource("e15")
+stream_0/weight = 1.0
+stream_1/stream = ExtResource("e16")
+stream_1/weight = 1.0
+
+[sub_resource type="AudioStreamRandomizer" id="banked"]
+streams_count = 2
+random_pitch = 1.0
+random_volume_offset_db = 1.0
+stream_0/stream = ExtResource("e17")
+stream_0/weight = 1.0
+stream_1/stream = ExtResource("e18")
+stream_1/weight = 1.0
+
+[sub_resource type="AudioStreamRandomizer" id="crack"]
+streams_count = 5
+random_pitch = 1.15
+random_volume_offset_db = 3.0
+stream_0/stream = ExtResource("e22")
+stream_0/weight = 1.0
+stream_1/stream = ExtResource("e23")
+stream_1/weight = 1.0
+stream_2/stream = ExtResource("e24")
+stream_2/weight = 1.0
+stream_3/stream = ExtResource("e25")
+stream_3/weight = 1.0
+stream_4/stream = ExtResource("e26")
+stream_4/weight = 1.0
+
+[node name="VehicleAudio" type="Node"]
+script = ExtResource("e0")
+sound_set = ExtResource("e1")
+
+[node name="WindLow" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("e2")
+bus = &"Wind"
+
+[node name="WindMid" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("e3")
+bus = &"Wind"
+
+[node name="WindHigh" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("e4")
+bus = &"Wind"
+
+[node name="Motion" type="AudioStreamPlayer" parent="."]
+bus = &"Rider"
+
+[node name="MotionFast" type="AudioStreamPlayer" parent="."]
+bus = &"Rider"
+
+[node name="Engine" type="AudioStreamPlayer" parent="."]
+bus = &"Rider"
+
+[node name="EngineHigh" type="AudioStreamPlayer" parent="."]
+bus = &"Rider"
+
+[node name="Grind" type="AudioStreamPlayer" parent="."]
+bus = &"Rider"
+
+[node name="GrindCatch" type="AudioStreamPlayer" parent="."]
+max_polyphony = 2
+bus = &"Rider"
+
+[node name="Hop" type="AudioStreamPlayer" parent="."]
+max_polyphony = 2
+bus = &"Rider"
+
+[node name="Boost" type="AudioStreamPlayer" parent="."]
+max_polyphony = 2
+bus = &"Rider"
+
+[node name="CannonBoost" type="AudioStreamPlayer" parent="."]
+max_polyphony = 2
+bus = &"Rider"
+
+[node name="Crush" type="AudioStreamPlayer" parent="."]
+max_polyphony = 3
+bus = &"World"
+
+[node name="TrickSpin" type="AudioStreamPlayer" parent="."]
+max_polyphony = 2
+bus = &"Rider"
+
+[node name="LandingImpact" type="AudioStreamPlayer" parent="."]
+max_polyphony = 2
+bus = &"Rider"
+
+[node name="Crash" type="AudioStreamPlayer" parent="."]
+max_polyphony = 2
+bus = &"Rider"
+
+[node name="NotePerfect" type="AudioStreamPlayer" parent="."]
+stream = SubResource("note_perfect")
+max_polyphony = 2
+bus = &"Feedback"
+
+[node name="NoteGood" type="AudioStreamPlayer" parent="."]
+stream = SubResource("note_good")
+max_polyphony = 2
+bus = &"Feedback"
+
+[node name="NoteSketchy" type="AudioStreamPlayer" parent="."]
+stream = SubResource("note_sketchy")
+bus = &"Feedback"
+
+[node name="Trick" type="AudioStreamPlayer" parent="."]
+stream = SubResource("trick")
+max_polyphony = 3
+bus = &"Feedback"
+
+[node name="Gate" type="AudioStreamPlayer" parent="."]
+stream = SubResource("gate")
+max_polyphony = 2
+bus = &"Feedback"
+
+[node name="Banked" type="AudioStreamPlayer" parent="."]
+stream = SubResource("banked")
+bus = &"Feedback"
+
+[node name="Rumble" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("e19")
+bus = &"World"
+
+[node name="Debris" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("e20")
+bus = &"World"
+
+[node name="Roar" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("e21")
+bus = &"World"
+
+[node name="Crack" type="AudioStreamPlayer" parent="."]
+stream = SubResource("crack")
+max_polyphony = 3
+bus = &"World"
