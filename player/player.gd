@@ -936,6 +936,18 @@ func update_visual(delta: float, steer: float, up_target: Vector3, forward: Vect
 	visual.position = base * pivot - full * pivot + contact
 
 
+## Adds speed now, in any state, up to max_speed; returns what was gained. In
+## the air `speed` doesn't move you and landing replaces it, so the flight
+## gets the boost too.
+func add_speed(amount: float) -> float:
+	var before: float = speed
+	speed = minf(speed + amount, tuning.max_speed)
+	var gained: float = speed - before
+	if state_machine.get_state_name() == &"Air" and velocity.length() > 1.0:
+		velocity += velocity.normalized() * gained
+	return gained
+
+
 ## Speed lines flash for speed_lines_boost_time (a boost just happened).
 func flash_boost() -> void:
 	boost_timer = tuning.speed_lines_boost_time
