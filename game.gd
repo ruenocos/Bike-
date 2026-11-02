@@ -461,6 +461,8 @@ func _start_boss() -> void:
 	await get_tree().process_frame
 	builder.clear()
 	collapse.stop()
+	# Out of sight in the arena; Collapse.reset() shows it at the next stage.
+	collapse.hide()
 	hud.progress.visible = false
 	player.set_physics_process(true)
 	await boss_fight.begin(player, boss_fights, _rng.randi())
