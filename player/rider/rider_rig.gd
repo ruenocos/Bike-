@@ -88,6 +88,7 @@ func _ready() -> void:
 		CelLook.apply(self, outline)
 		_add_rim(self)
 		_set_layer(self)
+		CelLook.keep_outline(self)
 		var parent: Node = get_parent()
 		while parent != null and not parent is Player:
 			parent = parent.get_parent()

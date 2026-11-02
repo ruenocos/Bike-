@@ -29,6 +29,15 @@ static func apply(root: Node, outline: bool, tint: Color = Color.WHITE) -> void:
 		apply(child, outline, tint)
 
 
+## Keeps a thin ink line under `root` when `BiomeLook.stylize` removes the
+## others, so the rider and things you can hit still stand out.
+static func keep_outline(root: Node, width: float = 1.0) -> void:
+	if root is GeometryInstance3D:
+		(root as GeometryInstance3D).set_instance_shader_parameter(&"outline_min", width)
+	for child: Node in root.get_children(true):
+		keep_outline(child, width)
+
+
 static func material_for(source: Material, outline: bool, tint: Color = Color.WHITE) -> Material:
 	var key: String = "%d:%s:%s" % [source.get_instance_id() if source != null else 0, outline, tint.to_html()]
 	if _cache.has(key):

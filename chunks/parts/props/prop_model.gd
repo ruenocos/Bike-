@@ -88,6 +88,9 @@ func _rebuild() -> void:
 		tint = tint * Color(1.0 + w * color_jitter * 0.75, 1.0, 1.0 - w * color_jitter * 0.75) * (1.0 + v * color_jitter)
 		tint.a = 1.0
 	CelLook.apply(_model, outline, tint)
+	# Logs, fences and boulders (not scenery trees and rocks) stay inked.
+	if kind == "none":
+		CelLook.keep_outline(_model)
 	if kind == "tree" and tree_sway > 0.0:
 		_set_sway(_model, tree_sway)
 	if contact_shadow and contact_shadows_on and biome != null and biome.contact_shadow > 0.0 and not Engine.is_editor_hint():

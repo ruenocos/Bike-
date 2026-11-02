@@ -16,6 +16,25 @@ extends Node
 ## little darker and less hazy than the far one.
 @export var near_mountains: MountainRing
 @export_range(0.0, 1.0, 0.01) var near_mountains_darken: float = 0.12
+## How stylised the whole game looks (v0.30): 1 = hard cel bands and ink
+## lines, 0 = soft low-poly (smooth light, soft shadows and highlights, no
+## ink except a thin line on the rider and on things you can hit, light
+## SSAO). F5 cycles 1 / 0.5 / 0 while playing. Moving it here also previews
+## in the editor (and changes the scene's sun / SSAO values, like `preview`).
+@export_range(0.0, 1.0, 0.01) var stylize: float = 1.0:
+	set(v):
+		stylize = v
+		if is_inside_tree():
+			apply_stylize()
+@export_group("Soft end of stylize (0)")
+## Softness of the highlight and rim edges (the cel look uses 0.05).
+@export_range(0.0, 1.0, 0.01) var soft_highlights: float = 0.6
+## Sun shadow edge blur.
+@export_range(0.0, 6.0, 0.1) var soft_shadow_blur: float = 2.5
+## SSAO fades in as stylize goes down (0 = off). Cost: see CLAUDE.md.
+@export_range(0.0, 4.0, 0.05) var soft_ssao_intensity: float = 0.8
+@export_range(0.1, 4.0, 0.05) var soft_ssao_radius: float = 1.0
+@export_group("")
 ## Editor only: shows this biome in the scene.
 @export var preview: Biome:
 	set(v):
@@ -25,6 +44,7 @@ extends Node
 
 
 func apply(b: Biome) -> void:
+	apply_stylize()
 	RenderingServer.global_shader_parameter_set(&"ground_dirt", b.ground_dirt)
 	RenderingServer.global_shader_parameter_set(&"ground_grass", b.ground_grass)
 	RenderingServer.global_shader_parameter_set(&"ground_rock", b.ground_rock)
@@ -83,3 +103,49 @@ var _height_fog_below: float = 40.0
 func follow_height(y: float) -> void:
 	if world_environment != null and world_environment.environment != null:
 		world_environment.environment.fog_height = y - _height_fog_below
+
+
+## Current value for the F3 readout.
+static var current_stylize: float = 1.0
+const CEL_CURVE: GradientTexture1D = preload("res://vfx/cel/diffuse_curve.tres")
+var _base_shadow_blur: float = -1.0
+
+
+## Puts `stylize` on the shader globals, sun and environment. At 1 everything
+## is exactly the Project Settings look.
+func apply_stylize() -> void:
+	current_stylize = stylize
+	RenderingServer.global_shader_parameter_set(&"diffuse_curve", _light_curve(stylize))
+	RenderingServer.global_shader_parameter_set(&"outline_width", _project_global(&"outline_width", 2.0) * stylize)
+	RenderingServer.global_shader_parameter_set(&"specular_smoothness", lerpf(soft_highlights, _project_global(&"specular_smoothness", 0.05), stylize))
+	RenderingServer.global_shader_parameter_set(&"fresnel_smoothness", lerpf(soft_highlights, _project_global(&"fresnel_smoothness", 0.05), stylize))
+	if sun != null:
+		if _base_shadow_blur < 0.0:
+			_base_shadow_blur = sun.shadow_blur
+		sun.shadow_blur = lerpf(soft_shadow_blur, _base_shadow_blur, stylize)
+	if world_environment != null and world_environment.environment != null:
+		var env: Environment = world_environment.environment
+		env.ssao_enabled = soft_ssao_intensity > 0.0 and stylize < 0.99
+		env.ssao_intensity = soft_ssao_intensity * (1.0 - stylize)
+		env.ssao_radius = soft_ssao_radius
+		env.ssao_light_affect = 0.3
+
+
+## The light ramp (input: light dot normal): the cel bands blended toward
+## half-Lambert, so the shadow side stays filled and the bands melt away.
+func _light_curve(s: float) -> Texture2D:
+	if s >= 0.999:
+		return CEL_CURVE
+	var width: int = 128
+	var image: Image = Image.create(width, 1, false, Image.FORMAT_RGB8)
+	for i: int in width:
+		var x: float = (float(i) + 0.5) / float(width)
+		var half: float = (x + 1.0) * 0.5
+		var v: float = lerpf(half * half, CEL_CURVE.gradient.sample(x).r, s)
+		image.set_pixel(i, 0, Color(v, v, v))
+	return ImageTexture.create_from_image(image)
+
+
+func _project_global(global_name: StringName, fallback: float) -> float:
+	var entry: Variant = ProjectSettings.get_setting("shader_globals/%s" % global_name)
+	return float(entry["value"]) if entry is Dictionary else fallback

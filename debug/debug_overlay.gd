@@ -50,6 +50,7 @@ func _process(_delta: float) -> void:
 	var p: Player = _player
 	var lines: PackedStringArray = PackedStringArray()
 	lines.append("FPS        %d" % Engine.get_frames_per_second())
+	lines.append("stylize    %.1f  (F5)" % BiomeLook.current_stylize)
 	lines.append("speed      %5.1f m/s   %3d km/h" % [p.speed, roundi(p.speed * 3.6)])
 	lines.append("state      %s" % p.state_machine.get_state_name())
 	lines.append("landing    %4.1f°  %s" % [p.last_landing_angle, p.last_landing_grade])

@@ -173,6 +173,9 @@ func _ready() -> void:
 	if args.has("--debug-nomountains"):
 		mountains.visible = false
 	_print_stage = args.has("--print-stage")
+	for arg: String in args:
+		if arg.begins_with("--stylize="):
+			biome_look.stylize = arg.trim_prefix("--stylize=").to_float()
 	if args.has("--debug-nocontact"):
 		PropModel.contact_shadows_on = false
 	if args.has("--debug-greyscale"):
@@ -399,6 +402,9 @@ func _add_stage_stats(distance: float) -> void:
 ## F4 (debug_greyscale) shows the world without colour, to check that
 ## hazards stand out by value alone.
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.is_pressed() and not event.is_echo() and (event as InputEventKey).physical_keycode == KEY_F5:
+		# F5: compare the looks (BiomeLook.stylize).
+		biome_look.stylize = 0.5 if biome_look.stylize > 0.75 else (0.0 if biome_look.stylize > 0.25 else 1.0)
 	if event.is_action_pressed(&"debug_greyscale"):
 		# Flips the flag too, so the next stage's apply_biome keeps it.
 		_greyscale = not _greyscale

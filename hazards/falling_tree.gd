@@ -49,6 +49,7 @@ var can_see: Callable
 
 func _ready() -> void:
 	add_to_group(&"hop_hazards")
+	CelLook.keep_outline(self)
 	if not can_see.is_valid():
 		can_see = _can_see
 	_set_fall(preview_fall if Engine.is_editor_hint() else 0.0)

@@ -12,6 +12,10 @@ global uniform float outline_fade_end;
 
 #include "includes/sway.gdshaderinc"
 
+// Bike! (v0.30): the width never drops below this on this mesh, whatever the
+// global (CelLook.keep_outline: the rider and things you can hit).
+instance uniform float outline_min = 0.0;
+
 void vertex() {
 	VERTEX += sway_offset(VERTEX, MODEL_MATRIX, TIME);
 	vec4 view_position = MODELVIEW_MATRIX * vec4(VERTEX, 1.0);
@@ -24,7 +28,7 @@ void vertex() {
 			normalize(clip_normal.xy) /
 			VIEWPORT_SIZE *
 			clip_position.w *
-			outline_width * fade;
+			max(outline_width, outline_min) * fade;
 	POSITION = clip_position;
 }
 
