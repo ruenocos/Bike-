@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=3]
+[gd_scene load_steps=31 format=3]
 
 [ext_resource type="Script" path="res://player/player.gd" id="1_player"]
 [ext_resource type="Script" path="res://player/state_machine.gd" id="2_machine"]
@@ -19,6 +19,7 @@
 [ext_resource type="PackedScene" path="res://vfx/rider_vfx.tscn" id="18_vfx"]
 [ext_resource type="PackedScene" path="res://player/rider/rider_rig.tscn" id="19_rig"]
 [ext_resource type="PackedScene" path="res://vfx/anime_fx.tscn" id="90_animefx"]
+[ext_resource type="PackedScene" path="res://vfx/speed_feel/speed_feel.tscn" id="91_speedfeel"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_body"]
 radius = 0.35
@@ -88,3 +89,5 @@ margin = 0.2
 current = true
 fov = 75.0
 far = 4500.0
+
+[node name="SpeedFeel" parent="CameraRig" instance=ExtResource("91_speedfeel")]

@@ -723,6 +723,12 @@ func check_air_crash(approach: Vector3) -> bool:
 	return crashed
 
 
+## Speed as a fraction of max speed (0..1). The vehicle interface SpeedFeel
+## reads; any vehicle (the tank) only needs this, is_grounded() and velocity.
+func get_speed_ratio() -> float:
+	return clampf(speed / tuning.max_speed, 0.0, 1.0)
+
+
 ## On the ground after this tick's ground_move? States use this, not
 ## is_on_floor(), so an edge that let go counts as leaving the ground.
 func is_grounded() -> bool:
