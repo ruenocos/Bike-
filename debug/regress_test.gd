@@ -9,6 +9,8 @@ extends Node3D
 ##   - crushing something in the air keeps your flight path
 ##   - a landed trick counts on a soft touchdown too
 ##   - a hazard hit still pending doesn't follow you through place()
+##   - state_changed reports a landing before the Ride / Bail it hands over to
+##   - a time penalty leaves the collapse alone during the start wait
 ## Run:  <exe> --headless --path . --fixed-fps 60 res://debug/regress_test.tscn
 ## Exits with code 1 on failure.
 
@@ -72,6 +74,13 @@ func _run_game_cases() -> void:
 			break
 	_check(game.get("in_stage"), "ride: the stage starts")
 	_check(collapse.visible, "ride: the collapse wall is back")
+
+	var waiting_at: float = collapse.distance
+	collapse.add_time_penalty(3.0, waiting_at + 500.0)
+	_check(collapse.waiting and is_equal_approx(collapse.distance, waiting_at), "start wait: a penalty doesn't move the collapse (%.1f -> %.1f m)" % [waiting_at, collapse.distance])
+	collapse.release()
+	collapse.add_time_penalty(3.0, waiting_at + 500.0)
+	_check(collapse.distance > waiting_at, "released: a penalty moves the collapse (%.1f -> %.1f m)" % [waiting_at, collapse.distance])
 	# Past the title menu's input delay, which still holds its button.
 	await get_tree().create_timer(menu.input_delay + 0.1).timeout
 	game.queue_free()
@@ -99,6 +108,7 @@ func _run_slope_cases() -> void:
 	await _crush_in_air()
 	await _soft_trick_landing()
 	await _pending_hazard_place()
+	await _state_changed_order()
 	Input.action_release(&"no_hander")
 
 
@@ -236,3 +246,21 @@ func _pending_hazard_place() -> void:
 	_bails = 0
 	await _ticks(5)
 	_check(_bails == 0, "a hazard hit still pending doesn't follow you through place()")
+
+
+func _state_changed_order() -> void:
+	var seen: Array[StringName] = []
+	var on_state: Callable = func(state_name: StringName) -> void: seen.append(state_name)
+	_player.state_machine.state_changed.connect(on_state)
+	await _on_ground(-40.0, 30.0)
+	await _ticks(10)
+	seen.clear()
+	_player.state_machine.transition_to(&"Land", {"velocity": _player.ground_dir * 30.0})
+	_check(seen == [&"Land", &"Ride"], "soft landing: state_changed in order (%s)" % [seen])
+	await _ticks(10)
+	_player.bail_immunity_timer = 0.0
+	seen.clear()
+	_player.state_machine.transition_to(&"Land", {"velocity": -_player.ground_normal * 40.0})
+	_check(seen == [&"Land", &"Bail"], "bailed landing: state_changed in order (%s)" % [seen])
+	_player.state_machine.state_changed.disconnect(on_state)
+	await _ticks(60)
