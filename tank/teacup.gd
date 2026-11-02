@@ -1,7 +1,8 @@
 class_name Teacup
 extends Node3D
-## A teacup on the hull (v0.32), visual only: it rattles on landings, flies off
-## in a crash, and is back in place a moment later.
+## Tea things on the hull (v0.32): the cup, the cake and the pot all use this.
+## Visual only: they rattle on landings, fly off in a crash, and are back in
+## place a moment later.
 
 ## Rattle height on a landing (m), and how long the bounce lasts.
 @export_range(0.0, 1.0, 0.01, "suffix:m") var rattle: float = 0.12

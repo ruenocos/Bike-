@@ -223,13 +223,14 @@ func _pose_upper_body() -> void:
 	_turn(_spine, Vector3.FORWARD, rad_to_deg(_lean))
 	_turn(_head, Vector3.RIGHT, -8.0 if pose == Pose.HATCH else 6.0)
 	# In the hatch the elbows stay up and the hands come in to the rim.
-	var left_down: float = -32.0 if pose == Pose.HATCH else -72.0
-	var right_down: float = 32.0 if pose == Pose.HATCH else 72.0
-	var bend: float = 70.0 if pose == Pose.HATCH else 20.0
+	var left_down: float = -58.0 if pose == Pose.HATCH else -72.0
+	var right_down: float = 58.0 if pose == Pose.HATCH else 72.0
+	var bend: float = 75.0 if pose == Pose.HATCH else 20.0
 	_turn(_arm_l, Vector3.FORWARD, left_down)
 	_turn(_arm_r, Vector3.FORWARD, lerpf(right_down, -70.0, _cheer))
-	_turn(_fore_l, Vector3.UP, bend)
-	_turn(_fore_r, Vector3.UP, lerpf(-bend, -5.0, _cheer))
+	# Around Y a left arm (along +X) swings forward (+Z) with a negative angle.
+	_turn(_fore_l, Vector3.UP, -bend)
+	_turn(_fore_r, Vector3.UP, lerpf(bend, 5.0, _cheer))
 
 
 ## One spring chain per strand of hair (VRoid names them HairJoint-*). Bust

@@ -1,4 +1,4 @@
-[gd_scene load_steps=119 format=3]
+[gd_scene load_steps=126 format=3]
 
 [ext_resource type="Script" path="res://tank/tank_rig.gd" id="1_rig"]
 [ext_resource type="Script" path="res://tank/tank_tread.gd" id="2_tread"]
@@ -525,6 +525,46 @@ height = 0.025
 radial_segments = 12
 rings = 1
 
+[sub_resource type="StandardMaterial3D" id="CakeM"]
+albedo_color = Color(1, 0.86, 0.72, 1)
+
+[sub_resource type="StandardMaterial3D" id="IcingM"]
+albedo_color = Color(1, 0.55, 0.6, 1)
+
+[sub_resource type="StandardMaterial3D" id="PotM"]
+albedo_color = Color(0.2, 0.34, 0.62, 1)
+
+[sub_resource type="CylinderMesh" id="CakeS"]
+material = SubResource("CakeM")
+top_radius = 0.15
+bottom_radius = 0.15
+height = 0.12
+radial_segments = 12
+rings = 1
+
+[sub_resource type="CylinderMesh" id="IcingS"]
+material = SubResource("IcingM")
+top_radius = 0.155
+bottom_radius = 0.155
+height = 0.04
+radial_segments = 12
+rings = 1
+
+[sub_resource type="SphereMesh" id="PotS"]
+material = SubResource("PotM")
+radius = 0.12
+height = 0.2
+radial_segments = 12
+rings = 6
+
+[sub_resource type="CylinderMesh" id="SpoutS"]
+material = SubResource("PotM")
+top_radius = 0.018
+bottom_radius = 0.035
+height = 0.14
+radial_segments = 8
+rings = 1
+
 [node name="TankRig" type="Node3D"]
 script = ExtResource("1_rig")
 
@@ -791,3 +831,30 @@ mesh = SubResource("SaucerS")
 [node name="Cup" type="MeshInstance3D" parent="Body/Teacup"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.07, 0)
 mesh = SubResource("CupS")
+
+[node name="Cake" type="Node3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.38, 1.52, 1.25)
+script = ExtResource("4_cup")
+
+[node name="Plate" type="MeshInstance3D" parent="Body/Cake"]
+mesh = SubResource("SaucerS")
+
+[node name="Sponge" type="MeshInstance3D" parent="Body/Cake"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.07, 0)
+mesh = SubResource("CakeS")
+
+[node name="Icing" type="MeshInstance3D" parent="Body/Cake"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.14, 0)
+mesh = SubResource("IcingS")
+
+[node name="Teapot" type="Node3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.42, 1.52, 1.0)
+script = ExtResource("4_cup")
+
+[node name="Pot" type="MeshInstance3D" parent="Body/Teapot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
+mesh = SubResource("PotS")
+
+[node name="Spout" type="MeshInstance3D" parent="Body/Teapot"]
+transform = Transform3D(0.7, -0.7, 0, 0.7, 0.7, 0, 0, 0, 1, 0.14, 0.12, 0)
+mesh = SubResource("SpoutS")
