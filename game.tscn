@@ -153,6 +153,7 @@ script = ExtResource("5_stats")
 [node name="RunHud" parent="." instance=ExtResource("6_hud")]
 
 [node name="DebugOverlay" parent="." instance=ExtResource("7_overlay")]
+show_flashes = false
 
 [node name="Menus" type="CanvasLayer" parent="."]
 layer = 20

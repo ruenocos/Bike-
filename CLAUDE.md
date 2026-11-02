@@ -38,7 +38,7 @@ Goal right now: a playable demo built from the vertical slice. No deadline. Game
 ## Prefer editor-visible setup
 Prefer editor-visible setup: scenes, nodes, .tres, @export, @tool previews; code for behaviour only (Wons's standing preference, from v0.6).
 - Chunks are .tscn files with visible nodes (TrackLine Path3D + CSG Ribbon, Entry/Exit/Spawn Marker3D, instanced kicker/rail/halfpipe/finish-gate scenes). StageBuilder only instances and places them.
-- One .tres per data item (tricks/data/, scoring/upgrades/). HUD, menus and the collapse are scenes laid out with nodes and a Theme (ui/bike_theme.tres).
+- One .tres per data item (tricks/data/, scoring/upgrades/). HUD, menus and the collapse are scenes laid out with nodes and a Theme (ui/theme/panzer_theme.tres since v0.31).
 - Expose tuning with @export (+ @export_range, groups, doc comments). Use @tool where a live editor preview or a button helps (Chunk "Rebuild TrackLine from keys", Rail "Rebuild posts").
 
 ## Audio
@@ -274,14 +274,14 @@ Done (v0.20 "Snowline for real", branch `landscape`, + fixes from the external r
 - Review fixes: leaving a run for the title from the pause menu records it (gates, runs, bests; Restart run doesn't); input line in this file explains no_hander and the legacy grind action; run top speed only counts in a stage; pausing during a hit-stop is safe (its timer ignores pause and time scale).
 - Known: a flat hazy band shows near the horizon beyond the valley in every biome (same outline for the same seed: geometry, probably the far ground plane at a grazing angle); not fixed yet.
 Done (v0.21 "menus look", branch `landscape`, + fixes from the external review of v0.20):
-- One panel style across every menu (ui/bike_theme.tres): warm dark panel, thick ink border, drop shadow; chunky buttons with a heavier bottom edge, ink outline on button text, yellow pressed / focus; ProgressBar styles. Title: tilted "BIKE!" wordmark (ink outline, red offset shadow), bike card with Speed / Hop / Toughness bars (worked out from the bike's stat changes on the base tuning).
+- One panel style across every menu (ui/bike_theme.tres, replaced by ui/theme/panzer_theme.tres in v0.31): warm dark panel, thick ink border, drop shadow; chunky buttons with a heavier bottom edge, ink outline on button text, yellow pressed / focus; ProgressBar styles. Title: tilted "BIKE!" wordmark (ink outline, red offset shadow), bike card with Speed / Hop / Toughness bars (worked out from the bike's stat changes on the base tuning).
 - Ground patches: chunks/materials/ground_noise.gdshaderinc (sin-free Hoskins hash, cells wrapped every 289, so it stays clean kilometres from the origin), used by the terrain and the grass tufts (tufts now follow the same light / dark patches).
 - Far ground: its own unshaded shader (chunks/materials/far_ground.gdshader) fading to the biome's fog colour with distance; the sky below the horizon = the fog colour. (The flat band some stills show beyond the valley turned out to be the stage's own distant terrain, partly fogged, not the far ground.)
 Done (v0.22 "rider juice", branch `landscape`, + fixes from the external review of v0.21):
 - Each trick has its own body pose (TrickData `pose`): Frontloop tucks tight (poses/trick_tuck.tres), Pocket is the superman (poses/trick.tres), Whirl Left / Right kick one foot out (trick_kick_left / _right). Tricks without a pose use RiderRig `pose_trick`.
 - Landing squash: the rider squashes on every landing (RiderRig `land_squash` 0.12, x1.4 on a perfect) and springs back with the hip dip.
 - Perfect landings flash the screen warm white for 0.12 s (RunHud.flash_light), inside the existing hit-stop / camera punch.
-- Review fixes: upgrade cards have a title and a body label styled by theme type variations (bike_theme.tres CardTitle / CardBody) instead of one text; the bike card's bar ranges are exports on MainMenu (Stat bars group); fog aerial perspective 0.35 → 0.6 so far terrain melts into the sky.
+- Review fixes: upgrade cards have a title and a body label styled by theme type variations (theme CardTitle / CardBody) instead of one text; the bike card's bar ranges are exports on MainMenu (Stat bars group); fog aerial perspective 0.35 → 0.6 so far terrain melts into the sky.
 - debug/rider_poses.tscn shows the trick poses too.
 Done (v0.23 "more set pieces", branch `landscape`, + fixes from the external review of v0.22):
 - A second set piece per biome (author_landscape.gd, chunks/landscape/), each with several ways through and in the biome's `set_pieces` (the stage's first set piece is one of the biome's own): set_log_rhythm (Meadow: low log piles every ~45 m, alternating sides, over rollers), set_narrows (Canyon: the valley pinches twice to 40-45% with a kink, a kicker over a shallow wash), set_ice_chute (Snowline: a long steep drop over rollers with two rock chokes), set_bridge_gap (Ash Quarry: two raised ramps on the left with a gap over a deep cut and a gate in it, or the low road). Smoke and line tests ride them.
@@ -355,6 +355,14 @@ Tweak in the editor (v0.9):
 - Rider (v0.11): player/rider/poses/*.tres (poses), RiderRig in player/rider/rider_rig.tscn (Feel: blend, tuck, steer, cadence, land dip; Body: limb lengths). Ground cover: chunks/terrain/cover/meadow.tres (patches + layers), ground colours in Shader Globals.
 - Look (v0.10, shadow band since v0.30): a prop scene's Model node (PropModel: variants, scale, outline); light band in vfx/cel/diffuse_curve.tres; outline colour / width in Project Settings > Shader Globals.
 
+Done (v0.31 "Panzer Pop" UI, branch `claude/project-thread-quh231`; Wons: "the ui is very ugly and bare", picked Panzer Pop from the mockups (https://claude.ai/artifact/QAD3JGAVH62S1qPdkLBNsi) and asked to "reduce a bit of the junk on the screen"):
+- Look: Persona / Denshattack angles for the WW2 tank + anime crew pivot. Ink #141416, paper #F4F1E8, red #E5322D, mustard #F2B705, olive #3E5B3A, navy #1B2340. Every panel is a skewed "tape" (StyleBoxFlat `skew` 0.28; text stays upright). Fonts (OFL, ui/fonts/, CREDITS.md): Big Shoulders Stencil Display (numbers, headlines), Barlow Condensed Italic (labels, buttons), Barlow SemiBold (body), Dela Gothic One (katakana / kanji accents).
+- ui/theme/panzer_theme.tres (was ui/bike_theme.tres): type variations HudNumber, HudLabel, HudLabelInk, Kana, Headline, CardTitle, CardBody, CardNumber, StatLine; tapes TapeInk / TapePaper / TapeRed / TapeMustard / TapeOlive / TapeScore, screen-edge tapes TapeOliveL / TapeInkL / TapeRedL (bleed off the left edge) and TapeRedR / TapeInkR (right edge); Button (paper slip, mustard focus with ink shadow), CardButton (upgrade slips with an olive number strip), ProgressBar.
+- HUD (ui/run_hud.tscn, everything under Root): stage + time tapes top left, score tape top right; the collapse tape only shows within `collapse_show_distance` 160 m (the old meter bar is gone); speed on a tank-style dial (ui/hud/speed_dial.gd, @tool) with the number on a tape; combo = multiplier tape + shell pips (ui/hud/shell_pips.gd, @tool) + points, only while a combo runs; one callout tape under it for tricks, BANKED, SKETCHY and BAIL (GOOD landings show nothing); PERFECT plays a red slash cut-in with the word and a random line (`cut_in_*` exports, `cut_in_portrait` for crew art later); progress bar redrawn as a skewed tape, distance on an ink plate (was unreadable on snow). The debug overlay's centre flashes are off in game.tscn (`show_flashes`).
+- Menus: upgrade picker = "REQUISITION" (stacked slips, up/down, down past the last card = Reroll; `portrait` export, the 補給 kana fills the slot without art); stage clear / run over / pause = colour band + stencil headline + kana + ink slab with two stat columns (Names / Values); run over buttons side by side; title screen = BIKE! stencil logo on an ink shard + vehicle card ("ROLL OUT").
+- Motion (ui/ui_motion.gd, UiMotion): tape_in (unroll from the left), slam (scale down with overshoot), slide_in, kick, open_menu; all ignore time scale so they play through the hit stop.
+- debug/ui_gallery.tscn: every HUD state and menu with sample data (F6 in the editor; `-- --ui-shots=<dir>` saves stills). menu_test updated for the new focus layout (10/10).
+
 ## Next tasks, in order
 0. Playtest v0.11-v0.14 (see the final summary): the rider look, grass, the four biomes, falling trees (readable? fair?), the new upgrades, the title screen and bikes, the closer camera.
 0. Playtest v0.10 look: do the cel bands, outlines and real trees/rocks read well at speed, are obstacles still easy to spot, does it still feel golden hour. Next visual steps if wanted: rider model, grass/bushes decoration, cel on the boulder and rails.
@@ -365,5 +373,5 @@ Tweak in the editor (v0.9):
 5. Camera: rider sits off-centre and small during lip airs; at the halfpipe exit the spring arm can dip into the transition wall.
 6. Lip-air pose: bike side-on with wheels to the ramp reads like "lying on the deck" from the chase cam; add a proper vert pose / rotate the rider upright.
 7. Bail recovery: proper bail animation/ragdoll-lite and a quicker way back into flow.
-8. Real combo HUD in ui/ (the stacked flashes still live in the debug overlay).
+8. UI: crew portrait art for the PERFECT cut-in and the requisition screen (exports ready); pad glyphs per controller (PS5 vs Xbox) instead of letters.
 9. Riding into a wall on the ground at an angle kills nearly all speed (pre-existing ground_move clamp); make it a glancing slide.

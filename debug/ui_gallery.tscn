@@ -1,0 +1,48 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://debug/ui_gallery.gd" id="1_gallery"]
+[ext_resource type="PackedScene" path="res://ui/run_hud.tscn" id="2_hud"]
+[ext_resource type="PackedScene" path="res://ui/menus/stage_summary.tscn" id="3_summary"]
+[ext_resource type="PackedScene" path="res://ui/menus/upgrade_picker.tscn" id="4_picker"]
+[ext_resource type="PackedScene" path="res://ui/menus/run_over.tscn" id="5_run_over"]
+[ext_resource type="PackedScene" path="res://ui/menus/pause_menu.tscn" id="6_pause"]
+[ext_resource type="PackedScene" path="res://ui/menus/main_menu.tscn" id="7_title"]
+
+[sub_resource type="Gradient" id="Grad_sky"]
+offsets = PackedFloat32Array(0, 0.55, 0.56, 1)
+colors = PackedColorArray(0.55, 0.6, 0.78, 1, 0.98, 0.82, 0.62, 1, 0.42, 0.62, 0.3, 1, 0.3, 0.5, 0.22, 1)
+
+[sub_resource type="GradientTexture2D" id="Tex_sky"]
+gradient = SubResource("Grad_sky")
+fill_from = Vector2(0, 0)
+fill_to = Vector2(0, 1)
+
+[node name="UiGallery" type="Node"]
+script = ExtResource("1_gallery")
+
+[node name="Backdrop" type="CanvasLayer" parent="."]
+layer = -1
+
+[node name="Sky" type="TextureRect" parent="Backdrop"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = SubResource("Tex_sky")
+expand_mode = 1
+
+[node name="RunHud" parent="." instance=ExtResource("2_hud")]
+
+[node name="Menus" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="StageSummary" parent="Menus" instance=ExtResource("3_summary")]
+
+[node name="UpgradePicker" parent="Menus" instance=ExtResource("4_picker")]
+
+[node name="RunOver" parent="Menus" instance=ExtResource("5_run_over")]
+
+[node name="PauseMenu" parent="Menus" instance=ExtResource("6_pause")]
+
+[node name="MainMenu" parent="Menus" instance=ExtResource("7_title")]
