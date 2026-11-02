@@ -6,6 +6,7 @@ Third-party assets and code used in Bike!. Licence texts sit next to each one.
 |---|---|---|---|
 | Cel shader (base, cut-out, outline, includes) | `vfx/cel/` | Rafael de Lima Bordoni (eldskald), [godot4-cel-shader](https://github.com/eldskald/godot4-cel-shader) | MIT (`vfx/cel/LICENSE.txt`) |
 | Stylized Nature MegaKit (Standard): trees, rocks, bushes, textures | `art/nature/megakit/` | [Quaternius](https://quaternius.itch.io/stylized-nature-megakit) | CC0 (`art/nature/megakit/License_Standard.txt`) |
+| Animated Mech Pack: the boss mech ("Leela", re-exported and optimised) | `art/boss/` | [Quaternius](https://quaternius.com/packs/animatedmech.html) (via [OpenGameArt](https://opengameart.org/content/animated-mech-pack)) | CC0 (`art/boss/License.txt`) |
 | Nature Kit: fences, logs, stumps | `art/props/kenney/` | [Kenney](https://kenney.nl/assets/nature-kit) | CC0 (`art/props/kenney/License.txt`) |
 | Painted anime sky panoramas (sky_101, 113, 116, 118) | `sky/painted/` | [FreeStylized](https://freestylized.com/category/skybox/anime) | Royalty free, commercial use OK (`sky/painted/LICENSE.txt`) |
 | UI fonts: Big Shoulders Stencil Display, Barlow, Barlow Condensed, Dela Gothic One | `ui/fonts/` | Google Fonts: Patric King (Big Shoulders), Jeremy Tribby (Barlow), artakana (Dela Gothic One) | SIL Open Font License 1.1 (`ui/fonts/OFL.txt`) |

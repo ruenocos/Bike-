@@ -35,6 +35,9 @@ extends Node3D
 @export_range(0.0, 1.0, 0.05) var fall_respawn_speed: float = 0.6
 @export_range(0.0, 60.0, 1.0, "suffix:m/s") var respawn_min_speed: float = 25.0
 
+## A boss fight after every this many stages (0 = no bosses). v0.33.
+@export_range(0, 10) var boss_every: int = 2
+
 @export_group("Out of bounds and penalties")
 ## Seconds past the valley crests before you're put back on a line.
 @export_range(0.5, 10.0, 0.1, "suffix:s") var oob_time: float = 3.0
@@ -67,6 +70,7 @@ var _near_anchor: Vector3 = Vector3.ZERO
 @onready var biome_look: BiomeLook = $BiomeLook
 @onready var menu_camera: Camera3D = $MenuCamera
 @onready var hazards: HazardDirector = $HazardDirector
+@onready var boss_fight: BossFight = $BossFight
 
 ## The look of the current stage.
 var biome: Biome
@@ -90,6 +94,9 @@ var _menu_flight: float = 0.0
 var _in_menu: bool = false
 ## `--biome=<n>`: start the biome order at n (look at one biome quickly).
 var biome_offset: int = 0
+## --boss-now or the title screen's BOSS FIGHT button: skip stage 1 and
+## go straight to the first boss.
+var _boss_now: bool = false
 
 var run_seed: int = 0
 ## 0 = first stage.
@@ -99,6 +106,12 @@ var upgrades_taken: Array[UpgradeData] = []
 ## How far down the stage the rider is (m).
 var player_progress: float = 0.0
 var in_stage: bool = false
+## In a boss fight (v0.33); in_stage is false meanwhile.
+var in_boss: bool = false
+## Boss fights started this run (0 = none yet).
+var boss_fights: int = 0
+## Rerolls earned by the stage just finished (for the summary after a boss).
+var _last_earned: int = 0
 ## Time spent past the crests (s); 0 when in bounds.
 var oob_timer: float = 0.0
 ## Upgrade rerolls in hand (earned with boost gates and score, RunRules).
@@ -124,26 +137,36 @@ func _ready() -> void:
 	run_over.restart.connect(start_run)
 	run_over.to_menu.connect(_open_main_menu)
 	main_menu.ride.connect(_on_ride)
+	main_menu.boss_fight.connect(func(b: BikeData) -> void:
+		_boss_now = true
+		_on_ride(b))
 	pause_menu.resumed.connect(_unpause)
 	pause_menu.restart.connect(func() -> void:
 		_unpause()
 		in_stage = false
+		_leave_boss()
 		start_run(_seed_arg))
 	pause_menu.to_menu.connect(func() -> void:
 		_unpause()
 		# Leaving for the title counts the run so far (gates, runs, bests);
 		# Restart run doesn't.
-		if in_stage:
+		if in_stage or in_boss:
+			var was_stage: bool = in_stage
 			in_stage = false
+			_leave_boss()
 			stats.stop()
-			run_gates += stats.gates
-			_add_stage_stats(player_progress)
+			if was_stage:
+				run_gates += stats.gates
+				_add_stage_stats(player_progress)
 			Save.record_run(stage_index + 1, player.combo.run_total, run_gates, bikes)
 		_open_main_menu())
 	Events.trick_completed.connect(func(_n: String, _s: int) -> void:
 		if in_stage:
 			run_tricks += 1)
 	start_sprint.launched.connect(_on_launched)
+	boss_fight.won.connect(_on_boss_won)
+	boss_fight.lost.connect(_on_boss_lost)
+	boss_fight.flash = hud.flash_message
 	Events.bailed.connect(_on_bailed)
 	Events.gate_collected.connect(func(score: int) -> void: hud.flash_gate(score))
 	Events.landed.connect(func(grade: StringName) -> void:
@@ -183,7 +206,10 @@ func _ready() -> void:
 	if args.has("--debug-shadow2x"):
 		biome_look.sun.directional_shadow_max_distance *= 2.0
 	# Bots and quick looks (--seed, --biome, --skip-menu) skip the title screen.
-	if args.has("--autopilot") or args.has("--skip-menu") or seed_arg >= 0 or biome_offset != 0:
+	if args.has("--boss-now"):
+		# Straight into the first boss fight (testing the boss).
+		_boss_now = true
+	if args.has("--autopilot") or args.has("--skip-menu") or seed_arg >= 0 or biome_offset != 0 or _boss_now:
 		start_run(seed_arg)
 	else:
 		_open_main_menu()
@@ -208,9 +234,18 @@ func start_run(new_seed: int = -1) -> void:
 	run_distance = 0.0
 	run_time = 0.0
 	upgrades_taken.clear()
+	boss_fights = 0
+	_leave_boss()
 	rerolls = rules.start_rerolls
 	player.combo.drop()
 	player.combo.run_total = 0
+	if _boss_now:
+		_boss_now = false
+		if not biomes.is_empty():
+			apply_biome(biomes[biome_offset % biomes.size()])
+		hud.visible = true
+		_start_boss()
+		return
 	start_stage()
 
 
@@ -268,6 +303,9 @@ func start_stage() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if in_boss:
+		_follow_scenery(player.global_position, boss_fight.global_position.y)
+		return
 	if not in_stage:
 		return
 	player_progress = builder.progress_at(player.global_position)
@@ -331,6 +369,13 @@ func _process(delta: float) -> void:
 		biome_look.follow_height(get_viewport().get_camera_3d().global_position.y)
 		return
 	biome_look.follow_height(player.global_position.y)
+	if in_boss:
+		hud.update_run(stage_index + 1, stats.time, player.combo.run_total, hud.meter_range * 10.0,
+				0.0, 0.0, 1.0, 1.0, player.shields_left)
+		hud.show_start(null)
+		hud.update_rider(delta, player.speed, run_tuning.max_speed if run_tuning != null else 60.0,
+				player.combo.is_active(), player.combo.get_multiplier(), int(player.combo.points))
+		return
 	# While it waits behind the start pad it isn't a threat yet.
 	var gap: float = player_progress - collapse.distance
 	if collapse.waiting:
@@ -368,6 +413,9 @@ func _on_launched(grade: StringName, _boost: float) -> void:
 func _on_bailed() -> void:
 	if in_stage:
 		_add_penalty(bail_time_cost)
+	elif in_boss:
+		boss_fight.add_penalty(bail_time_cost)
+		hud.flash_penalty(bail_time_cost)
 
 
 func _add_penalty(seconds: float) -> void:
@@ -390,8 +438,72 @@ func _on_finished() -> void:
 	_freeze_player()
 	var earned: int = rules.earned(stats.gates, stats.score)
 	rerolls = mini(rerolls + earned, rules.max_rerolls)
+	_last_earned = earned
+	if boss_every > 0 and (stage_index + 1) % boss_every == 0:
+		_start_boss()
+		return
+	_open_summary()
+
+
+func _open_summary() -> void:
 	summary.open(stage_index + 1, stats.time, stats.best_combo, stats.score, player.combo.run_total,
-			stats.gates, stats.gates_total, earned, rerolls)
+			stats.gates, stats.gates_total, _last_earned, rerolls)
+
+
+## Boss fight (v0.33): the stage is cleared, the arena is built in its
+## place, the player starts on its deck. Won = summary as usual; lost = run
+## over.
+func _start_boss() -> void:
+	in_boss = true
+	hud.black_out()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	builder.clear()
+	collapse.stop()
+	hud.progress.visible = false
+	player.set_physics_process(true)
+	await boss_fight.begin(player, boss_fights, _rng.randi())
+	if not in_boss:
+		return
+	boss_fights += 1
+	_far_ground_y = boss_fight.global_position.y - 380.0
+	_follow_scenery(player.global_position, boss_fight.global_position.y)
+	hud.fade_in(0.45)
+
+
+## Out of a boss fight (won, lost, or left through the pause menu).
+func _leave_boss() -> void:
+	if not in_boss:
+		return
+	in_boss = false
+	boss_fight.end()
+	hud.progress.visible = true
+
+
+## Far ground, mountain rings: around the rider at a height of `base_y`.
+func _follow_scenery(at: Vector3, base_y: float) -> void:
+	far_ground.global_position = Vector3(at.x, _far_ground_y, at.z)
+	mountains.global_position = Vector3(at.x, base_y - 200.0, at.z)
+	near_mountains.global_position = Vector3(at.x, base_y - 200.0, at.z)
+
+
+func _on_boss_won(data: BossData) -> void:
+	if not in_boss:
+		return
+	player.combo.bank()
+	player.combo.run_total += data.score
+	rerolls = mini(rerolls + data.reward_rerolls, rules.max_rerolls)
+	_last_earned += data.reward_rerolls
+	_freeze_player()
+	_leave_boss()
+	_open_summary()
+
+
+func _on_boss_lost() -> void:
+	if not in_boss:
+		return
+	_leave_boss()
+	_run_over(false)
 
 
 func _add_stage_stats(distance: float) -> void:
@@ -409,7 +521,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_greyscale = not _greyscale
 		var env: Environment = biome_look.world_environment.environment
 		env.adjustment_saturation = 0.0 if _greyscale else (biome.saturation if biome != null else 1.0)
-	if event.is_action_pressed(&"pause") and in_stage and not get_tree().paused:
+	if event.is_action_pressed(&"pause") and (in_stage or in_boss) and not get_tree().paused:
 		get_viewport().set_input_as_handled()
 		get_tree().paused = true
 		Input.stop_joy_vibration(0)
@@ -423,6 +535,7 @@ func _unpause() -> void:
 ## The title screen over the empty sky (the stage is built on Ride).
 func _open_main_menu() -> void:
 	in_stage = false
+	_leave_boss()
 	_freeze_player()
 	hud.visible = false
 	collapse.stop()
@@ -510,11 +623,18 @@ func _on_caught() -> void:
 	if not in_stage:
 		return
 	in_stage = false
+	_run_over()
+
+
+## `count_stage`: add the current stage's gates / distance / time (false
+## after a boss: that stage was already counted when it finished).
+func _run_over(count_stage: bool = true) -> void:
 	stats.stop()
 	player.combo.drop()
 	_freeze_player()
-	run_gates += stats.gates
-	_add_stage_stats(player_progress)
+	if count_stage:
+		run_gates += stats.gates
+		_add_stage_stats(player_progress)
 	var report: Dictionary = Save.record_run(stage_index + 1, player.combo.run_total, run_gates, bikes)
 	report["stats"] = {"best_combo": run_best_combo, "tricks": run_tricks, "gates": run_gates,
 		"km": run_distance / 1000.0, "top_speed": run_top_speed * 3.6, "time": run_time}
@@ -525,6 +645,11 @@ func _on_caught() -> void:
 func _on_player_fell() -> void:
 	if in_stage:
 		_respawn_on_line()
+	elif in_boss and boss_fight.active:
+		player.combo.drop()
+		boss_fight.place_player_on_deck(player.global_position)
+		boss_fight.add_penalty(respawn_time_cost)
+		hud.flash_penalty(respawn_time_cost)
 
 
 ## Back on the nearest ride line, a little up the hill, with a time cost.
