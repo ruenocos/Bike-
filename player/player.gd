@@ -608,6 +608,7 @@ func ground_move(delta: float, input_enabled: bool) -> void:
 		accel += float(_gravity_body.get(&"boost_accel")) if _gravity_body.get(&"boost_accel") != null else 0.0
 	else:
 		accel -= t.rolling_drag * speed + t.air_drag * speed * speed
+	accel -= t.overspeed_decel(speed)
 	# Hard carving at speed scrubs a little speed.
 	accel -= t.carve_drag * absf(steer) * smoothstep(t.carve_drag_from, 1.0, speed_ratio)
 	speed = t.capped(maxf(speed + accel * delta, 0.0))

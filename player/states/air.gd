@@ -76,6 +76,10 @@ func physics_update(delta: float) -> void:
 	_update_no_hander(delta)
 
 	player.velocity.y -= t.gravity * delta
+	# No cap since v0.33: drag on the part above max_speed (long drops).
+	var air_speed: float = player.velocity.length()
+	if air_speed > t.max_speed:
+		player.velocity *= maxf(air_speed - t.overspeed_decel(air_speed) * delta, t.max_speed) / air_speed
 
 	# Air steer rotates the horizontal velocity around the up axis.
 	var steer: float = player.get_steer()

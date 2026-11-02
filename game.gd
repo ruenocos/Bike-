@@ -270,6 +270,10 @@ func _physics_process(delta: float) -> void:
 	player.kill_y = track_y - fall_margin
 	start_sprint.tick(delta, player_progress > _drop_in_distance)
 	collapse.advance(delta, player_progress)
+	if player_progress > minf(builder.finish_distance + 40.0, builder.length - 5.0):
+		# Flew over or past the finish gate (v0.33, no speed cap): still a finish.
+		_on_finished()
+		return
 	builder.free_behind(player_progress)
 	far_ground.global_position = Vector3(player.global_position.x, _far_ground_y, player.global_position.z)
 	TerrainPatch.cover_focus = player.global_position

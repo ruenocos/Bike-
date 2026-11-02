@@ -53,6 +53,7 @@ func physics_update(delta: float) -> void:
 	if rail != null and rail.boost_accel > 0.0:
 		accel += rail.boost_accel
 		player.speed = maxf(player.speed, rail.boost_min_speed)
+	accel -= t.overspeed_decel(player.speed)
 	player.speed = t.capped(maxf(player.speed + accel * delta, 0.0))
 	player.velocity = tangent * player.speed
 	player.heading = atan2(-tangent.x, -tangent.z)
