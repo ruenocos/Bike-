@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="BossData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://boss/boss_data.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+display_name = "WARDEN"
+subtitle = "It guards the drop. Hit it fast."
+tint = Color(1, 1, 1, 1)
+model_scale = 3.0
+max_health = 160.0
+time_limit = 150.0
+walk_speed = 5.0
+attack_interval = 4.5
+shockwave_speed = 24.0
+shockwave_rings = 1
+mortar_count = 5
+mortar_delay = 1.5
+charge_speed = 26.0
+charge_weight = 0.7
+score = 5000
+reward_rerolls = 1
