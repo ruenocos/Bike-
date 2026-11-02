@@ -45,6 +45,8 @@ extends Node3D
 @export_range(0.0, 20.0, 0.1, "suffix:s") var bail_time_cost: float = 1.0
 
 @onready var builder: StageBuilder = $StageBuilder
+## Monoliths, spires, shards and the energy core beside the valley (v0.31).
+@onready var skyline: Skyline = $Skyline
 @onready var collapse: Collapse = $Collapse
 @onready var player: Player = $Player
 @onready var hud: RunHud = $RunHud
@@ -232,6 +234,7 @@ func start_stage() -> void:
 	for i: int in 3:
 		await get_tree().physics_frame
 	hazards.populate(builder, stage_index, stage_seed)
+	skyline.populate(builder, stage_seed)
 	_near_anchor = builder.transform_at_distance(builder.length * 0.5).origin
 	if _print_stage:
 		print("CONTACT SHADOWS %d" % PropModel.contact_shadow_count)
@@ -427,7 +430,9 @@ func _open_main_menu() -> void:
 	rng.randomize()
 	if not biomes.is_empty():
 		apply_biome(biomes[rng.randi_range(0, biomes.size() - 1)])
-	builder.build(rng.randi(), middle_chunks, 0)
+	var title_seed: int = rng.randi()
+	builder.build(title_seed, middle_chunks, 0)
+	skyline.populate(builder, title_seed)
 	var spawn: Transform3D = builder.get_spawn_transform()
 	var forward: Vector3 = -spawn.basis.z
 	player.place(spawn.origin + Vector3.UP * 0.05, atan2(-forward.x, -forward.z), 0.0)

@@ -36,6 +36,9 @@ func _ready() -> void:
 	await _run(&"loop 30 m/s", _loop_case.bind(30.0))
 	await _run(&"sap rail climb + launch", _sap_case)
 	await _run(&"abyss respawn", _abyss_case)
+	await _run(&"world tree spiral (real chunk)", _tree_case.bind(&"SpiralBranchRight"))
+	await _run(&"world tree spiral left (real chunk)", _tree_case.bind(&"SpiralBranchLeft"))
+	await _run(&"alien garden ring (real chunk)", _garden_case)
 	print("")
 	if _failures.is_empty():
 		print("DRASTIC TEST: all passed")
@@ -154,6 +157,7 @@ func _abyss_case(label: String) -> void:
 	(abyss.get_node(^"Respawn") as Node3D).global_position = Vector3(5, 0.5, -20)
 	# A hole: no ground under z -60..-140 (the sandbox floor stops there).
 	_sandbox.get_child(0).free()
+	_player.kill_y = -2000.0
 	_ground(Vector3(0, 0, -20), Vector3(200, 2, 80))
 	for i: int in 2:
 		await get_tree().physics_frame
@@ -169,3 +173,71 @@ func _abyss_case(label: String) -> void:
 	print("%s: respawned at the marker %s" % [label, stats["respawned"]])
 	if not stats["respawned"]:
 		_failures.append("%s: no respawn at the marker" % label)
+
+
+func _chunk(path: String) -> Chunk:
+	# The real chunk has its own ground; drop the sandbox floor.
+	_sandbox.get_child(0).free()
+	_player.kill_y = -2000.0
+	var chunk: Chunk = (load(path) as PackedScene).instantiate() as Chunk
+	_sandbox.add_child(chunk)
+	for i: int in 3:
+		await get_tree().physics_frame
+	return chunk
+
+
+func _tree_case(label: String, branch: StringName) -> void:
+	var chunk: Chunk = await _chunk("res://chunks/landscape/set_world_tree.tscn")
+	var tree: WorldTree = chunk.find_child("WorldTree", true, false) as WorldTree
+	var rail: Rail = tree.get_node(NodePath("Built/" + branch)) as Rail
+	var a: Vector3 = rail.to_global(rail.curve.get_point_position(0))
+	var b: Vector3 = rail.to_global(rail.curve.get_point_position(1))
+	var flat: Vector3 = Vector3(b.x - a.x, 0.0, b.z - a.z).normalized()
+	_player.auto_respawn = true
+	_player.place(a + Vector3.UP * 0.9 - flat * 2.0, atan2(-flat.x, -flat.z), 45.0)
+	_player.state_machine.transition_to(&"Air", {})
+	var stats: Dictionary = {"grind": false, "max_y": a.y, "bails": 0, "last": &""}
+	await _ride(label, 8.0, func(_t: float) -> void:
+		var state: StringName = _player.state_machine.get_state_name()
+		if state == &"Grind":
+			stats["grind"] = true
+		if state == &"Bail" and stats["last"] != &"Bail":
+			stats["bails"] += 1
+		stats["last"] = state
+		stats["max_y"] = maxf(stats["max_y"], _player.global_position.y))
+	var climb: float = stats["max_y"] - a.y
+	print("%s: grind %s, climbed %.1f m above the rim, bails %d, end %s" % [label, stats["grind"], climb, stats["bails"], _player.global_position])
+	if not stats["grind"]:
+		_failures.append("%s: never caught the branch" % label)
+	elif climb < tree.climb * 0.8:
+		_failures.append("%s: didn't reach the top (%.1f m)" % [label, climb])
+	if stats["bails"] > 0:
+		_failures.append("%s: bailed" % label)
+	_player.auto_respawn = false
+
+
+func _garden_case(label: String) -> void:
+	var chunk: Chunk = await _chunk("res://chunks/landscape/set_alien_garden.tscn")
+	var loop: GravityLoop = chunk.find_child("GravityRingA", true, false) as GravityLoop
+	# On the pad just before the run-in (the pad is tilted with the slope).
+	var entry: Vector3 = loop.to_global(Vector3(0, 0.45, loop.lead_length + 6.0))
+	var fwd: Vector3 = -loop.global_basis.z.normalized()
+	_player.place(entry, atan2(-fwd.x, -fwd.z), 50.0)
+	_player.state_machine.transition_to(&"Air", {})
+	# Coming down the slope: moving along the tilted pad, not level.
+	_player.velocity = fwd * 50.0
+	var stats: Dictionary = {"min_ny": 1.0, "bails": 0, "last": &""}
+	await _ride(label, 5.0, func(_t: float) -> void:
+		stats["min_ny"] = minf(stats["min_ny"], _player.ground_normal.y)
+		var state: StringName = _player.state_machine.get_state_name()
+		if state == &"Bail" and stats["last"] != &"Bail":
+			stats["bails"] += 1
+		stats["last"] = state)
+	var out: Vector3 = loop.to_local(_player.global_position)
+	print("%s: upside down n.y %.2f, end (loop space) %s, speed %.1f, bails %d" % [label, stats["min_ny"], out, _player.speed, stats["bails"]])
+	if stats["min_ny"] > -0.9:
+		_failures.append("%s: never went upside down" % label)
+	if out.z > -loop.lead_length:
+		_failures.append("%s: didn't come out" % label)
+	if stats["bails"] > 0:
+		_failures.append("%s: bailed" % label)

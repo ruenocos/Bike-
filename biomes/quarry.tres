@@ -2,6 +2,7 @@
 
 [ext_resource type="Resource" path="res://sky/looks/quarry.tres" id="80_sky"]
 [ext_resource type="Script" path="res://biomes/biome.gd" id="1_biome"]
+[ext_resource type="PackedScene" path="res://chunks/landscape/set_alien_garden.tscn" id="92_set"]
 [ext_resource type="PackedScene" path="res://chunks/landscape/set_bridge_gap.tscn" id="91_set"]
 [ext_resource type="PackedScene" path="res://chunks/landscape/set_ramp_yard.tscn" id="90_set"]
 [ext_resource type="Resource" path="res://chunks/terrain/cover/quarry.tres" id="2_cover"]
@@ -11,7 +12,7 @@
 
 [resource]
 script = ExtResource("1_biome")
-set_pieces = Array[PackedScene]([ExtResource("90_set"), ExtResource("91_set")])
+set_pieces = Array[PackedScene]([ExtResource("90_set"), ExtResource("91_set"), ExtResource("92_set")])
 display_name = "Ash Quarry"
 subtitle = "The old dig site, after dark"
 ground_dirt = Color(0.4, 0.3, 0.52, 1)

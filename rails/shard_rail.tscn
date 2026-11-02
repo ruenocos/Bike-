@@ -1,0 +1,37 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://rails/rail.gd" id="1_rail"]
+[ext_resource type="Material" path="res://rails/shard_material.tres" id="2_shard"]
+
+[sub_resource type="Curve3D" id="Curve3D_shard"]
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -40),
+"tilts": PackedFloat32Array(0, 0)
+}
+point_count = 2
+
+[node name="ShardRail" type="Path3D" groups=["rails"]]
+curve = SubResource("Curve3D_shard")
+script = ExtResource("1_rail")
+glow_idle = 1.0
+glow_highlight = 6.0
+boost_accel = 8.0
+boost_min_speed = 34.0
+end_launch = 6.0
+
+[node name="RailMesh" type="CSGPolygon3D" parent="."]
+polygon = PackedVector2Array(0, 0, -0.35, -0.6, 0, -2.2, 0.35, -0.6)
+mode = 2
+path_node = NodePath("..")
+path_interval_type = 0
+path_interval = 0.5
+path_simplify_angle = 0.0
+path_rotation = 2
+path_rotation_accurate = false
+path_local = true
+path_continuous_u = true
+path_u_distance = 1.0
+path_joined = false
+material = ExtResource("2_shard")
+
+[node name="Posts" type="Node3D" parent="."]

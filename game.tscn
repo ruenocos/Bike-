@@ -42,6 +42,7 @@
 [ext_resource type="Resource" path="res://scoring/upgrades/perfect_streak.tres" id="47_u12"]
 [ext_resource type="Script" path="res://player/start_sprint.gd" id="21_sprint"]
 [ext_resource type="Script" path="res://chunks/parts/mountain_ring.gd" id="22_mountains"]
+[ext_resource type="Script" path="res://chunks/parts/drastic/skyline.gd" id="v31_skyline"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.17, 0.29, 0.56, 1)
@@ -165,3 +166,6 @@ layer = 20
 [node name="MainMenu" parent="Menus" instance=ExtResource("40_main_menu")]
 
 [node name="PauseMenu" parent="Menus" instance=ExtResource("46_pause")]
+
+[node name="Skyline" type="Node3D" parent="."]
+script = ExtResource("v31_skyline")
