@@ -88,10 +88,16 @@ func _ready() -> void:
 			var st: StageStats = _game.get_node(^"StageStats") as StageStats
 			print("t=%6.2f FINISH stage %d  gates %d/%d  score %d  rerolls %d" % [_time, int(_game.get("stage_index")) + 1, st.gates, st.gates_total, st.score, int(_game.get("rerolls"))]))
 		_collapse.caught.connect(func() -> void: print("t=%6.2f CAUGHT by the collapse" % _time))
+		var fight: BossFight = _game.get_node(^"BossFight") as BossFight
+		fight.won.connect(func(d: BossData) -> void: print("t=%6.2f BOSS %s DOWN" % [_time, d.display_name]))
+		fight.lost.connect(func() -> void: print("t=%6.2f BOSS ARENA FELL (lost)" % _time))
 
 
 func _physics_process(delta: float) -> void:
 	_time += delta
+	if bool(_game.get("in_boss")):
+		_boss_ride()
+		return
 	if not bool(_game.get("in_stage")):
 		_was_air = false
 		_stage_time = 0.0
@@ -401,6 +407,9 @@ func _shot(file_name: String, camera: Camera3D) -> void:
 ## Trace line for a bail: the reason, the chunk, how far into it and the
 ## heading against the stage line (where to look when the bot crashes).
 func _on_bailed_trace() -> void:
+	if bool(_game.get("in_boss")):
+		print("t=%6.2f BAILED (%s) in the boss arena" % [_time, _player.last_bail_reason])
+		return
 	var progress: float = _builder.progress_at(_player.global_position)
 	var index: int = _builder.chunk_index_at(progress)
 	var into: float = progress - _builder.chunk_start_distance[index]
@@ -420,3 +429,52 @@ func _release_hop_event() -> void:
 	e.pressed = false
 	Input.parse_input_event(e)
 
+
+## Boss fight (v0.33): pedal, swing out toward the rim when too slow, then
+## ram it; hop the shockwaves. Not clever, just enough for recordings.
+func _boss_ride() -> void:
+	var fight: BossFight = _game.get_node(^"BossFight") as BossFight
+	if fight.boss == null or fight.arena == null:
+		return
+	Input.action_press(&"pedal")
+	if _trace:
+		_trace_timer -= get_physics_process_delta_time()
+		if _trace_timer <= 0.0:
+			_trace_timer = 2.0
+			print("t=%6.2f boss %s hp %.0f/%.0f  %s  v=%5.1f  %-5s  clock %.0f s" % [_time, fight.data.display_name,
+				fight.boss.health, fight.boss.max_health, Boss.Mode.keys()[fight.boss.mode], _player.speed,
+				_player.state_machine.get_state_name(), fight.time_left])
+	var to_boss: Vector3 = fight.boss.global_position - _player.global_position
+	to_boss.y = 0.0
+	var target: Vector3 = fight.boss.global_position
+	if _player.speed < fight.data.ram_min_speed + 4.0 and to_boss.length() < 60.0:
+		# Out toward the rim on the side we're already going, to come back fast.
+		var out: Vector3 = Vector3(_player.velocity.x, 0.0, _player.velocity.z)
+		if out.length() < 1.0:
+			out = -to_boss
+		target = _player.global_position + out.normalized() * 40.0
+	var to_target: Vector3 = target - _player.global_position
+	to_target.y = 0.0
+	var going: Vector3 = Vector3(_player.velocity.x, 0.0, _player.velocity.z)
+	var steer: float = 0.0
+	if going.length() > 0.5 and to_target.length() > 0.5:
+		steer = clampf(going.normalized().signed_angle_to(to_target.normalized(), Vector3.DOWN) * 2.5, -1.0, 1.0)
+	if steer >= 0.0:
+		Input.action_release(&"steer_left")
+		Input.action_press(&"steer_right", maxf(steer, 0.001))
+	else:
+		Input.action_release(&"steer_right")
+		Input.action_press(&"steer_left", -steer)
+	# Shockwaves: charge the hop as one comes, let go just before it.
+	var nearest: float = INF
+	for node: Node in fight.arena.get_children():
+		var ring: BossShockwave = node as BossShockwave
+		if ring == null:
+			continue
+		var flat: Vector3 = _player.global_position - fight.boss.global_position
+		nearest = minf(nearest, Vector2(flat.x, flat.z).length() - ring.radius)
+	if nearest < 9.0 and nearest > 3.0 and _player.is_grounded():
+		Input.action_press(&"hop")
+	elif Input.is_action_pressed(&"hop"):
+		Input.action_release(&"hop")
+		_release_hop_event()
