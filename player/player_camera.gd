@@ -50,6 +50,8 @@ var _last_heading: float = 0.0
 ## Carve roll and air look-down now (radians, v0.17).
 var _roll: float = 0.0
 var _look_down: float = 0.0
+## Horizon tilt with the ground (radians, v0.31).
+var _ground_roll: float = 0.0
 
 func _ready() -> void:
 	# We move this node ourselves in _process, so physics interpolation must not fight us.
@@ -151,6 +153,9 @@ func _process(delta: float) -> void:
 
 	# FOV widens with speed. fov_smoothing is roughly the time to get there.
 	var target_fov: float = lerpf(t.fov_base, t.fov_max, pow(speed_ratio, t.fov_speed_curve))
+	# Big drops: FOV kicks wider while you fall fast (v0.31).
+	if not grounded:
+		target_fov += t.fov_drop_kick_deg * clampf(-player.velocity.y / maxf(t.fov_drop_speed, 0.001), 0.0, 1.0)
 	camera.fov = lerpf(camera.fov, target_fov, _damp_weight(t.fov_smoothing / 3.0, delta))
 
 	# Landing punch: shove the camera forward and down, ease back out.
@@ -183,7 +188,7 @@ func _process(delta: float) -> void:
 		var amount: float = _shake_strength * _shake_timer / _shake_time
 		camera.position += Vector3(randf_range(-amount, amount), randf_range(-amount, amount), 0.0)
 	_update_lean(delta, speed_ratio, grounded)
-	camera.rotation.z += _roll
+	camera.rotation.z += _roll + _ground_roll
 	camera.rotation.x -= _look_down
 
 
@@ -216,6 +221,15 @@ func _update_lean(delta: float, speed_ratio: float, grounded: bool) -> void:
 	var riding: bool = grounded and state != &"Bail" and state != &"Land"
 	var roll_target: float = -player.get_steer() * deg_to_rad(t.cam_carve_roll_deg) * speed_ratio * calm if riding else 0.0
 	_roll = lerpf(_roll, roll_target, _damp_weight(t.cam_carve_roll_time, delta))
+	# Horizon tilt (v0.31): roll with the ground's sideways tilt, so a
+	# sidehill or a bank reads as a tilted world, not a flat strip.
+	var ground_target: float = 0.0
+	if grounded and state != &"Bail":
+		var right: Vector3 = player.get_heading_dir().cross(Vector3.UP).normalized()
+		var side: float = clampf(player.ground_normal.dot(right), -1.0, 1.0)
+		var limit: float = deg_to_rad(t.cam_ground_roll_max_deg)
+		ground_target = clampf(-asin(side) * t.cam_ground_roll, -limit, limit) * calm
+	_ground_roll = lerpf(_ground_roll, ground_target, _damp_weight(t.cam_ground_roll_time, delta))
 	# Look down only in the last cam_air_look_down_time before touchdown.
 	var look: float = 0.0
 	if state == &"Air":
