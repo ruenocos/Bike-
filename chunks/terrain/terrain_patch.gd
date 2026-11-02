@@ -116,6 +116,19 @@ const BOUNDARY_SEGMENT: float = 20.0
 	set(v):
 		noise_seed = v
 		queue_rebuild()
+## Short, punchy bumps on top of the rolling ground (v0.33, Wons: "the
+## noise the terrain makes needs to be intense more bump more hill"): up and
+## down from the slope (m). 0 = none. Lines-shapes and flatten pads (rail
+## beds, kicker pads) smooth them out like the rest of the noise.
+@export_range(0.0, 10.0, 0.05, "suffix:m") var bump_amplitude: float = 0.0:
+	set(v):
+		bump_amplitude = v
+		queue_rebuild()
+## Bumps per metre (0.035 = one every ~28 m: at 50 m/s each one pops you).
+@export_range(0.005, 0.2, 0.001) var bump_frequency: float = 0.035:
+	set(v):
+		bump_frequency = v
+		queue_rebuild()
 ## How far in from the entry and exit the noise and shaping fade in, so the
 ## edges stay plain slope and line up with the next patch.
 @export_range(0.0, 100.0, 1.0, "suffix:m") var seam_blend: float = 30.0:
@@ -242,6 +255,7 @@ static var cover_focus: Vector3 = Vector3.ZERO
 var cover_stats: Dictionary = {}
 var _rebuild_queued: bool = false
 var _noise: FastNoiseLite = FastNoiseLite.new()
+var _bumps: FastNoiseLite = FastNoiseLite.new()
 ## Per row: height of the base slope, half the play width, the spine point
 ## (x, z in patch space) and its heading (radians, + = left).
 var _row_base: PackedFloat32Array = PackedFloat32Array()
@@ -570,6 +584,10 @@ func _compute_heights() -> void:
 	_noise.frequency = noise_frequency
 	_noise.fractal_type = FastNoiseLite.FRACTAL_FBM if noise_octaves > 1 else FastNoiseLite.FRACTAL_NONE
 	_noise.fractal_octaves = noise_octaves
+	_bumps.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	_bumps.seed = noise_seed + 101
+	_bumps.frequency = bump_frequency
+	_bumps.fractal_type = FastNoiseLite.FRACTAL_NONE
 
 	var count: int = columns * rows
 	# Height on top of the base slope (noise + shaping), before the seam fade.
@@ -578,7 +596,10 @@ func _compute_heights() -> void:
 	for r: int in rows:
 		var d: float = r * dz
 		for c: int in columns:
-			detail[r * columns + c] = _noise.get_noise_2d(_column_x(r, c), d) * noise_amplitude
+			var x: float = _column_x(r, c)
+			detail[r * columns + c] = _noise.get_noise_2d(x, d) * noise_amplitude
+			if bump_amplitude > 0.0:
+				detail[r * columns + c] += _bumps.get_noise_2d(x, d) * bump_amplitude
 
 	var shapes: Array[Node3D] = []
 	_collect_shapers(self, shapes)

@@ -172,6 +172,16 @@ extends Resource
 ## ...and on the ground nothing snaps (you hit the ledge instead). Turn this
 ## on for the old "press grind while riding past" behaviour.
 @export var rail_ground_catch: bool = false
+## Ground steeper than this that isn't a transition or a gravity ring lets
+## go of you: you fall off it instead of driving along a cliff or chasm wall
+## (v0.33, the World Tree's chasm). 90 = off (ride anything, the old rule).
+@export_range(30.0, 90.0, 1.0, "suffix:deg") var max_wall_ride_deg: float = 90.0
+## Riding into a rail's ledge (its raised base, physics layer 9) on the
+## ground is a crash at speed, like any obstacle. Off (the tank, v0.33:
+## "rails can make u stuck"): the body doesn't collide with ledges at all, so
+## the treads roll over them and nothing can wedge you against one. Rails
+## still catch you from the air as before.
+@export var rail_ledges_crash: bool = true
 ## The magnet only pulls while you're in the air (off = the old ground pull too).
 @export var rail_magnet_air_only: bool = true
 ## Press grind within this distance of a rail to snap on (m), at low speed...

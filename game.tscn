@@ -172,5 +172,12 @@ layer = 20
 
 [node name="Skyline" type="Node3D" parent="."]
 script = ExtResource("v31_skyline")
+near_distance = 230.0
+spacing = 300.0
+fill = 0.6
+shard_cluster_weight = 1.0
+monolith_height = Vector2(90, 260)
+monolith_width = Vector2(30, 90)
+spire_height = Vector2(160, 420)
 
 [node name="BossFight" parent="." instance=ExtResource("v33_boss")]

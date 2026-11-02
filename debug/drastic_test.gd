@@ -39,6 +39,10 @@ func _ready() -> void:
 	await _run(&"abyss respawn", _abyss_case)
 	await _run(&"world tree spiral (real chunk)", _tree_case.bind(&"SpiralBranchRight"))
 	await _run(&"world tree spiral left (real chunk)", _tree_case.bind(&"SpiralBranchLeft"))
+	for x: float in [-60.0, 0.0, 30.0]:
+		for spd: float in [25.0, 50.0]:
+			await _run(StringName("world tree chasm drop x %d at %d" % [x, spd]), _chasm_case.bind(x, spd))
+	await _run(&"world tree hop off the spiral", _tree_hop_off_case)
 	await _run(&"alien garden ring (real chunk)", _garden_case)
 	print("")
 	if _failures.is_empty():
@@ -214,6 +218,60 @@ func _tree_case(label: String, branch: StringName) -> void:
 		_failures.append("%s: didn't reach the top (%.1f m)" % [label, climb])
 	if stats["bails"] > 0:
 		_failures.append("%s: bailed" % label)
+	_player.auto_respawn = false
+
+
+## Rides straight off the chasm's rim (v0.33, Wons: "the tree ride makes the
+## wall fucky"): the rider must fall into the Abyss and be put back at its
+## marker, never ride / stick on the chasm's steep walls.
+func _chasm_case(label: String, x: float, spd: float) -> void:
+	var chunk: Chunk = await _chunk("res://chunks/landscape/set_world_tree.tscn")
+	var terrain: TerrainPatch = chunk.get_node(^"Terrain") as TerrainPatch
+	await _chasm_ride(label, chunk, terrain.to_global(terrain.valley_to_local(x, terrain.surface_height(x, -250.0) + 0.6, 250.0)), spd, Callable())
+
+
+func _tree_hop_off_case(label: String) -> void:
+	var chunk: Chunk = await _chunk("res://chunks/landscape/set_world_tree.tscn")
+	var tree: WorldTree = chunk.find_child("WorldTree", true, false) as WorldTree
+	var rail: Rail = tree.get_node(^"Built/SpiralBranchRight") as Rail
+	var a: Vector3 = rail.to_global(rail.curve.get_point_position(0))
+	var b: Vector3 = rail.to_global(rail.curve.get_point_position(1))
+	var flat: Vector3 = Vector3(b.x - a.x, 0.0, b.z - a.z).normalized()
+	await _chasm_ride(label, chunk, a + Vector3.UP * 0.9 - flat * 2.0, 45.0, func(t: float) -> void:
+		if t > 1.4 and t < 1.5:
+			Input.action_press(&"hop")
+		elif t >= 1.5:
+			Input.action_release(&"hop"), flat)
+
+
+func _chasm_ride(label: String, chunk: Chunk, at: Vector3, spd: float, each: Callable, forward: Vector3 = Vector3.FORWARD) -> void:
+	var marker: Node3D = chunk.get_node(^"Abyss/Respawn") as Node3D
+	_player.auto_respawn = true
+	_player.respawn_hint = null
+	_player.place(at, atan2(-forward.x, -forward.z), spd)
+	_player.state_machine.transition_to(&"Air", {})
+	var stats: Dictionary = {"respawned": false, "wall_time": 0.0, "worst_wall": 0.0, "low": INF}
+	await _ride(label, 9.0, func(t: float) -> void:
+		if each.is_valid():
+			each.call(t)
+		stats["low"] = minf(stats["low"], _player.global_position.y)
+		if _player.global_position.distance_to(marker.global_position) < 3.0 and stats["low"] < marker.global_position.y - 20.0:
+			stats["respawned"] = true
+		# On the ground with the ground steeper than 60 deg: riding a wall.
+		if _player.is_on_floor() and _player.ground_normal.y < 0.5:
+			stats["wall_time"] += 1.0 / 60.0
+			stats["worst_wall"] = maxf(stats["worst_wall"], stats["wall_time"])
+		else:
+			stats["wall_time"] = 0.0)
+	Input.action_release(&"hop")
+	print("%s: respawned %s, longest on a wall %.2f s, lowest %.1f" % [label, stats["respawned"], stats["worst_wall"], stats["low"]])
+	if stats["worst_wall"] > 0.4:
+		_failures.append("%s: rode the chasm wall for %.2f s" % [label, stats["worst_wall"]])
+	# Either put back before the rim, or made it across (the far rim is at
+	# d ~370 down the chunk).
+	var far: float = chunk.to_local(_player.global_position).z
+	if not stats["respawned"] and far > -375.0:
+		_failures.append("%s: neither respawned nor across (z %.1f)" % [label, far])
 	_player.auto_respawn = false
 
 
