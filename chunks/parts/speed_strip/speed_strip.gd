@@ -58,6 +58,8 @@ extends Node3D
 ## (the kicker's run-up).
 @export_range(0.0, 60.0, 1.0, "suffix:m") var assist_before: float = 10.0
 @export_range(0.0, 60.0, 1.0, "suffix:m") var assist_beyond: float = 20.0
+## The assist only helps while you head this much along it (dot of directions).
+@export_range(-1.0, 1.0, 0.05) var assist_alignment: float = 0.8
 
 @export_group("Look")
 ## Chase light: a bright band runs forward along the chevrons this fast (m/s).
@@ -151,7 +153,10 @@ func _physics_process(delta: float) -> void:
 	var aligned: bool = going.dot(forward) >= min_alignment
 	var near: bool = absf(side) < width * 0.5 + 3.0 and _height_above(along) < reach_height
 	# Line assist from a little before the strip to the kicker's run-up.
-	if aligned and near and along > -assist_before and along < length + assist_beyond and line_assist > 0.0 and _player.is_grounded():
+	# Only for a rider who is really taking it: on the strip's width and
+	# heading along it (riders just crossing it keep their line).
+	var taking: bool = absf(side) < width * 0.5 + 1.0 and going.dot(forward) >= assist_alignment
+	if taking and near and along > -assist_before and along < length + assist_beyond and line_assist > 0.0 and _player.is_grounded():
 		var target: Vector3 = global_position + forward * minf(along + 25.0, length + assist_beyond + 10.0)
 		var to: Vector3 = target - _player.global_position
 		var pull: Vector3 = to - going * to.dot(going)
