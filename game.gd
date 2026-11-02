@@ -426,6 +426,8 @@ func _open_main_menu() -> void:
 	_freeze_player()
 	hud.visible = false
 	collapse.stop()
+	# No wall in the backdrop stage (it would stand where the last run ended).
+	collapse.hide()
 	# A live backdrop: a random stage in a random biome, the rider waiting on
 	# the start pad, the camera flying slowly down the valley.
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()

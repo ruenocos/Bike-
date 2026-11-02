@@ -101,6 +101,7 @@ func reset(builder: StageBuilder, spawn_distance: float, stage_index: int, speed
 	_time = 0.0
 	running = true
 	waiting = true
+	show()
 	_place()
 	reset_physics_interpolation()
 
