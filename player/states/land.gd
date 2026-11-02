@@ -47,9 +47,10 @@ func enter(msg: Dictionary) -> void:
 		player.start_no_hander_grace()
 
 	# Coming back into a quarter pipe from a lip air is nearly tangent, so it
-	# is always graded even though it's soft.
-	if impact < t.land_min_impact and not mid_trick and not msg.get("lip_air", false):
+	# is always graded even though it's soft, and so is a landed trick.
+	if impact < t.land_min_impact and not mid_trick and player.air_tricks == 0 and not msg.get("lip_air", false):
 		# Soft roll-in (small drop, respawn): no grade.
+		player.tricks.tricks_this_air = 0
 		machine.transition_to(&"Ride", {})
 		return
 
