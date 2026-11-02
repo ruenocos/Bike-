@@ -200,11 +200,12 @@ for i, (a, s, ring) in enumerate([(0, 1, 11), (1, 2, 1), (2, 3, 3), (3, 4, 11)])
 	one_shot("tank/grind_catch_%d.wav" % (i + 1),
 			[(imp("impactMetal_heavy", a), 0.0, 0.0, 0.0, 0.0), (O["mech"] % "clank1", -8.0, 0.0, s - 3.0, 0.0),
 			(O["ping"] % ring, -9.0, 0.01, 0.0, 0.7)], "heavy metal hit + clank + ping ring-out")
-# Hop = the cannon's recoil: a boom cut short + a metal clunk.
-for i, (src, semis) in enumerate([(O["cannon"], 0.0), (O["bang"] % "bang_03", -3.0), (O["bang"] % "cannon_01", -5.0), (O["bang"] % "cannon_02", -5.0)]):
+# Hop: a suspension thump, a short metal clunk and a spring squeak, lighter than a landing. No cannon.
+for i in range(4):
 	one_shot("tank/hop_%d.wav" % (i + 1),
-			[(src, 0.0, 0.0, semis, 0.65), (imp("impactMetal_heavy", i), -4.0, 0.0, -2.0, 0.0),
-			(imp("impactPunch_heavy", i), -6.0, 0.0, 0.0, 0.0)], "cannon boom cut to 0.65 s + metal clunk + low thud")
+			[(imp("impactSoft_heavy", i), 0.0, 0.0, 0.0, 0.3), (imp("impactMetal_light", i), -7.0, 0.0, -3.0, 0.18),
+			(O["mech"] % ("squeakyclick1" if i % 2 == 0 else "squeakyclick2"), -9.0, 0.0, float(i) - 2.0, 0.0)],
+			"soft thump + short metal clunk + spring squeak")
 # Exhaust whoosh on any boost; the full blast only on a cannon boost (tank branch).
 for i, s in enumerate((7, 8, 9)):
 	one_shot("tank/boost_%d.wav" % (i + 1),

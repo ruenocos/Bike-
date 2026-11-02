@@ -36,7 +36,7 @@ extends Resource
 @export_group("Hop")
 ## The pop when leaving the ground on purpose, and air hops.
 @export var hop: AudioStream
-@export_range(-80.0, 12.0, 0.5, "suffix:dB") var hop_db: float = -8.0
+@export_range(-80.0, 12.0, 0.5, "suffix:dB") var hop_db: float = -10.0
 
 @export_group("Boost")
 ## The whoosh on any boost (Player.boost_flashed).
