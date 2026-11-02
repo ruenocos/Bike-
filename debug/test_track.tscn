@@ -1,5 +1,6 @@
 [gd_scene format=3 uid="uid://b3xykcmmbxp4h"]
 
+[ext_resource type="PackedScene" path="res://audio/vehicle_audio.tscn" id="90_audio"]
 [ext_resource type="Shader" uid="uid://co3f5yr71w4gd" path="res://debug/grid.gdshader" id="1_grid"]
 [ext_resource type="PackedScene" path="res://player/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://debug/debug_overlay.tscn" id="3_overlay"]
@@ -593,6 +594,8 @@ mesh = SubResource("BoxMesh_pillar")
 
 [node name="Player" parent="." unique_id=622013792 instance=ExtResource("2_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 176.29282, 315.18771)
+
+[node name="VehicleAudio" parent="." instance=ExtResource("90_audio")]
 
 [node name="DebugOverlay" parent="." unique_id=526159149 instance=ExtResource("3_overlay")]
 

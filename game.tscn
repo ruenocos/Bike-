@@ -1,5 +1,6 @@
 [gd_scene load_steps=46 format=3]
 
+[ext_resource type="PackedScene" path="res://audio/vehicle_audio.tscn" id="90_audio"]
 [ext_resource type="Script" path="res://game.gd" id="1_game"]
 [ext_resource type="Script" path="res://biomes/biome.gd" id="30_biome"]
 [ext_resource type="Script" path="res://hazards/hazard_director.gd" id="35_hazards"]
@@ -102,6 +103,8 @@ script = ExtResource("2_builder")
 [node name="Collapse" parent="." instance=ExtResource("3_collapse")]
 
 [node name="Player" parent="." instance=ExtResource("4_player")]
+
+[node name="VehicleAudio" parent="." instance=ExtResource("90_audio")]
 
 [node name="FarGround" type="MeshInstance3D" parent="."]
 mesh = SubResource("PlaneMesh_far")
