@@ -362,6 +362,21 @@ func out_of_bounds(pos: Vector3, d: float) -> bool:
 	return chunks[i].is_out_of_bounds(pos)
 
 
+## True when a global point is more than `margin` below the ground of the
+## chunk at stage distance `d` (off the edge of the map, or through it).
+## Past the patch's sides the height clamps to its edge, so riding off the
+## side and dropping counts once you're `margin` under the edge.
+func below_map(pos: Vector3, d: float, margin: float) -> bool:
+	var i: int = chunk_index_at(d)
+	if i < 0 or _gone[i] or not is_instance_valid(chunks[i]):
+		return false
+	var terrain: TerrainPatch = chunks[i].get_node_or_null(^"Terrain") as TerrainPatch
+	if terrain == null:
+		return false
+	var local: Vector3 = terrain.to_local(pos)
+	return local.y < terrain.height_at_local(local) - margin
+
+
 ## The ride line nearest to `pos` in the chunks around `d`, or null.
 func nearest_ride_line(pos: Vector3, d: float) -> RideLine:
 	var best: RideLine = null

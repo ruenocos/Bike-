@@ -32,6 +32,7 @@ material = ExtResource("2_rail_mat")
 
 [node name="Ledge" type="CSGPolygon3D" parent="." groups=["obstacles"]]
 use_collision = true
+collision_layer = 256
 polygon = PackedVector2Array(-0.17, -4.0, -0.17, -0.07, 0.17, -0.07, 0.17, -4.0)
 mode = 2
 path_node = NodePath("..")
