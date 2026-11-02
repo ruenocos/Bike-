@@ -21,8 +21,7 @@ signal lip_air
 @warning_ignore("unused_signal")
 signal gate_collected(score: int)
 
-## Something gave the vehicle a burst of speed (boost, perfect landing, a
-## drop), strength 0..1. SpeedFeel kicks the FOV and blur on it and re-emits
-## its own detected surges here, so sound can hang a whoosh off it.
+## Speed was just added (m/s): boosts, cannon hops, perfect landings.
+## SpeedFeel kicks the FOV and blur on it (same signature as the tank branch).
 @warning_ignore("unused_signal")
-signal speed_gained(strength: float)
+signal speed_gained(amount: float)

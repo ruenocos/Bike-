@@ -10,12 +10,16 @@ extends Node
 ##   low_distance_m() / low_pitch_rad() and blends its framing toward them.
 ## - FOV kick: any speed gain kicks the FOV (fov_kick, degrees) and the blur.
 ##   Kicks come from detected surges, a perfect landing (Events.landed),
-##   the vehicle's boost_flashed signal (if it has one) and Events.speed_gained.
+##   the vehicle's boost_flashed signal (if it has one) and
+##   Events.speed_gained(amount m/s, scaled by tuning.surge_full).
 ## - Radial blur: the RadialBlur layer, converging on where you're heading.
 ##
-## Sound hook: Events.speed_gained fires on every kick (strength 0..1), and
+## Sound hook: the `kicked(strength)` signal fires on every kick (0..1), and
 ## speed_ratio is public; find this node in group "speed_feel".
 ## All numbers live in `tuning` (speed_feel.tres).
+
+## Fires on every FOV/blur kick (0..1), for sound.
+signal kicked(strength: float)
 
 @export var tuning: SpeedFeelTuning = preload("res://vfx/speed_feel/speed_feel.tres")
 ## The vehicle this follows. Empty = the camera rig's parent.
@@ -43,7 +47,6 @@ var _prev_position: Vector3 = Vector3.ZERO
 var _gain: float = 0.0
 var _surge_cooldown: float = 0.0
 var _blur_center: Vector2 = Vector2(0.5, 0.45)
-var _emitting: bool = false
 
 @onready var _blur_layer: CanvasLayer = $RadialBlur
 @onready var _blur_rect: ColorRect = $RadialBlur/Blur
@@ -63,14 +66,12 @@ func _ready() -> void:
 	_blur_rect.visible = false
 
 
-## Kick the FOV and the blur (0..1). Also tells listeners (sound) via Events.
+## Kick the FOV and the blur (0..1). Also tells listeners (sound) via `kicked`.
 func kick(strength: float) -> void:
 	if not enabled or strength <= 0.0:
 		return
 	_kick_peak = clampf(maxf(_kick_peak, strength), 0.0, 1.0)
-	_emitting = true
-	Events.speed_gained.emit(strength)
-	_emitting = false
+	kicked.emit(strength)
 
 
 func low_height_m() -> float:
@@ -90,9 +91,9 @@ func _on_landed(grade: StringName) -> void:
 		kick(tuning.perfect_kick)
 
 
-func _on_speed_gained(strength: float) -> void:
-	if not _emitting:
-		kick(strength)
+## `amount` is in m/s (tank convention); surge_full m/s = a full kick.
+func _on_speed_gained(amount: float) -> void:
+	kick(clampf(amount / tuning.surge_full, 0.0, 1.0))
 
 
 func _physics_process(delta: float) -> void:
@@ -169,6 +170,8 @@ func _vehicle_speed() -> float:
 func _vehicle_ratio() -> float:
 	if vehicle.has_method(&"get_speed_ratio"):
 		return clampf(float(vehicle.call(&"get_speed_ratio")), 0.0, 1.0)
+	if &"speed_ratio" in vehicle:
+		return clampf(float(vehicle.get(&"speed_ratio")), 0.0, 1.0)
 	return clampf(_vehicle_speed() / maxf(fallback_max_speed, 0.01), 0.0, 1.0)
 
 
