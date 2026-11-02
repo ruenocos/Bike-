@@ -142,6 +142,15 @@ var _side_pull: Vector3 = Vector3.ZERO
 ## Counts down after a speed boost (perfect landing, landed tricks, sprint
 ## start); the speed lines flash while it's running.
 var boost_timer: float = 0.0
+## True while the ground under you is a gravity surface (v0.31 gravity
+## rings, group "gravity_surfaces"): gravity pulls into the surface, so
+## you ride loops and ceilings at constant speed. The camera reads it.
+var on_gravity_surface: bool = false
+## Where to respawn after falling into an abyss (set by an Abyss area just
+## before `fell`), or null: the game then uses the nearest ride line.
+var respawn_hint: Variant = null
+## The gravity ring under you (it steers you round), or null.
+var _gravity_body: Node
 ## Steer after steer_response_time smoothing and the steer_curve.
 var _steer_smoothed: float = 0.0
 ## After a crash, obstacles only glance you off for this long (s), so staying
@@ -516,7 +525,8 @@ func get_raw_ground_normal() -> Vector3:
 ## the steps). `delta` 0 snaps straight to it, for touchdowns.
 func update_ground_normal(delta: float) -> void:
 	var raw: Vector3 = get_raw_ground_normal()
-	if delta <= 0.0:
+	if delta <= 0.0 or on_gravity_surface:
+		# On a loop the surface turns ~3 deg per tick; smoothing would lag.
 		ground_normal = raw
 		return
 	# lerp, not slerp: slerp errors on float noise when both vectors are almost equal.
@@ -535,6 +545,7 @@ func set_ground_motion(dir: Vector3, new_speed: float) -> void:
 func leave_surface() -> void:
 	up_direction = Vector3.UP
 	_carving = false
+	on_gravity_surface = false
 
 
 func _update_heading(dir: Vector3) -> void:
@@ -565,6 +576,13 @@ func ground_move(delta: float, input_enabled: bool) -> void:
 	# stop and rolls you back.
 	var gravity_along: Vector3 = Vector3.DOWN * t.gravity
 	gravity_along -= ground_normal * gravity_along.dot(ground_normal)
+	if on_gravity_surface:
+		# Gravity ring: gravity points into the surface, nothing along it,
+		# and the ring carries you round (its guide_dir) in your lane.
+		gravity_along = Vector3.ZERO
+		if _gravity_body != null and is_instance_valid(_gravity_body) and _gravity_body.has_method(&"guide_dir"):
+			var guide: Vector3 = _gravity_body.call(&"guide_dir", global_position)
+			ground_dir = tangent_dir(ground_dir.lerp(guide, 1.0 - exp(-delta / 0.05)), ground_normal)
 	var surface_velocity: Vector3 = ground_dir * speed + gravity_along * delta
 	if surface_velocity.length() > 0.001:
 		ground_dir = surface_velocity.normalized()
@@ -575,7 +593,11 @@ func ground_move(delta: float, input_enabled: bool) -> void:
 		if speed < t.pedal_max_speed:
 			accel += t.pedal_accel * Input.get_action_strength(&"pedal")
 		accel -= t.brake_decel * Input.get_action_strength(&"brake")
-	accel -= t.rolling_drag * speed + t.air_drag * speed * speed
+	if on_gravity_surface and _gravity_body != null and is_instance_valid(_gravity_body):
+		# Gravity rings carry you: no drag, a push instead (their boost_accel).
+		accel += float(_gravity_body.get(&"boost_accel")) if _gravity_body.get(&"boost_accel") != null else 0.0
+	else:
+		accel -= t.rolling_drag * speed + t.air_drag * speed * speed
 	# Hard carving at speed scrubs a little speed.
 	accel -= t.carve_drag * absf(steer) * smoothstep(t.carve_drag_from, 1.0, speed_ratio)
 	speed = clampf(speed + accel * delta, 0.0, t.max_speed)
@@ -588,7 +610,13 @@ func ground_move(delta: float, input_enabled: bool) -> void:
 
 	if is_on_wall():
 		var wall_normal: Vector3 = get_wall_normal()
-		if wall_normal.y > ground_normal.y + 0.3 or (hit == Hit.NONE and wall_normal.y > tuning.ramp_min_normal_y):
+		if on_gravity_surface and hit == Hit.NONE:
+			# Gravity ring: the surface curling up ahead (or overhead) is the
+			# new ground, whichever way world up points.
+			ground_normal = wall_normal
+			up_direction = wall_normal
+			ground_dir = tangent_dir(ground_dir, wall_normal)
+		elif wall_normal.y > ground_normal.y + 0.3 or (hit == Hit.NONE and wall_normal.y > tuning.ramp_min_normal_y):
 			# Sharp inside corner (rode down a steep face into the floor), or a
 			# kink up into a face that's still walkable in world terms (the
 			# end of a ridge, a bank): it counts as a wall relative to the
@@ -602,6 +630,8 @@ func ground_move(delta: float, input_enabled: bool) -> void:
 			# the real velocity is a division by zero.)
 			speed = minf(speed, get_real_velocity().length())
 	_on_transition_body = _touching_transition_body()
+	_gravity_body = _touching_group(&"gravity_surfaces")
+	on_gravity_surface = _gravity_body != null
 	_check_convex_release()
 
 	_update_heading(ground_dir)
@@ -727,6 +757,15 @@ func check_air_crash(approach: Vector3) -> bool:
 ## is_on_floor(), so an edge that let go counts as leaving the ground.
 func is_grounded() -> bool:
 	return is_on_floor() and not _ground_released
+
+
+## The body in `group` this tick's move touched, or null.
+func _touching_group(group: StringName) -> Node:
+	for i: int in get_slide_collision_count():
+		var collider: Node = get_slide_collision(i).get_collider() as Node
+		if collider != null and collider.is_in_group(group):
+			return collider
+	return null
 
 
 func _touching_transition_body() -> bool:
@@ -902,6 +941,8 @@ func place(at: Vector3, new_heading: float, new_speed: float) -> void:
 	_on_transition_body = false
 	_lip_timer = 0.0
 	_carving = false
+	on_gravity_surface = false
+	respawn_hint = null
 	crashed = false
 	_crash_cooldown = 0.0
 	air_tricks = 0

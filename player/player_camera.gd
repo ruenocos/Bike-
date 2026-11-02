@@ -52,6 +52,13 @@ var _roll: float = 0.0
 var _look_down: float = 0.0
 ## Horizon tilt with the ground (radians, v0.31).
 var _ground_roll: float = 0.0
+## Camera yaw (radians); kept here because the rig's basis can roll on a loop.
+var _yaw: float = 0.0
+## Gravity rings (v0.31): 0..1 toward the rider's own up, how long to hold
+## it after leaving the loop, and the last orientation on the loop.
+var _gravity_blend: float = 0.0
+var _gravity_hold: float = 0.0
+var _gravity_basis: Basis = Basis.IDENTITY
 
 func _ready() -> void:
 	# We move this node ourselves in _process, so physics interpolation must not fight us.
@@ -64,6 +71,7 @@ func _ready() -> void:
 	camera.fov = t.fov_base
 	global_position = player.global_position
 	rotation = Vector3(0.0, player.heading, 0.0)
+	_yaw = player.heading
 	_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
 	_noise.frequency = 1.0
 
@@ -77,6 +85,9 @@ func make_current() -> void:
 func snap() -> void:
 	global_position = player.global_position
 	rotation = Vector3(0.0, player.heading, 0.0)
+	_yaw = player.heading
+	_gravity_blend = 0.0
+	_gravity_hold = 0.0
 	_transition_blend = 0.0
 	_transition_hold_timer = 0.0
 	_slope_pitch = 0.0
@@ -107,7 +118,7 @@ func _process(delta: float) -> void:
 		var along: Vector3 = flat_velocity - _transition_normal * flat_velocity.dot(_transition_normal)
 		flat_velocity = flat_velocity.lerp(along, _transition_blend)
 		if on_transition:
-			target_yaw = atan2(-along.x, -along.z) if along.length() > 1.0 else rotation.y
+			target_yaw = atan2(-along.x, -along.z) if along.length() > 1.0 else _yaw
 
 	# Position: follow the interpolated body, plus a look-ahead along velocity,
 	# plus the transition inset out over the pipe.
@@ -127,8 +138,23 @@ func _process(delta: float) -> void:
 
 	# Rotation: swing behind the heading (or along the ramp). Yaw only, so the
 	# camera never rolls with the rider.
-	var yaw: float = lerp_angle(rotation.y, target_yaw, _damp_weight(t.cam_rotation_damping, delta))
+	# On a loop the heading flips at the top; hold the yaw until you're out.
+	if not player.on_gravity_surface:
+		_yaw = lerp_angle(_yaw, target_yaw, _damp_weight(t.cam_rotation_damping, delta))
+	var yaw: float = _yaw
 	rotation = Vector3(0.0, yaw, 0.0)
+	# Gravity rings (v0.31): the camera rolls round the loop with you (its up
+	# follows the surface), then eases back upright.
+	if player.on_gravity_surface:
+		_gravity_hold = 0.35
+	else:
+		_gravity_hold = maxf(_gravity_hold - delta, 0.0)
+	_gravity_blend = lerpf(_gravity_blend, 1.0 if _gravity_hold > 0.0 else 0.0, _damp_weight(0.12, delta))
+	if _gravity_blend > 0.001:
+		if player.on_gravity_surface and player.ground_dir.length_squared() > 0.5:
+			_gravity_basis = Basis.looking_at(player.ground_dir, player.ground_normal)
+		var upright: Quaternion = Quaternion(Basis(Vector3.UP, yaw))
+		basis = Basis(upright.slerp(Quaternion(_gravity_basis.orthonormalized()), _gravity_blend))
 
 	# Pitch down the slope (none in the halfpipe: it stays upright there).
 	var grounded: bool = player.is_grounded()

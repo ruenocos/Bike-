@@ -527,7 +527,12 @@ func _respawn_on_line() -> void:
 	var line: RideLine = builder.nearest_ride_line(player.global_position, player_progress)
 	var pos: Vector3
 	var forward: Vector3
-	if line != null:
+	if player.respawn_hint is Transform3D:
+		# Fell into an abyss (v0.31): its own respawn point, before the drop.
+		var hint: Transform3D = player.respawn_hint
+		pos = hint.origin + hint.basis.y * 0.5
+		forward = -hint.basis.z
+	elif line != null:
 		var pts: PackedVector3Array = line.get_global_points()
 		var i: int = line.nearest_index(player.global_position)
 		var back: int = clampi(i - int(fall_respawn_back / 2.0), 0, pts.size() - 2)

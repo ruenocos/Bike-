@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://chunks/parts/drastic/abyss.gd" id="1_abyss"]
+
+[sub_resource type="BoxShape3D" id="Box_abyss"]
+size = Vector3(160, 30, 80)
+
+[node name="Abyss" type="Area3D"]
+collision_layer = 0
+monitorable = false
+script = ExtResource("1_abyss")
+
+[node name="Shape" type="CollisionShape3D" parent="."]
+shape = SubResource("Box_abyss")
+
+[node name="Respawn" type="Marker3D" parent="."]
