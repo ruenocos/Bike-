@@ -21,3 +21,7 @@ signal lip_air
 @warning_ignore("unused_signal")
 signal gate_collected(score: int)
 
+## Speed was just added (m/s): boosts, cannon hops, perfect landings.
+## SpeedFeel kicks the FOV and blur on it (same signature as the tank branch).
+@warning_ignore("unused_signal")
+signal speed_gained(amount: float)
