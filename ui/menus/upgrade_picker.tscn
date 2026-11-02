@@ -1,10 +1,7 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://ui/menus/upgrade_picker.gd" id="1_script"]
-[ext_resource type="Theme" path="res://ui/bike_theme.tres" id="2_theme"]
-
-[sub_resource type="SystemFont" id="Font_mono"]
-font_names = PackedStringArray("Consolas", "Menlo", "monospace")
+[ext_resource type="Theme" path="res://ui/theme/panzer_theme.tres" id="2_theme"]
 
 [node name="UpgradePicker" type="Control"]
 layout_mode = 3
@@ -16,7 +13,7 @@ grow_vertical = 2
 theme = ExtResource("2_theme")
 script = ExtResource("1_script")
 
-[node name="Dim" type="ColorRect" parent="."]
+[node name="Bg" type="ColorRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -24,142 +21,258 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0, 0, 0, 0.45)
+color = Color(0.898, 0.196, 0.176, 0.94)
 
-[node name="Center" type="CenterContainer" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="Shard" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = -420.0
+offset_top = -200.0
+offset_right = 560.0
+offset_bottom = 1400.0
+rotation = 0.31
+mouse_filter = 2
+color = Color(0.078, 0.078, 0.086, 1)
 
-[node name="VBox" type="VBoxContainer" parent="Center"]
-layout_mode = 2
-theme_override_constants/separation = 40
+[node name="Stripe" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = 590.0
+offset_top = -200.0
+offset_right = 626.0
+offset_bottom = 1400.0
+rotation = 0.31
+mouse_filter = 2
+color = Color(0.957, 0.945, 0.91, 1)
 
-[node name="Title" type="Label" parent="Center/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.8, 0.2, 1)
-theme_override_font_sizes/font_size = 64
-text = "PICK AN UPGRADE"
-horizontal_alignment = 1
-
-[node name="Cards" type="HBoxContainer" parent="Center/VBox"]
-layout_mode = 2
-theme_override_constants/separation = 32
-
-[node name="Choice1" type="Button" parent="Center/VBox/Cards"]
+[node name="Portrait" type="TextureRect" parent="."]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(400, 280)
-layout_mode = 2
+visible = false
+layout_mode = 0
+offset_left = 30.0
+offset_top = 200.0
+offset_right = 560.0
+offset_bottom = 1080.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 6
 
-[node name="Text" type="VBoxContainer" parent="Center/VBox/Cards/Choice1"]
+[node name="BigKana" type="Label" parent="."]
+layout_mode = 0
+offset_left = 90.0
+offset_top = 330.0
+offset_right = 330.0
+offset_bottom = 900.0
+theme_type_variation = &"Kana"
+theme_override_colors/font_color = Color(0.898, 0.196, 0.176, 1)
+theme_override_constants/outline_size = 0
+theme_override_constants/line_spacing = -20
+theme_override_font_sizes/font_size = 170
+text = "補
+給"
+
+[node name="Speech" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 70.0
+offset_top = 930.0
+offset_right = 480.0
+offset_bottom = 984.0
+rotation = -0.1
+mouse_filter = 2
+theme_type_variation = &"TapePaper"
+
+[node name="Line" type="Label" parent="Speech"]
+layout_mode = 2
+theme_type_variation = &"Kana"
+theme_override_colors/font_color = Color(0.078, 0.078, 0.086, 1)
+theme_override_constants/outline_size = 0
+theme_override_font_sizes/font_size = 28
+text = "どれにする、隊長？"
+
+[node name="Header" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 560.0
+offset_top = 50.0
+offset_right = 1800.0
+offset_bottom = 230.0
+rotation = -0.07
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="Title" type="Label" parent="Header"]
+layout_mode = 2
+theme_type_variation = &"Headline"
+theme_override_colors/font_shadow_color = Color(0.078, 0.078, 0.086, 1)
+theme_override_font_sizes/font_size = 130
+text = "REQUISITION"
+
+[node name="Sub" type="Label" parent="Header"]
+layout_mode = 2
+theme_type_variation = &"HudLabel"
+theme_override_colors/font_color = Color(0.078, 0.078, 0.086, 1)
+theme_override_font_sizes/font_size = 34
+text = "PICK 1 OF 3 FOR THE NEXT STAGE"
+
+[node name="Cards" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 640.0
+offset_top = 290.0
+offset_right = 1800.0
+offset_bottom = 900.0
+theme_override_constants/separation = 26
+
+[node name="Choice1" type="Button" parent="Cards"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 172)
+layout_mode = 2
+theme_type_variation = &"CardButton"
+
+[node name="Row" type="HBoxContainer" parent="Cards/Choice1"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 26.0
-offset_top = 22.0
-offset_right = -26.0
-offset_bottom = -22.0
+offset_left = 30.0
+offset_right = -40.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 70
+
+[node name="Num" type="Label" parent="Cards/Choice1/Row"]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+theme_type_variation = &"CardNumber"
+text = "01"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Text" type="VBoxContainer" parent="Cards/Choice1/Row"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 2
 alignment = 1
 
-[node name="Name1" type="Label" parent="Center/VBox/Cards/Choice1/Text"]
+[node name="Name1" type="Label" parent="Cards/Choice1/Row/Text"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"CardTitle"
-text = "UPGRADE"
-horizontal_alignment = 1
-autowrap_mode = 3
+text = "AIR CONTROL"
 
-[node name="Desc1" type="Label" parent="Center/VBox/Cards/Choice1/Text"]
+[node name="Desc1" type="Label" parent="Cards/Choice1/Row/Text"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(700, 0)
 layout_mode = 2
 theme_type_variation = &"CardBody"
-text = "Description"
-horizontal_alignment = 1
+text = "Steer 35% faster in the air."
 autowrap_mode = 3
 
-[node name="Choice2" type="Button" parent="Center/VBox/Cards"]
+[node name="Choice2" type="Button" parent="Cards"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(400, 280)
+custom_minimum_size = Vector2(0, 172)
 layout_mode = 2
+theme_type_variation = &"CardButton"
 
-[node name="Text" type="VBoxContainer" parent="Center/VBox/Cards/Choice2"]
+[node name="Row" type="HBoxContainer" parent="Cards/Choice2"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 26.0
-offset_top = 22.0
-offset_right = -26.0
-offset_bottom = -22.0
+offset_left = 30.0
+offset_right = -40.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 70
+
+[node name="Num" type="Label" parent="Cards/Choice2/Row"]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+theme_type_variation = &"CardNumber"
+text = "02"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Text" type="VBoxContainer" parent="Cards/Choice2/Row"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 2
 alignment = 1
 
-[node name="Name2" type="Label" parent="Center/VBox/Cards/Choice2/Text"]
+[node name="Name2" type="Label" parent="Cards/Choice2/Row/Text"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"CardTitle"
-text = "UPGRADE"
-horizontal_alignment = 1
-autowrap_mode = 3
+text = "PERFECT STREAK"
 
-[node name="Desc2" type="Label" parent="Center/VBox/Cards/Choice2/Text"]
+[node name="Desc2" type="Label" parent="Cards/Choice2/Row/Text"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(700, 0)
 layout_mode = 2
 theme_type_variation = &"CardBody"
-text = "Description"
-horizontal_alignment = 1
+text = "Perfect landings in a row add speed: +1 m/s more each time (up to 5 in a row)."
 autowrap_mode = 3
 
-[node name="Choice3" type="Button" parent="Center/VBox/Cards"]
+[node name="Choice3" type="Button" parent="Cards"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(400, 280)
+custom_minimum_size = Vector2(0, 172)
 layout_mode = 2
+theme_type_variation = &"CardButton"
 
-[node name="Text" type="VBoxContainer" parent="Center/VBox/Cards/Choice3"]
+[node name="Row" type="HBoxContainer" parent="Cards/Choice3"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 26.0
-offset_top = 22.0
-offset_right = -26.0
-offset_bottom = -22.0
+offset_left = 30.0
+offset_right = -40.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 70
+
+[node name="Num" type="Label" parent="Cards/Choice3/Row"]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+theme_type_variation = &"CardNumber"
+text = "03"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Text" type="VBoxContainer" parent="Cards/Choice3/Row"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 2
 alignment = 1
 
-[node name="Name3" type="Label" parent="Center/VBox/Cards/Choice3/Text"]
+[node name="Name3" type="Label" parent="Cards/Choice3/Row/Text"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"CardTitle"
-text = "UPGRADE"
-horizontal_alignment = 1
-autowrap_mode = 3
+text = "CRASH SHIELD"
 
-[node name="Desc3" type="Label" parent="Center/VBox/Cards/Choice3/Text"]
+[node name="Desc3" type="Label" parent="Cards/Choice3/Row/Text"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(700, 0)
 layout_mode = 2
 theme_type_variation = &"CardBody"
-text = "Description"
-horizontal_alignment = 1
+text = "Once per stage, smash through what you crash into at full speed. Stacks."
 autowrap_mode = 3
 
-[node name="Reroll" type="Button" parent="Center/VBox"]
+[node name="Reroll" type="Button" parent="."]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(400, 64)
-layout_mode = 2
-size_flags_horizontal = 4
-text = "REROLL  (1 left)"
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -460.0
+offset_top = -130.0
+offset_right = -110.0
+offset_bottom = -60.0
+grow_horizontal = 0
+grow_vertical = 0
+text = "REROLL  (1 LEFT)"

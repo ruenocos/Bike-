@@ -23,6 +23,7 @@ func _ready() -> void:
 
 func open() -> void:
 	show()
+	UiMotion.open_menu(self)
 	await MenuInput.delay_focus(self, resume_button, input_delay)
 
 

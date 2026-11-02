@@ -1,0 +1,338 @@
+[gd_resource type="Theme" format=3]
+
+; Panzer Pop UI theme (v0.31). Palette:
+;   ink     #141416  Color(0.078, 0.078, 0.086)
+;   paper   #F4F1E8  Color(0.957, 0.945, 0.91)
+;   red     #E5322D  Color(0.898, 0.196, 0.176)
+;   mustard #F2B705  Color(0.949, 0.718, 0.02)
+;   olive   #3E5B3A  Color(0.243, 0.357, 0.227)
+;   navy    #1B2340  Color(0.106, 0.137, 0.251)
+; Every "tape" is a StyleBoxFlat with skew 0.28: the box leans like the
+; italic text, the text itself stays upright (Godot draws text unskewed).
+; Fonts (OFL, ui/fonts/): Big Shoulders Stencil Display Black (numbers,
+; headlines), Barlow Condensed Italic (labels, buttons), Barlow SemiBold
+; (body copy), Dela Gothic One (katakana / kanji accents).
+
+[ext_resource type="FontFile" path="res://ui/fonts/BigShouldersStencilDisplay-Black.ttf" id="1_stencil"]
+[ext_resource type="FontFile" path="res://ui/fonts/BarlowCondensed-BlackItalic.ttf" id="2_cond_black"]
+[ext_resource type="FontFile" path="res://ui/fonts/BarlowCondensed-ExtraBoldItalic.ttf" id="3_cond_xbold"]
+[ext_resource type="FontFile" path="res://ui/fonts/Barlow-SemiBold.ttf" id="4_body"]
+[ext_resource type="FontFile" path="res://ui/fonts/DelaGothicOne-Regular.ttf" id="5_kana"]
+
+[sub_resource type="FontVariation" id="Font_stencil"]
+base_font = ExtResource("1_stencil")
+spacing_glyph = 2
+
+[sub_resource type="FontVariation" id="Font_label"]
+base_font = ExtResource("3_cond_xbold")
+spacing_glyph = 1
+
+[sub_resource type="FontVariation" id="Font_label_wide"]
+base_font = ExtResource("2_cond_black")
+spacing_glyph = 3
+
+[sub_resource type="FontVariation" id="Font_kana"]
+base_font = ExtResource("5_kana")
+spacing_glyph = 6
+
+[sub_resource type="StyleBoxFlat" id="Tape_ink"]
+content_margin_left = 30.0
+content_margin_top = 2.0
+content_margin_right = 30.0
+content_margin_bottom = 2.0
+bg_color = Color(0.078, 0.078, 0.086, 0.94)
+skew = Vector2(0.28, 0)
+
+[sub_resource type="StyleBoxFlat" id="Tape_paper"]
+content_margin_left = 30.0
+content_margin_top = 2.0
+content_margin_right = 30.0
+content_margin_bottom = 2.0
+bg_color = Color(0.957, 0.945, 0.91, 1)
+skew = Vector2(0.28, 0)
+
+[sub_resource type="StyleBoxFlat" id="Tape_red"]
+content_margin_left = 30.0
+content_margin_top = 2.0
+content_margin_right = 30.0
+content_margin_bottom = 2.0
+bg_color = Color(0.898, 0.196, 0.176, 1)
+skew = Vector2(0.28, 0)
+
+[sub_resource type="StyleBoxFlat" id="Tape_mustard"]
+content_margin_left = 30.0
+content_margin_top = 2.0
+content_margin_right = 30.0
+content_margin_bottom = 2.0
+bg_color = Color(0.949, 0.718, 0.02, 1)
+skew = Vector2(0.28, 0)
+
+[sub_resource type="StyleBoxFlat" id="Tape_olive"]
+content_margin_left = 30.0
+content_margin_top = 2.0
+content_margin_right = 30.0
+content_margin_bottom = 2.0
+bg_color = Color(0.243, 0.357, 0.227, 1)
+border_width_left = 12
+border_color = Color(0.949, 0.718, 0.02, 1)
+skew = Vector2(0.28, 0)
+
+[sub_resource type="StyleBoxFlat" id="Tape_score"]
+content_margin_left = 34.0
+content_margin_top = 0.0
+content_margin_right = 84.0
+content_margin_bottom = 0.0
+bg_color = Color(0.078, 0.078, 0.086, 0.94)
+border_width_right = 12
+border_color = Color(0.898, 0.196, 0.176, 1)
+skew = Vector2(0.28, 0)
+
+[sub_resource type="StyleBoxFlat" id="Panel_slab"]
+content_margin_left = 64.0
+content_margin_top = 40.0
+content_margin_right = 64.0
+content_margin_bottom = 40.0
+bg_color = Color(0.078, 0.078, 0.086, 0.96)
+border_width_right = 14
+border_color = Color(0.898, 0.196, 0.176, 1)
+skew = Vector2(0.12, 0)
+shadow_color = Color(0.898, 0.196, 0.176, 0.9)
+shadow_size = 1
+shadow_offset = Vector2(14, 14)
+
+[sub_resource type="StyleBoxFlat" id="Button_normal"]
+content_margin_left = 44.0
+content_margin_top = 8.0
+content_margin_right = 44.0
+content_margin_bottom = 8.0
+bg_color = Color(0.957, 0.945, 0.91, 1)
+skew = Vector2(0.28, 0)
+
+[sub_resource type="StyleBoxFlat" id="Button_hover"]
+content_margin_left = 44.0
+content_margin_top = 8.0
+content_margin_right = 44.0
+content_margin_bottom = 8.0
+bg_color = Color(1, 0.86, 0.45, 1)
+skew = Vector2(0.28, 0)
+
+[sub_resource type="StyleBoxFlat" id="Button_pressed"]
+content_margin_left = 44.0
+content_margin_top = 8.0
+content_margin_right = 44.0
+content_margin_bottom = 8.0
+bg_color = Color(0.898, 0.196, 0.176, 1)
+skew = Vector2(0.28, 0)
+
+[sub_resource type="StyleBoxFlat" id="Button_disabled"]
+content_margin_left = 44.0
+content_margin_top = 8.0
+content_margin_right = 44.0
+content_margin_bottom = 8.0
+bg_color = Color(0.957, 0.945, 0.91, 0.35)
+skew = Vector2(0.28, 0)
+
+[sub_resource type="StyleBoxFlat" id="Button_focus"]
+bg_color = Color(0.949, 0.718, 0.02, 1)
+skew = Vector2(0.28, 0)
+shadow_color = Color(0.078, 0.078, 0.086, 1)
+shadow_size = 1
+shadow_offset = Vector2(10, 10)
+
+[sub_resource type="StyleBoxFlat" id="Card_normal"]
+content_margin_left = 40.0
+content_margin_top = 24.0
+content_margin_right = 40.0
+content_margin_bottom = 24.0
+bg_color = Color(0.957, 0.945, 0.91, 0.92)
+border_width_left = 150
+border_color = Color(0.243, 0.357, 0.227, 1)
+skew = Vector2(0.28, 0)
+
+[sub_resource type="StyleBoxFlat" id="Card_hover"]
+content_margin_left = 40.0
+content_margin_top = 24.0
+content_margin_right = 40.0
+content_margin_bottom = 24.0
+bg_color = Color(1, 0.9, 0.6, 1)
+border_width_left = 150
+border_color = Color(0.243, 0.357, 0.227, 1)
+skew = Vector2(0.28, 0)
+
+[sub_resource type="StyleBoxFlat" id="Card_focus"]
+bg_color = Color(0.949, 0.718, 0.02, 1)
+border_width_left = 150
+border_color = Color(0.078, 0.078, 0.086, 1)
+skew = Vector2(0.28, 0)
+shadow_color = Color(0.078, 0.078, 0.086, 1)
+shadow_size = 1
+shadow_offset = Vector2(14, 14)
+
+[sub_resource type="StyleBoxFlat" id="Card_disabled"]
+content_margin_left = 40.0
+content_margin_top = 24.0
+content_margin_right = 40.0
+content_margin_bottom = 24.0
+bg_color = Color(0.957, 0.945, 0.91, 0.6)
+border_width_left = 150
+border_color = Color(0.243, 0.357, 0.227, 0.6)
+skew = Vector2(0.28, 0)
+
+[sub_resource type="StyleBoxFlat" id="Bar_bg"]
+bg_color = Color(0.078, 0.078, 0.086, 0.8)
+skew = Vector2(0.5, 0)
+
+[sub_resource type="StyleBoxFlat" id="Bar_fill"]
+bg_color = Color(0.949, 0.718, 0.02, 1)
+skew = Vector2(0.5, 0)
+
+[sub_resource type="StyleBoxFlat" id="Edge_olive"]
+content_margin_left = 70.0
+content_margin_top = 2.0
+content_margin_right = 34.0
+content_margin_bottom = 2.0
+bg_color = Color(0.243, 0.357, 0.227, 1)
+border_width_left = 12
+border_color = Color(0.949, 0.718, 0.02, 1)
+skew = Vector2(0.28, 0)
+
+[sub_resource type="StyleBoxFlat" id="Edge_ink"]
+content_margin_left = 70.0
+content_margin_top = 2.0
+content_margin_right = 30.0
+content_margin_bottom = 2.0
+bg_color = Color(0.078, 0.078, 0.086, 0.94)
+skew = Vector2(0.28, 0)
+
+[sub_resource type="StyleBoxFlat" id="Edge_red"]
+content_margin_left = 70.0
+content_margin_top = 2.0
+content_margin_right = 30.0
+content_margin_bottom = 2.0
+bg_color = Color(0.898, 0.196, 0.176, 1)
+skew = Vector2(0.28, 0)
+
+[sub_resource type="StyleBoxFlat" id="EdgeR_red"]
+content_margin_left = 30.0
+content_margin_top = 2.0
+content_margin_right = 74.0
+content_margin_bottom = 2.0
+bg_color = Color(0.898, 0.196, 0.176, 1)
+skew = Vector2(0.28, 0)
+
+[sub_resource type="StyleBoxFlat" id="EdgeR_ink"]
+content_margin_left = 30.0
+content_margin_top = 2.0
+content_margin_right = 74.0
+content_margin_bottom = 2.0
+bg_color = Color(0.078, 0.078, 0.086, 0.94)
+skew = Vector2(0.28, 0)
+
+[sub_resource type="StyleBoxEmpty" id="Empty"]
+
+[resource]
+default_font = SubResource("Font_label")
+default_font_size = 30
+Label/colors/font_color = Color(0.957, 0.945, 0.91, 1)
+Label/colors/font_outline_color = Color(0.078, 0.078, 0.086, 1)
+Label/colors/font_shadow_color = Color(0, 0, 0, 0)
+Label/constants/outline_size = 8
+HudNumber/base_type = &"Label"
+HudNumber/colors/font_color = Color(0.957, 0.945, 0.91, 1)
+HudNumber/constants/outline_size = 0
+HudNumber/font_sizes/font_size = 72
+HudNumber/fonts/font = SubResource("Font_stencil")
+HudLabel/base_type = &"Label"
+HudLabel/colors/font_color = Color(0.957, 0.945, 0.91, 1)
+HudLabel/constants/outline_size = 0
+HudLabel/font_sizes/font_size = 28
+HudLabel/fonts/font = SubResource("Font_label_wide")
+HudLabelInk/base_type = &"Label"
+HudLabelInk/colors/font_color = Color(0.078, 0.078, 0.086, 1)
+HudLabelInk/constants/outline_size = 0
+HudLabelInk/font_sizes/font_size = 28
+HudLabelInk/fonts/font = SubResource("Font_label_wide")
+Kana/base_type = &"Label"
+Kana/colors/font_color = Color(0.957, 0.945, 0.91, 1)
+Kana/colors/font_outline_color = Color(0.078, 0.078, 0.086, 1)
+Kana/colors/font_shadow_color = Color(0.078, 0.078, 0.086, 0.9)
+Kana/constants/outline_size = 0
+Kana/constants/shadow_offset_x = 2
+Kana/constants/shadow_offset_y = 2
+Kana/font_sizes/font_size = 26
+Kana/fonts/font = SubResource("Font_kana")
+Headline/base_type = &"Label"
+Headline/colors/font_color = Color(0.957, 0.945, 0.91, 1)
+Headline/colors/font_shadow_color = Color(0.898, 0.196, 0.176, 1)
+Headline/constants/outline_size = 0
+Headline/constants/shadow_offset_x = 6
+Headline/constants/shadow_offset_y = 6
+Headline/font_sizes/font_size = 120
+Headline/fonts/font = SubResource("Font_stencil")
+CardTitle/base_type = &"Label"
+CardTitle/colors/font_color = Color(0.078, 0.078, 0.086, 1)
+CardTitle/constants/outline_size = 0
+CardTitle/font_sizes/font_size = 48
+CardTitle/fonts/font = ExtResource("2_cond_black")
+CardBody/base_type = &"Label"
+CardBody/colors/font_color = Color(0.13, 0.13, 0.15, 1)
+CardBody/constants/outline_size = 0
+CardBody/font_sizes/font_size = 24
+CardBody/fonts/font = ExtResource("4_body")
+CardNumber/base_type = &"Label"
+CardNumber/colors/font_color = Color(0.957, 0.945, 0.91, 1)
+CardNumber/constants/outline_size = 0
+CardNumber/font_sizes/font_size = 72
+CardNumber/fonts/font = SubResource("Font_stencil")
+StatLine/base_type = &"Label"
+StatLine/colors/font_color = Color(0.957, 0.945, 0.91, 1)
+StatLine/constants/outline_size = 0
+StatLine/constants/line_spacing = 2
+StatLine/font_sizes/font_size = 30
+StatLine/fonts/font = SubResource("Font_label")
+TapeInk/base_type = &"PanelContainer"
+TapeInk/styles/panel = SubResource("Tape_ink")
+TapePaper/base_type = &"PanelContainer"
+TapePaper/styles/panel = SubResource("Tape_paper")
+TapeRed/base_type = &"PanelContainer"
+TapeRed/styles/panel = SubResource("Tape_red")
+TapeMustard/base_type = &"PanelContainer"
+TapeMustard/styles/panel = SubResource("Tape_mustard")
+TapeOlive/base_type = &"PanelContainer"
+TapeOlive/styles/panel = SubResource("Tape_olive")
+TapeOliveL/base_type = &"PanelContainer"
+TapeOliveL/styles/panel = SubResource("Edge_olive")
+TapeInkL/base_type = &"PanelContainer"
+TapeInkL/styles/panel = SubResource("Edge_ink")
+TapeRedL/base_type = &"PanelContainer"
+TapeRedL/styles/panel = SubResource("Edge_red")
+TapeRedR/base_type = &"PanelContainer"
+TapeRedR/styles/panel = SubResource("EdgeR_red")
+TapeInkR/base_type = &"PanelContainer"
+TapeInkR/styles/panel = SubResource("EdgeR_ink")
+TapeScore/base_type = &"PanelContainer"
+TapeScore/styles/panel = SubResource("Tape_score")
+PanelContainer/styles/panel = SubResource("Panel_slab")
+Button/colors/font_color = Color(0.078, 0.078, 0.086, 1)
+Button/colors/font_focus_color = Color(0.078, 0.078, 0.086, 1)
+Button/colors/font_hover_color = Color(0.078, 0.078, 0.086, 1)
+Button/colors/font_hover_pressed_color = Color(0.957, 0.945, 0.91, 1)
+Button/colors/font_pressed_color = Color(0.957, 0.945, 0.91, 1)
+Button/colors/font_disabled_color = Color(0.078, 0.078, 0.086, 0.5)
+Button/constants/outline_size = 0
+Button/font_sizes/font_size = 36
+Button/fonts/font = SubResource("Font_label_wide")
+Button/styles/disabled = SubResource("Button_disabled")
+Button/styles/focus = SubResource("Button_focus")
+Button/styles/hover = SubResource("Button_hover")
+Button/styles/normal = SubResource("Button_normal")
+Button/styles/pressed = SubResource("Button_pressed")
+CardButton/base_type = &"Button"
+CardButton/styles/disabled = SubResource("Card_disabled")
+CardButton/styles/focus = SubResource("Card_focus")
+CardButton/styles/hover = SubResource("Card_hover")
+CardButton/styles/normal = SubResource("Card_normal")
+CardButton/styles/pressed = SubResource("Card_focus")
+ProgressBar/font_sizes/font_size = 1
+ProgressBar/styles/background = SubResource("Bar_bg")
+ProgressBar/styles/fill = SubResource("Bar_fill")

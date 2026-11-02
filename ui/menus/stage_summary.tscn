@@ -1,10 +1,7 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://ui/menus/stage_summary.gd" id="1_script"]
-[ext_resource type="Theme" path="res://ui/bike_theme.tres" id="2_theme"]
-
-[sub_resource type="SystemFont" id="Font_mono"]
-font_names = PackedStringArray("Consolas", "Menlo", "monospace")
+[ext_resource type="Theme" path="res://ui/theme/panzer_theme.tres" id="2_theme"]
 
 [node name="StageSummary" type="Control"]
 layout_mode = 3
@@ -24,39 +21,86 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0, 0, 0, 0.45)
+color = Color(0.078, 0.078, 0.086, 0.6)
 
-[node name="Center" type="CenterContainer" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="Band" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = -200.0
+offset_top = 110.0
+offset_right = 2200.0
+offset_bottom = 330.0
+rotation = -0.07
+mouse_filter = 2
+color = Color(0.243, 0.357, 0.227, 1)
 
-[node name="Panel" type="PanelContainer" parent="Center"]
-layout_mode = 2
+[node name="Header" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 150.0
+offset_top = 120.0
+offset_right = 1500.0
+offset_bottom = 330.0
+rotation = -0.07
+mouse_filter = 2
+theme_override_constants/separation = -10
+alignment = 1
 
-[node name="VBox" type="VBoxContainer" parent="Center/Panel"]
-layout_mode = 2
-theme_override_constants/separation = 28
-
-[node name="Title" type="Label" parent="Center/Panel/VBox"]
+[node name="Title" type="Label" parent="Header"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.8, 0.2, 1)
-theme_override_font_sizes/font_size = 64
+theme_type_variation = &"Headline"
+theme_override_colors/font_shadow_color = Color(0.078, 0.078, 0.086, 1)
+theme_override_font_sizes/font_size = 130
 text = "STAGE 1 CLEAR"
-horizontal_alignment = 1
 
-[node name="Stats" type="Label" parent="Center/Panel/VBox"]
+[node name="Kana" type="Label" parent="Header"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_fonts/font = SubResource("Font_mono")
-theme_override_font_sizes/font_size = 34
-text = "Time            0:00.00"
+theme_type_variation = &"Kana"
+theme_override_colors/font_color = Color(0.078, 0.078, 0.086, 1)
+theme_override_constants/outline_size = 0
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0)
+theme_override_font_sizes/font_size = 36
+text = "第1戦区 突破"
 
-[node name="Continue" type="Button" parent="Center/Panel/VBox"]
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -420.0
+offset_top = 400.0
+offset_right = 420.0
+offset_bottom = 500.0
+grow_horizontal = 2
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/separation = 22
+
+[node name="Stats" type="HBoxContainer" parent="Panel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 60
+
+[node name="Names" type="Label" parent="Panel/VBox/Stats"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Continue"
+size_flags_horizontal = 3
+theme_type_variation = &"StatLine"
+theme_override_colors/font_color = Color(0.949, 0.718, 0.02, 1)
+text = "TIME\nBEST COMBO\nSTAGE SCORE\nRUN SCORE\nBOOST GATES\nREROLLS"
+
+[node name="Values" type="Label" parent="Panel/VBox/Stats"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"StatLine"
+theme_override_colors/font_color = Color(0.957, 0.945, 0.91, 1)
+text = "1:42.30\n3,210\n8,400\n12,450\n3 / 20\n+1  (1)"
+horizontal_alignment = 2
+
+[node name="Continue" type="Button" parent="Panel/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 70)
+layout_mode = 2
+text = "CONTINUE"
+

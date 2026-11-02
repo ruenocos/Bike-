@@ -49,9 +49,12 @@ func _ready() -> void:
 func open(all_bikes: Array[BikeData], selected: int) -> void:
 	bikes = all_bikes
 	index = clampi(selected, 0, maxi(bikes.size() - 1, 0))
-	best_label.text = "Best stage   %d\nBest score   %d\nBoost gates  %d\nRuns         %d" % [Save.best_stage, Save.best_score, Save.total_gates, Save.runs]
+	best_label.text = "BEST STAGE %d   ·   BEST SCORE %s   ·   GATES %d   ·   RUNS %d" % [
+		Save.best_stage, RunHud.group_digits(Save.best_score), Save.total_gates, Save.runs]
 	_show_bike()
 	show()
+	UiMotion.slide_in($Logo as Control, Vector2(-300.0, 0.0), 0.32)
+	UiMotion.slide_in($Panel as Control, Vector2(300.0, 0.0), 0.32, 0.08)
 	_waiting = true
 	await MenuInput.delay_focus(self, ride_button, input_delay)
 	_waiting = false
@@ -82,6 +85,8 @@ func _show_bike() -> void:
 	var b: BikeData = bikes[index]
 	var open_bike: bool = Save.is_unlocked(b)
 	bike_name.text = b.display_name.to_upper()
+	if is_visible_in_tree():
+		UiMotion.kick(bike_name, 0.12)
 	swatch.color = b.frame_color if open_bike else Color(0.3, 0.3, 0.32)
 	var lines: PackedStringArray = [b.description]
 	for m: UpgradeData in b.modifiers:
@@ -98,10 +103,10 @@ func _show_bike() -> void:
 	hop_bar.value = clampf(inverse_lerp(hop_range.x, hop_range.y, t.hop_max_velocity) + t.air_hops * double_hop_bonus, 0.05, 1.0)
 	tough_bar.value = clampf((1.0 - t.crash_penalty) * 0.9 + t.crash_shields * shield_bonus, 0.05, 1.0)
 	lock_label.visible = not open_bike
-	lock_label.text = "LOCKED: %s" % b.unlock_text()
+	lock_label.text = "LOCKED: %s" % b.unlock_text().to_upper()
 	if not _waiting:
 		ride_button.disabled = not open_bike
-	ride_button.text = "Ride" if open_bike else "Locked"
+	ride_button.text = "ROLL OUT" if open_bike else "LOCKED"
 
 
 func _on_ride() -> void:

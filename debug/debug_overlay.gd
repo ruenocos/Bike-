@@ -35,6 +35,9 @@ func _ready() -> void:
 
 ## Show the top-left readout at start (F3 toggles it while playing).
 @export var show_panel: bool = false
+## The big centre flashes (trick / grade / banked). Off in game.tscn since
+## v0.31: the RunHud shows those (PERFECT cut-in, callouts).
+@export var show_flashes: bool = true
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -108,6 +111,8 @@ func _on_combo_banked(score: int) -> void:
 ## Pops the label in, holds it, fades it. A new flash on the same label
 ## restarts it; the other labels keep their own tweens.
 func _flash(target: Label, text: String, color: Color) -> void:
+	if not show_flashes:
+		return
 	if _tweens.has(target):
 		_tweens[target].kill()
 	target.text = text
