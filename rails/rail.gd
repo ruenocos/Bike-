@@ -28,6 +28,16 @@ extends Path3D
 ## Time to fade the glow in or out (s).
 @export var glow_fade_time: float = 0.08
 
+@export_group("Sap rail")
+## Pushes a grinding rider along the rail (m/s²), enough to climb (v0.31,
+## the World Tree's branches). 0 = a plain rail.
+@export_range(0.0, 60.0, 0.5, "suffix:m/s²") var boost_accel: float = 0.0
+## A boosted rail never lets you drop below this speed (m/s).
+@export_range(0.0, 60.0, 0.5, "suffix:m/s") var boost_min_speed: float = 0.0
+## Extra speed along the rail when you fly off its end (m/s): the crown launch.
+@export_range(0.0, 60.0, 0.5, "suffix:m/s") var end_launch: float = 0.0
+@export_group("")
+
 @onready var rail_mesh: CSGPolygon3D = $RailMesh
 
 var _material: StandardMaterial3D

@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://1yiqirwyxwod"
-path="res://.godot/imported/fumiriya_M00_000_HairBack_00.png-a466dd6c97f0e73c61e715f1822f73e8.ctex"
+path.s3tc="res://.godot/imported/fumiriya_M00_000_HairBack_00.png-a466dd6c97f0e73c61e715f1822f73e8.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "2911519a71efe2a3a7f22e38a6bf1973"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/characters/vroid_cc0/fumiriya_M00_000_HairBack_00.png"
-dest_files=["res://.godot/imported/fumiriya_M00_000_HairBack_00.png-a466dd6c97f0e73c61e715f1822f73e8.ctex"]
+dest_files=["res://.godot/imported/fumiriya_M00_000_HairBack_00.png-a466dd6c97f0e73c61e715f1822f73e8.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

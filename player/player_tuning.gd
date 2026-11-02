@@ -273,6 +273,18 @@ extends Resource
 @export_range(0.1, 2.0, 0.05) var cam_air_look_down_time: float = 0.5
 ## Falling speed that gives the full look-down (m/s).
 @export_range(1.0, 60.0, 0.5) var cam_air_look_down_speed: float = 25.0
+## Drastic landscape (v0.31): FOV kicks wider while you fall fast (big
+## drops, cliffs), on top of the speed FOV (deg at fov_drop_speed).
+@export_range(0.0, 30.0, 0.5) var fov_drop_kick_deg: float = 12.0
+## Falling this fast (m/s down) gives the full kick.
+@export_range(1.0, 80.0, 1.0) var fov_drop_speed: float = 30.0
+## The horizon tilts with the ground under you: rolls by this share of the
+## ground's sideways tilt (0 = level horizon, 1 = glued to the slope).
+@export_range(0.0, 1.0, 0.05) var cam_ground_roll: float = 0.45
+## ...never more than this (deg).
+@export_range(0.0, 30.0, 0.5) var cam_ground_roll_max_deg: float = 12.0
+## How fast that roll follows the ground (s).
+@export_range(0.01, 1.0, 0.01) var cam_ground_roll_time: float = 0.25
 @export var fov_base: float = 75.0
 @export var fov_max: float = 105.0
 ## FOV follows speed_ratio ^ this (>1 keeps the wide end for real speed).

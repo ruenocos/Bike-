@@ -26,6 +26,10 @@ enum Pose { HATCH, SEATED }
 @export var shoes_color: Color = Color(0.2, 0.2, 0.24)
 @export var accessory_color: Color = Color(1.0, 0.5, 0.15)
 @export var scarf_color: Color = Color(1.0, 0.45, 0.12, 1.0)
+## The scarf ribbon: how wide, how long it lasts, how fast it streams back.
+@export_range(0.01, 1.0, 0.01, "suffix:m") var scarf_width: float = 0.09
+@export_range(0.05, 2.0, 0.01, "suffix:s") var scarf_time: float = 0.2
+@export_range(0.0, 30.0, 0.5, "suffix:m/s") var scarf_stream: float = 4.0
 
 @export_group("Reactions")
 ## How far they lean against a carve (deg).
@@ -91,9 +95,9 @@ func _ready() -> void:
 		_scarf.target = _scarf_point
 		_scarf.anchor = _player
 		_scarf.emitting = true
-		_scarf.width = 0.16
-		_scarf.lifetime = 0.35
-		_scarf.drift = 6.0
+		_scarf.width = scarf_width
+		_scarf.lifetime = scarf_time
+		_scarf.drift = scarf_stream
 		_scarf.head_color = scarf_color
 		_scarf.tail_color = Color(scarf_color, 0.0)
 		add_child(_scarf)

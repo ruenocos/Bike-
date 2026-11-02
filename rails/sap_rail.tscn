@@ -1,0 +1,37 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://rails/rail.gd" id="1_rail"]
+[ext_resource type="Material" path="res://rails/sap_material.tres" id="2_sap"]
+
+[sub_resource type="Curve3D" id="Curve3D_sap"]
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -40),
+"tilts": PackedFloat32Array(0, 0)
+}
+point_count = 2
+
+[node name="SapRail" type="Path3D" groups=["rails"]]
+curve = SubResource("Curve3D_sap")
+script = ExtResource("1_rail")
+glow_idle = 0.8
+glow_highlight = 5.0
+boost_accel = 22.0
+boost_min_speed = 30.0
+end_launch = 10.0
+
+[node name="RailMesh" type="CSGPolygon3D" parent="."]
+polygon = PackedVector2Array(-0.18, -0.05, -0.32, -0.25, -0.32, -0.55, -0.18, -0.75, 0.18, -0.75, 0.32, -0.55, 0.32, -0.25, 0.18, -0.05)
+mode = 2
+path_node = NodePath("..")
+path_interval_type = 0
+path_interval = 0.5
+path_simplify_angle = 0.0
+path_rotation = 2
+path_rotation_accurate = false
+path_local = true
+path_continuous_u = true
+path_u_distance = 1.0
+path_joined = false
+material = ExtResource("2_sap")
+
+[node name="Posts" type="Node3D" parent="."]

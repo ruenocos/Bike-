@@ -2,6 +2,7 @@
 
 [ext_resource type="Resource" path="res://sky/looks/canyon.tres" id="80_sky"]
 [ext_resource type="Script" path="res://biomes/biome.gd" id="1_biome"]
+[ext_resource type="PackedScene" path="res://chunks/landscape/set_megacliff.tscn" id="92_set"]
 [ext_resource type="PackedScene" path="res://chunks/landscape/set_narrows.tscn" id="91_set"]
 [ext_resource type="PackedScene" path="res://chunks/landscape/set_mesa_launch.tscn" id="90_set"]
 [ext_resource type="Resource" path="res://chunks/terrain/cover/canyon.tres" id="2_cover"]
@@ -14,7 +15,7 @@
 
 [resource]
 script = ExtResource("1_biome")
-set_pieces = Array[PackedScene]([ExtResource("90_set"), ExtResource("91_set")])
+set_pieces = Array[PackedScene]([ExtResource("90_set"), ExtResource("91_set"), ExtResource("92_set")])
 display_name = "Red Rock Canyon"
 subtitle = "Dry wind, hard ground"
 ground_dirt = Color(0.85, 0.47, 0.27, 1)

@@ -275,6 +275,81 @@ static func set_pieces() -> Array[Dictionary]:
 			[Vector2(0, 0), Vector2(25, 80), Vector2(35, 200), Vector2(35, 290), Vector2(10, 360), Vector2(0, 400)]],
 		"clusters_at": [{"kind": "rock", "at": Vector2(45, 150), "n": 4, "spread": 5.0}, {"kind": "rock", "at": Vector2(50, 260), "n": 4, "spread": 5.0}],
 		"clusters": 3.0, "mix": {"rock": 4, "tree": 2, "fence": 1}})
+	out.append_array(drastic_pieces())
+	return out
+
+
+## v0.31 "drastic landscape": the four big set pieces (Wons: "huge cliffs",
+## "a huge tree u need to grind to the top of", "a halfpipe the whole size
+## of the level ... while theres huge debris", "anti gravity parts where u
+## literally go into some kind of loop").
+static func drastic_pieces() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	const LOOP: String = "res://chunks/parts/drastic/gravity_loop.tscn"
+	const MONOLITH: String = "res://chunks/parts/drastic/monolith_ramp.tscn"
+	# Cliff Country: a long gentle run-up, then the ground falls away at 75
+	# deg: 190-480 m of drop, 3.4-5.1 s of air at 25-60 m/s, landing on a
+	# long 55 deg face that eases out (a good grade at any speed). A gate
+	# ~95 m up rewards a fast, straight launch.
+	out.append({"file": "set_megacliff", "length": 700.0, "difficulty": 3, "seed": 211, "noise": 1.4,
+		"profile": [Vector2(0, 1), Vector2(0.15, 1), Vector2(0.2, 0.35), Vector2(0.24, 0.35), Vector2(0.246, 3.25),
+			Vector2(0.285, 3.25), Vector2(0.3, 2.6), Vector2(0.6, 2.4), Vector2(0.7, 1.6), Vector2(0.82, 1), Vector2(1, 1)],
+		"paths": [[Vector2(-30, 0), Vector2(-30, 700)], [Vector2(0, 0), Vector2(0, 700)], [Vector2(30, 0), Vector2(30, 700)]],
+		"clear": [Vector2(140, 530)], "gates_at": [Vector3(0, 215, 97)],
+		"clusters": 3.5, "mix": {"tree": 5, "rock": 3}})
+	# The Megapipe: the valley closes into one huge halfpipe (56 m walls)
+	# for ~350 m with a gentle S; boulders roll off the walls across it.
+	# The whole thing is a transition surface: carve the walls, lip air.
+	out.append({"file": "set_megapipe", "length": 760.0, "difficulty": 3, "seed": 223, "noise": 0.8,
+		"heading": [Vector2(0, 0), Vector2(0.25, 0), Vector2(0.45, 14), Vector2(0.7, -8), Vector2(0.9, 0), Vector2(1, 0)],
+		"width": [Vector2(0, 1), Vector2(0.15, 1), Vector2(0.3, 0.6), Vector2(0.75, 0.6), Vector2(0.9, 1), Vector2(1, 1)],
+		"terrain": {"wall_profile": [Vector2(0, 1), Vector2(0.15, 1), Vector2(0.3, 4), Vector2(0.75, 4), Vector2(0.9, 1), Vector2(1, 1)],
+			"wall_width_profile": [Vector2(0, 1), Vector2(0.15, 1), Vector2(0.3, 2.4), Vector2(0.75, 2.4), Vector2(0.9, 1), Vector2(1, 1)],
+			"transition_surface": true},
+		"boulders_at": [{"d": 240.0, "side": -1.0, "radius": 4.0, "up_wall": 18.0, "time": 3.2},
+			{"d": 290.0, "side": 1.0, "radius": 5.0, "up_wall": 18.0, "time": 3.6},
+			{"d": 330.0, "side": -1.0, "radius": 3.0, "up_wall": 14.0, "time": 2.8},
+			{"d": 375.0, "side": 1.0, "radius": 6.0, "up_wall": 20.0, "time": 4.2},
+			{"d": 420.0, "side": -1.0, "radius": 4.5, "up_wall": 18.0, "time": 3.4},
+			{"d": 460.0, "side": 1.0, "radius": 3.5, "up_wall": 14.0, "time": 3.0},
+			{"d": 500.0, "side": -1.0, "radius": 5.5, "up_wall": 20.0, "time": 4.0},
+			{"d": 540.0, "side": 1.0, "radius": 4.0, "up_wall": 18.0, "time": 3.2}],
+		"paths": [[Vector2(0, 0), Vector2(0, 760)], [Vector2(0, 0), Vector2(-20, 150), Vector2(-24, 600), Vector2(0, 760)],
+			[Vector2(0, 0), Vector2(20, 150), Vector2(24, 600), Vector2(0, 760)]],
+		"clear": [Vector2(200, 590)], "clusters": 2.0, "mix": {"rock": 4, "tree": 2}, "tight": false})
+	# The World Tree: a chasm right across the valley with a giant tree in
+	# it. Hop onto a glowing branch (sap rail) at the rim: it carries you up
+	# round the trunk and fires you off its tip. Or grind the low root bridge
+	# across, or jump the chasm off the big kicker on the right. Fall in and
+	# you're put back before the rim (Abyss), with the usual time cost.
+	out.append({"file": "set_world_tree", "length": 760.0, "difficulty": 3, "seed": 227, "noise": 1.4,
+		"profile": [Vector2(0, 1), Vector2(0.18, 1), Vector2(0.26, 0.5), Vector2(0.33, 0.5), Vector2(0.36, 1.4),
+			Vector2(0.62, 1.4), Vector2(0.75, 1), Vector2(1, 1)],
+		"gullies_at": [{"name": "Chasm", "points": [Vector2(-115, 330), Vector2(115, 330)], "width": 80.0, "depth": 80.0, "flat": 0.4}],
+		"kickers_at": [{"name": "ChasmKickerPad", "at": Vector2(45, 245), "aim": Vector2(45, 330), "scale": Vector3(1.6, 3.0, 1.0), "gate_ahead": 60.0, "gate_up": 10.0}],
+		"parts_at": [{"scene": "res://chunks/parts/drastic/world_tree.tscn", "name": "WorldTree", "at": Vector2(0, 330), "tilt": false, "footprint": 24.0,
+				"ground_props": {"start_height": Vector2(22, 260), "bridge_in_height": Vector2(0, 255), "bridge_out_height": Vector2(0, 405)}},
+			{"scene": "res://chunks/parts/drastic/abyss.tscn", "name": "Abyss", "at": Vector2(0, 330), "up": -62.0,
+				"props": {"size": Vector3(330, 40, 110)}, "respawn": Vector2(0, 222)}],
+		"keep_out": [Vector3(-60, 330, 48), Vector3(0, 330, 48), Vector3(60, 330, 48)],
+		"paths": [[Vector2(0, 0), Vector2(0, 240), Vector2(0, 255), Vector2(7, 290), Vector2(14, 330), Vector2(7, 370), Vector2(0, 405), Vector2(0, 760)],
+			[Vector2(0, 0), Vector2(30, 150), Vector2(45, 215), Vector2(45, 440), Vector2(20, 540), Vector2(0, 760)]],
+		"clear": [Vector2(230, 440)], "clusters": 2.5, "mix": {"tree": 5, "rock": 3}})
+	# The Alien Garden: two gravity rings (optional loops) on the slope,
+	# glowing monolith ramps, and a floating shard rail you can only catch
+	# in the air off the first monolith.
+	out.append({"file": "set_alien_garden", "length": 700.0, "difficulty": 2, "seed": 229, "noise": 1.2,
+		"parts_at": [{"scene": LOOP, "name": "GravityRingA", "at": Vector2(-34, 200), "pad": Vector2(33, 60), "offset": Vector3(-7.5, 0.05, 0), "footprint": 30.0},
+			{"scene": LOOP, "name": "GravityRingB", "at": Vector2(32, 470), "pad": Vector2(38, 70), "offset": Vector3(-9, 0.05, 0), "footprint": 34.0,
+				"props": {"radius": 20.0, "side_shift": 18.0, "width": 14.0}},
+			{"scene": MONOLITH, "name": "MonolithA", "at": Vector2(-30, 300), "footprint": 26.0},
+			{"scene": MONOLITH, "name": "MonolithB", "at": Vector2(40, 600), "footprint": 26.0}],
+		"rails_at": [{"name": "ShardRail", "scene": "res://rails/shard_rail.tscn", "bed": false,
+			"points": [Vector3(-30, 352, 12), Vector3(-30, 380, 12.5), Vector3(-30, 410, 10), Vector3(-30, 440, 6)]}],
+		"gates_at": [Vector3(-30, 455, 5)],
+		"paths": [[Vector2(0, 0), Vector2(-2, 80), Vector2(-2, 700)],
+			[Vector2(0, 0), Vector2(30, 70), Vector2(58, 140), Vector2(58, 330), Vector2(-2, 400), Vector2(-2, 700)]],
+		"clusters": 2.5, "gap_gates": 1, "mix": {"tree": 4, "rock": 3}})
 	return out
 
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
@@ -320,6 +395,17 @@ func _author(spec: Dictionary, path: String) -> void:
 	terrain.slope_profile = _curve(spec.get("profile", []), 0.0, 3.5)
 	terrain.heading_curve = _curve(spec.get("heading", []), -120.0, 120.0)
 	terrain.width_profile = _curve(spec.get("width", []), 0.0, 1.5)
+	# v0.31: any other TerrainPatch setting (swells, megapipe walls...).
+	# Arrays of Vector2 become Curves (0..max of their values).
+	var extra: Dictionary = spec.get("terrain", {})
+	for key: String in extra:
+		var value: Variant = extra[key]
+		if value is Array:
+			var top: float = 1.0
+			for q: Vector2 in value:
+				top = maxf(top, q.y)
+			value = _curve(value, 0.0, ceilf(top))
+		terrain.set(key, value)
 	_add(root, root, terrain)
 	var props: Node3D = Node3D.new()
 	props.name = "Props"
@@ -478,10 +564,13 @@ func _author(spec: Dictionary, path: String) -> void:
 		var line2: PackedVector2Array = PackedVector2Array()
 		for kp: Vector3 in keys:
 			line2.append(Vector2(kp.x, kp.y))
+		hand_rails.append(rr)
+		if not rr.get("bed", true):
+			# v0.31 floating rails (shard rails): no ground bed under them.
+			continue
 		var bed2: TerrainShape = _shape_from(terrain, line2, TerrainShape.Mode.LINE, 9.0, 0.0, 0.45)
 		bed2.name = String(rr.get("name", "Rail")) + "Bed"
 		_add(root, shapes, bed2)
-		hand_rails.append(rr)
 		for kp: Vector3 in keys:
 			taken.append(Vector3(kp.x, kp.y, 8.0))
 	for k: Dictionary in spec.get("kickers_at", []):
@@ -524,7 +613,8 @@ func _author(spec: Dictionary, path: String) -> void:
 
 	# --- Hand-placed rails (set pieces), heights from the built ground.
 	for rr2: Dictionary in hand_rails:
-		var rail2: Path3D = RAIL.instantiate() as Path3D
+		var rail_scene: PackedScene = RAIL if not rr2.has("scene") else load(String(rr2["scene"])) as PackedScene
+		var rail2: Path3D = rail_scene.instantiate() as Path3D
 		rail2.name = String(rr2.get("name", "Rail"))
 		rail2.curve = Curve3D.new()
 		var keys2: Array = rr2["points"]
@@ -537,6 +627,54 @@ func _author(spec: Dictionary, path: String) -> void:
 				var p3: Vector3 = a3.lerp(b3, f3)
 				rail2.curve.add_point(terrain.valley_to_local(p3.x, terrain.surface_height(p3.x, -p3.y) + p3.z, p3.y))
 		_add(root, root, rail2)
+
+	# --- v0.31 parts: any scene at a valley spot (gravity loops, monoliths,
+	# the World Tree, abysses), optionally on its own flat pad tilted with
+	# the slope. "aim" turns it (default: straight down the valley), "up"
+	# lifts it, "rot" adds a local rotation (deg), "props" sets exports.
+	var part_pads: bool = false
+	for pt: Dictionary in spec.get("parts_at", []):
+		var at2: Vector2 = pt["at"]
+		var aim2: Vector2 = pt.get("aim", at2 + Vector2(0, 10))
+		var dir2: Vector2 = (aim2 - at2).normalized()
+		var node: Node3D = (load(String(pt["scene"])) as PackedScene).instantiate() as Node3D
+		node.name = String(pt.get("name", node.name))
+		for key2: String in pt.get("props", {}):
+			node.set(key2, pt["props"][key2])
+		# Ground heights at valley points, relative to the part's own base
+		# (the World Tree's branch starts and bridge ends).
+		for key4: String in pt.get("ground_props", {}):
+			var q4: Vector2 = pt["ground_props"][key4]
+			node.set(key4, terrain.base_height(q4.x, -q4.y) - terrain.base_height(at2.x, -at2.y))
+		var xform: Transform3D = _pad_transform(terrain, at2, dir2)
+		if not pt.get("tilt", true):
+			xform.basis = Basis(Vector3.UP, xform.basis.get_euler().y)
+		if pt.has("pad"):
+			var pad3: TerrainFlatten = TerrainFlatten.new()
+			pad3.name = node.name + "Pad"
+			pad3.size = pt["pad"]
+			pad3.blend = float(pt.get("blend", 10.0))
+			pad3.transform = xform
+			_add(root, shapes, pad3)
+			node.position = pt.get("offset", Vector3.ZERO) + Vector3.UP * float(pt.get("up", 0.0))
+			node.rotation_degrees = pt.get("rot", Vector3.ZERO)
+			_add(root, pad3, node)
+			part_pads = true
+		else:
+			node.transform = xform * Transform3D(Basis.from_euler(pt.get("rot", Vector3.ZERO) * (PI / 180.0)), Vector3.UP * float(pt.get("up", 0.0)))
+			_add(root, root, node)
+		if pt.has("respawn"):
+			# Where an Abyss puts you back: on the ground, facing down the valley.
+			var r5: Vector2 = pt["respawn"]
+			var marker5: Node3D = node.get_node_or_null(^"Respawn") as Node3D
+			if marker5 != null:
+				var yaw5: Basis = Basis(Vector3.UP, _pad_transform(terrain, r5, Vector2(0, 1)).basis.get_euler().y)
+				marker5.global_transform = root.global_transform * Transform3D(yaw5,
+						terrain.valley_to_local(r5.x, terrain.surface_height(r5.x, -r5.y) + 0.6, r5.y))
+		if pt.has("footprint"):
+			taken.append(Vector3(at2.x, at2.y, float(pt["footprint"])))
+	if part_pads:
+		terrain.rebuild()
 
 	# --- Boost gates on the risky options: in the air off kickers, just past
 	# rail ends, in narrow two-tree gaps off the safe ways, and set-piece ones.
@@ -630,6 +768,26 @@ func _author(spec: Dictionary, path: String) -> void:
 		boulder.position = Vector3(start.x, terrain.height_at_local(start) + 2.2, start.z)
 		boulder.roll_to = Vector3(end.x - start.x, 0.0, end.z - start.z)
 		_add(root, root, boulder)
+
+	# --- v0.31 hand-placed boulders: Vector3(d, side -1/+1, end x) roll
+	# from that crest across the valley (the Megapipe's debris).
+	var bi: int = 0
+	for bd: Dictionary in spec.get("boulders_at", []):
+		bi += 1
+		var d6: float = bd["d"]
+		var side6: float = bd["side"]
+		var half6: float = terrain.half_play_at(d6)
+		var start6: Vector3 = terrain.valley_to_local(side6 * (half6 + float(bd.get("up_wall", -2.0))), 0.0, d6)
+		var end6: Vector3 = terrain.valley_to_local(float(bd.get("to", -side6 * half6 * 0.6)), 0.0, d6 + float(bd.get("drift", 30.0)))
+		var boulder6: RollingBoulder = BOULDER.instantiate() as RollingBoulder
+		boulder6.name = "Debris%d" % bi
+		boulder6.radius = float(bd.get("radius", 2.2))
+		boulder6.scale = Vector3.ONE * boulder6.radius / 2.2
+		boulder6.roll_time = float(bd.get("time", 3.5))
+		boulder6.trigger_distance = float(bd.get("trigger", 160.0))
+		boulder6.position = Vector3(start6.x, terrain.height_at_local(start6) + boulder6.radius, start6.z)
+		boulder6.roll_to = Vector3(end6.x - start6.x, 0.0, end6.z - start6.z) / boulder6.scale.x
+		_add(root, root, boulder6)
 
 	# --- Invisible corridors as RideLines (respawn, autopilot, tests).
 	var lines: Node3D = Node3D.new()

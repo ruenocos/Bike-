@@ -54,6 +54,15 @@ var _last_heading: float = 0.0
 ## Carve roll and air look-down now (radians, v0.17).
 var _roll: float = 0.0
 var _look_down: float = 0.0
+## Horizon tilt with the ground (radians, v0.31).
+var _ground_roll: float = 0.0
+## Camera yaw (radians); kept here because the rig's basis can roll on a loop.
+var _yaw: float = 0.0
+## Gravity rings (v0.31): 0..1 toward the rider's own up, how long to hold
+## it after leaving the loop, and the last orientation on the loop.
+var _gravity_blend: float = 0.0
+var _gravity_hold: float = 0.0
+var _gravity_basis: Basis = Basis.IDENTITY
 
 func _ready() -> void:
 	# We move this node ourselves in _process, so physics interpolation must not fight us.
@@ -67,6 +76,7 @@ func _ready() -> void:
 	_fov = t.fov_base
 	global_position = player.global_position
 	rotation = Vector3(0.0, player.heading, 0.0)
+	_yaw = player.heading
 	_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
 	_noise.frequency = 1.0
 
@@ -80,6 +90,9 @@ func make_current() -> void:
 func snap() -> void:
 	global_position = player.global_position
 	rotation = Vector3(0.0, player.heading, 0.0)
+	_yaw = player.heading
+	_gravity_blend = 0.0
+	_gravity_hold = 0.0
 	_transition_blend = 0.0
 	_transition_hold_timer = 0.0
 	_slope_pitch = 0.0
@@ -110,7 +123,7 @@ func _process(delta: float) -> void:
 		var along: Vector3 = flat_velocity - _transition_normal * flat_velocity.dot(_transition_normal)
 		flat_velocity = flat_velocity.lerp(along, _transition_blend)
 		if on_transition:
-			target_yaw = atan2(-along.x, -along.z) if along.length() > 1.0 else rotation.y
+			target_yaw = atan2(-along.x, -along.z) if along.length() > 1.0 else _yaw
 
 	# Position: follow the interpolated body, plus a look-ahead along velocity,
 	# plus the transition inset out over the pipe.
@@ -130,8 +143,23 @@ func _process(delta: float) -> void:
 
 	# Rotation: swing behind the heading (or along the ramp). Yaw only, so the
 	# camera never rolls with the rider.
-	var yaw: float = lerp_angle(rotation.y, target_yaw, _damp_weight(t.cam_rotation_damping, delta))
+	# On a loop the heading flips at the top; hold the yaw until you're out.
+	if not player.on_gravity_surface:
+		_yaw = lerp_angle(_yaw, target_yaw, _damp_weight(t.cam_rotation_damping, delta))
+	var yaw: float = _yaw
 	rotation = Vector3(0.0, yaw, 0.0)
+	# Gravity rings (v0.31): the camera rolls round the loop with you (its up
+	# follows the surface), then eases back upright.
+	if player.on_gravity_surface:
+		_gravity_hold = 0.35
+	else:
+		_gravity_hold = maxf(_gravity_hold - delta, 0.0)
+	_gravity_blend = lerpf(_gravity_blend, 1.0 if _gravity_hold > 0.0 else 0.0, _damp_weight(0.12, delta))
+	if _gravity_blend > 0.001:
+		if player.on_gravity_surface and player.ground_dir.length_squared() > 0.5:
+			_gravity_basis = Basis.looking_at(player.ground_dir, player.ground_normal)
+		var upright: Quaternion = Quaternion(Basis(Vector3.UP, yaw))
+		basis = Basis(upright.slerp(Quaternion(_gravity_basis.orthonormalized()), _gravity_blend))
 
 	# Pitch down the slope (none in the halfpipe: it stays upright there).
 	var grounded: bool = player.is_grounded()
@@ -167,6 +195,9 @@ func _process(delta: float) -> void:
 	# FOV widens with speed. fov_smoothing is roughly the time to get there.
 	# A speed gain kicks it wider on top (SpeedFeel.fov_kick).
 	var target_fov: float = lerpf(t.fov_base, t.fov_max, pow(speed_ratio, t.fov_speed_curve))
+	# Big drops: FOV widens while you fall fast (v0.32 drastic landscape).
+	if not grounded:
+		target_fov += t.fov_drop_kick_deg * clampf(-player.velocity.y / maxf(t.fov_drop_speed, 0.001), 0.0, 1.0)
 	_fov = lerpf(_fov, target_fov, _damp_weight(t.fov_smoothing / 3.0, delta))
 	camera.fov = _fov + (speed_feel.fov_kick if speed_feel else 0.0)
 
@@ -200,7 +231,7 @@ func _process(delta: float) -> void:
 		var amount: float = _shake_strength * _shake_timer / _shake_time
 		camera.position += Vector3(randf_range(-amount, amount), randf_range(-amount, amount), 0.0)
 	_update_lean(delta, speed_ratio, grounded)
-	camera.rotation.z += _roll
+	camera.rotation.z += _roll + _ground_roll
 	camera.rotation.x -= _look_down
 
 
@@ -233,6 +264,15 @@ func _update_lean(delta: float, speed_ratio: float, grounded: bool) -> void:
 	var riding: bool = grounded and state != &"Bail" and state != &"Land"
 	var roll_target: float = -player.get_steer() * deg_to_rad(t.cam_carve_roll_deg) * speed_ratio * calm if riding else 0.0
 	_roll = lerpf(_roll, roll_target, _damp_weight(t.cam_carve_roll_time, delta))
+	# Horizon tilt (v0.31): roll with the ground's sideways tilt, so a
+	# sidehill or a bank reads as a tilted world, not a flat strip.
+	var ground_target: float = 0.0
+	if grounded and state != &"Bail":
+		var right: Vector3 = player.get_heading_dir().cross(Vector3.UP).normalized()
+		var side: float = clampf(player.ground_normal.dot(right), -1.0, 1.0)
+		var limit: float = deg_to_rad(t.cam_ground_roll_max_deg)
+		ground_target = clampf(-asin(side) * t.cam_ground_roll, -limit, limit) * calm
+	_ground_roll = lerpf(_ground_roll, ground_target, _damp_weight(t.cam_ground_roll_time, delta))
 	# Look down only in the last cam_air_look_down_time before touchdown.
 	var look: float = 0.0
 	if state == &"Air":

@@ -123,6 +123,37 @@ const BOUNDARY_SEGMENT: float = 20.0
 		seam_blend = v
 		queue_rebuild()
 
+@export_group("Swells")
+## Big rolling swells across the valley (v0.31 "drastic landscape"): long
+## waves you pump down the back of, instead of small bumps. Height up and
+## down from the slope (m). 0 = none.
+@export_range(0.0, 20.0, 0.1, "suffix:m") var swell_amplitude: float = 0.0:
+	set(v):
+		swell_amplitude = v
+		queue_rebuild()
+## Crest to crest, along the valley (m).
+@export_range(20.0, 300.0, 1.0, "suffix:m") var swell_wavelength: float = 90.0:
+	set(v):
+		swell_wavelength = v
+		queue_rebuild()
+## Crests run this many degrees off square to the valley (diagonal swells
+## make you pick where to cross them).
+@export_range(-60.0, 60.0, 1.0, "suffix:deg") var swell_skew_deg: float = 18.0:
+	set(v):
+		swell_skew_deg = v
+		queue_rebuild()
+## Swells ease out this far around rail beds, kicker pads and other LINE /
+## flatten shapes (m), so features keep a smooth run-in.
+@export_range(0.0, 120.0, 1.0, "suffix:m") var swell_calm_margin: float = 35.0:
+	set(v):
+		swell_calm_margin = v
+		queue_rebuild()
+## Shifts the waves along the valley (m), so neighbouring chunks differ.
+@export var swell_phase: float = 0.0:
+	set(v):
+		swell_phase = v
+		queue_rebuild()
+
 @export_group("Edges")
 ## How far in from each side the edge walls start to rise.
 @export_range(0.0, 80.0, 0.5, "suffix:m") var wall_width: float = 16.0:
@@ -138,6 +169,24 @@ const BOUNDARY_SEGMENT: float = 20.0
 @export_range(1.0, 5.0, 0.1) var wall_curve: float = 2.2:
 	set(v):
 		wall_curve = v
+		queue_rebuild()
+## Optional: wall height along the length, as a multiplier of wall_height
+## (x 0 = entry, x 1 = exit). Keep both ends at 1 so patches still join.
+## The Megapipe (v0.31) raises it to a 40 m halfpipe. Empty = constant.
+@export var wall_profile: Curve:
+	set(v):
+		wall_profile = _watch(wall_profile, v)
+## Optional: wall width (how far in the banks start) along the length, as a
+## multiplier of wall_width. Keep both ends at 1. Empty = constant.
+@export var wall_width_profile: Curve:
+	set(v):
+		wall_width_profile = _watch(wall_width_profile, v)
+## The ground counts as a transition (group "transitions"): carving scores,
+## steep banks launch lip airs and the camera goes into halfpipe mode on
+## them. On for the Megapipe.
+@export var transition_surface: bool = false:
+	set(v):
+		transition_surface = v
 		queue_rebuild()
 ## Out-of-bounds ground past each crest (m). 0 = the mesh ends at the crests.
 @export_range(0.0, 200.0, 1.0, "suffix:m") var outside_width: float = 50.0:
@@ -199,6 +248,11 @@ var _row_base: PackedFloat32Array = PackedFloat32Array()
 var _row_half: PackedFloat32Array = PackedFloat32Array()
 var _row_center: PackedVector2Array = PackedVector2Array()
 var _row_heading: PackedFloat32Array = PackedFloat32Array()
+## Per row: edge wall height and width (wall_profile / wall_width_profile).
+var _row_wall_h: PackedFloat32Array = PackedFloat32Array()
+var _row_wall_w: PackedFloat32Array = PackedFloat32Array()
+## Swell height per grid point (before the seam fade), see _compute_swells.
+var _swell: PackedFloat32Array = PackedFloat32Array()
 ## Smallest bend radius minus the local half width (m); < 0 = folds over.
 var fold_margin: float = INF
 
@@ -299,7 +353,7 @@ func _watch(old: Curve, new: Curve) -> Curve:
 ## Height of the plain slope + edge walls (no noise or shaping) at valley
 ## (x across, z = -d along). The entry and exit edges are exactly this.
 func base_height(x: float, z: float) -> float:
-	return _slope_height(-z) + _wall_height(x, half_play_at(-z))
+	return _slope_height(-z) + _wall_height(x, half_play_at(-z), wall_height_at(-z), wall_width_at(-z))
 
 
 ## Height of the built surface at valley (x across, z = -d along): the mesh /
@@ -481,6 +535,8 @@ func _compute_rows() -> void:
 	_row_half.resize(rows)
 	_row_center.resize(rows)
 	_row_heading.resize(rows)
+	_row_wall_h.resize(rows)
+	_row_wall_w.resize(rows)
 	_row_base[0] = 0.0
 	_row_center[0] = Vector2.ZERO
 	var tightest: float = INF
@@ -489,6 +545,8 @@ func _compute_rows() -> void:
 		var d: float = r * dz
 		_row_half[r] = half_play_at(d)
 		_row_heading[r] = heading_at(d)
+		_row_wall_h[r] = wall_height_at(d)
+		_row_wall_w[r] = wall_width_at(d)
 		if r == 0:
 			continue
 		var mid: float = (r - 0.5) * dz
@@ -524,6 +582,9 @@ func _compute_heights() -> void:
 
 	var shapes: Array[Node3D] = []
 	_collect_shapers(self, shapes)
+	_compute_swells(shapes, dz)
+	for i: int in count:
+		detail[i] += _swell[i]
 	# Additive shapes first (gullies dig into the noise), then the blends.
 	for s: Node3D in shapes:
 		if s is TerrainShape and (s as TerrainShape).mode != TerrainShape.Mode.LINE:
@@ -539,7 +600,7 @@ func _compute_heights() -> void:
 		var d: float = r * dz
 		var fade: float = _seam_fade(d)
 		for c: int in columns:
-			heights[r * columns + c] = _row_base[r] + detail[r * columns + c] * fade + _wall_height(_column_x(r, c), _row_half[r])
+			heights[r * columns + c] = _row_base[r] + detail[r * columns + c] * fade + _wall_height(_column_x(r, c), _row_half[r], _row_wall_h[r], _row_wall_w[r])
 
 
 func _slope_at(t: float) -> float:
@@ -559,14 +620,105 @@ func _slope_height(d: float) -> float:
 
 ## Edge profile across the valley: 0 in the middle, rising to wall_height at
 ## the crests (|x| = half_play), then falling away by outside_drop.
-func _wall_height(x: float, half_play: float) -> float:
+func _wall_height(x: float, half_play: float, wall_h: float, wall_w: float) -> float:
 	var e: float = half_play - absf(x)
 	if e < 0.0:
 		var t: float = minf(-e / maxf(outside_width, 0.001), 1.0)
-		return wall_height - outside_drop * t * t
-	if wall_width <= 0.0 or e >= wall_width:
+		return wall_h - outside_drop * t * t
+	if wall_w <= 0.0 or e >= wall_w:
 		return 0.0
-	return wall_height * pow(1.0 - e / wall_width, wall_curve)
+	return wall_h * pow(1.0 - e / wall_w, wall_curve)
+
+
+## Edge wall height at distance d (wall_profile x wall_height).
+func wall_height_at(d: float) -> float:
+	var k: float = 1.0 if wall_profile == null else wall_profile.sample(clampf(d / length, 0.0, 1.0))
+	return wall_height * maxf(k, 0.0)
+
+
+## Edge wall width at distance d (wall_width_profile x wall_width).
+func wall_width_at(d: float) -> float:
+	var k: float = 1.0 if wall_width_profile == null else wall_width_profile.sample(clampf(d / length, 0.0, 1.0))
+	return wall_width * maxf(k, 0.0)
+
+
+## Swell height at valley (x, d), before the seam fade (0 without swells).
+## Fades out toward the banks so the walls keep their shape.
+func swell_at(x: float, d: float) -> float:
+	if swell_amplitude <= 0.0:
+		return 0.0
+	var along: float = d + x * tan(deg_to_rad(swell_skew_deg)) + swell_phase
+	var wave: float = sin(TAU * along / maxf(swell_wavelength, 1.0))
+	var half: float = half_play_at(d)
+	var edge: float = 1.0 - smoothstep(half - wall_width_at(d) * 1.2, half, absf(x))
+	return wave * swell_amplitude * edge
+
+
+## Swell height at a point in this patch's space, with the seam fade and the
+## calm zones: what the swells added to the ground there.
+func swell_offset_local(p: Vector3) -> float:
+	if swell_amplitude <= 0.0 or _swell.is_empty():
+		return 0.0
+	var v: Vector3 = local_to_valley(p)
+	return _sample_grid(_swell, v.x, -v.z) * _seam_fade(v.z)
+
+
+## Swells per grid point, calmed to 0 around LINE shapes and flatten pads
+## (rail beds, kicker pads, causeways) so features keep a smooth run-in
+## instead of sitting in a trough. `swell_calm_margin` is the ease-out.
+func _compute_swells(shapes: Array[Node3D], dz: float) -> void:
+	var count: int = columns * rows
+	_swell.resize(count)
+	_swell.fill(0.0)
+	if swell_amplitude <= 0.0:
+		return
+	# Calm discs (valley x, d, radius) from the line-like shapers.
+	var calm: Array[Vector3] = []
+	for s: Node3D in shapes:
+		if s is TerrainShape and (s as TerrainShape).mode == TerrainShape.Mode.LINE:
+			var shape: TerrainShape = s as TerrainShape
+			if shape.curve == null:
+				continue
+			var xform: Transform3D = _to_patch(shape)
+			var baked: PackedVector3Array = shape.curve.get_baked_points()
+			for i: int in range(0, baked.size(), 4):
+				var v: Vector3 = local_to_valley(xform * baked[i])
+				calm.append(Vector3(v.x, v.z, shape.width * 0.5))
+		elif s is TerrainFlatten:
+			var flat: TerrainFlatten = s as TerrainFlatten
+			var v2: Vector3 = local_to_valley(_to_patch(flat).origin)
+			calm.append(Vector3(v2.x, v2.z, flat.size.length() * 0.5 + flat.blend))
+	for r: int in rows:
+		var d: float = r * dz
+		for c: int in columns:
+			var x: float = _column_x(r, c)
+			var k: float = 1.0
+			for disc: Vector3 in calm:
+				var dist: float = Vector2(x - disc.x, d - disc.y).length() - disc.z
+				if dist < swell_calm_margin:
+					k = minf(k, smoothstep(0.0, swell_calm_margin, dist))
+					if k <= 0.0:
+						break
+			if k > 0.0:
+				_swell[r * columns + c] = swell_at(x, d) * k
+
+
+## Bilinear sample of a per-vertex grid at valley (x, z = -d), same split as the mesh.
+func _sample_grid(grid: PackedFloat32Array, x: float, z: float) -> float:
+	var dz: float = length / float(rows - 1)
+	var fz: float = clampf(-z / dz, 0.0, float(rows - 1) - 0.0001)
+	var r: int = int(fz)
+	var tz: float = fz - r
+	var fx: float = lerpf(_column_f(r, x), _column_f(r + 1, x), tz)
+	var c: int = clampi(int(fx), 0, columns - 2)
+	var tx: float = clampf(fx - c, 0.0, 1.0)
+	var h00: float = grid[r * columns + c]
+	var h10: float = grid[r * columns + c + 1]
+	var h01: float = grid[(r + 1) * columns + c]
+	var h11: float = grid[(r + 1) * columns + c + 1]
+	if tx >= tz:
+		return h00 + (h10 - h00) * tx + (h11 - h10) * tz
+	return h00 + (h11 - h01) * tx + (h01 - h00) * tz
 
 
 func _seam_fade(d: float) -> float:
@@ -879,6 +1031,10 @@ func _build_collision() -> void:
 	for child: Node in _body.get_children():
 		child.free()
 	var mesh: ArrayMesh = _mesh_instance.mesh as ArrayMesh
+	if transition_surface:
+		_body.add_to_group(&"transitions")
+	elif _body.is_in_group(&"transitions"):
+		_body.remove_from_group(&"transitions")
 	var shape: ConcavePolygonShape3D = ConcavePolygonShape3D.new()
 	shape.set_faces(mesh.get_faces())
 	var col: CollisionShape3D = CollisionShape3D.new()

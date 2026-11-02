@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="GroundCoverLayer" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://chunks/terrain/ground_cover_layer.gd" id="1_layer"]
+[ext_resource type="PackedScene" path="res://art/nature/megakit/Fern_1.gltf" id="2_model"]
+
+[resource]
+script = ExtResource("1_layer")
+model = ExtResource("2_model")
+density = 0.22
+on_grass = 0.5
+zone = 3
+scale_min = 2.5
+scale_max = 5.0
+sink = 0.6
+follow_ground = 0.2
+visibility_end = 1200.0
+cast_shadows = true
+outline = true

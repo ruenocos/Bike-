@@ -45,6 +45,8 @@ extends Node3D
 @export_range(0.0, 20.0, 0.1, "suffix:s") var bail_time_cost: float = 1.0
 
 @onready var builder: StageBuilder = $StageBuilder
+## Monoliths, spires, shards and the energy core beside the valley (v0.31).
+@onready var skyline: Skyline = $Skyline
 @onready var collapse: Collapse = $Collapse
 @onready var player: Player = $Player
 @onready var hud: RunHud = $RunHud
@@ -233,6 +235,7 @@ func start_stage() -> void:
 	for i: int in 3:
 		await get_tree().physics_frame
 	hazards.populate(builder, stage_index, stage_seed)
+	skyline.populate(builder, stage_seed)
 	_near_anchor = builder.transform_at_distance(builder.length * 0.5).origin
 	if _print_stage:
 		print("CONTACT SHADOWS %d" % PropModel.contact_shadow_count)
@@ -429,7 +432,9 @@ func _open_main_menu() -> void:
 	rng.randomize()
 	if not biomes.is_empty():
 		apply_biome(biomes[rng.randi_range(0, biomes.size() - 1)])
-	builder.build(rng.randi(), middle_chunks, 0)
+	var title_seed: int = rng.randi()
+	builder.build(title_seed, middle_chunks, 0)
+	skyline.populate(builder, title_seed)
 	var spawn: Transform3D = builder.get_spawn_transform()
 	var forward: Vector3 = -spawn.basis.z
 	player.place(spawn.origin + Vector3.UP * 0.05, atan2(-forward.x, -forward.z), 0.0)
@@ -529,7 +534,12 @@ func _respawn_on_line() -> void:
 	var line: RideLine = builder.nearest_ride_line(player.global_position, player_progress)
 	var pos: Vector3
 	var forward: Vector3
-	if line != null:
+	if player.respawn_hint is Transform3D:
+		# Fell into an abyss (v0.31): its own respawn point, before the drop.
+		var hint: Transform3D = player.respawn_hint
+		pos = hint.origin + hint.basis.y * 0.5
+		forward = -hint.basis.z
+	elif line != null:
 		var pts: PackedVector3Array = line.get_global_points()
 		var i: int = line.nearest_index(player.global_position)
 		var back: int = clampi(i - int(fall_respawn_back / 2.0), 0, pts.size() - 2)

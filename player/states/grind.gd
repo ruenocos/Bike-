@@ -48,6 +48,11 @@ func physics_update(delta: float) -> void:
 
 	# Same slope gravity as riding (a downhill rail speeds you up), plus drag.
 	var accel: float = -t.gravity * tangent.y - t.grind_drag + t.grind_accel
+	# Sap rails (v0.31, the World Tree) push you along, even uphill.
+	var rail: Rail = _rail as Rail
+	if rail != null and rail.boost_accel > 0.0:
+		accel += rail.boost_accel
+		player.speed = maxf(player.speed, rail.boost_min_speed)
 	player.speed = clampf(player.speed + accel * delta, 0.0, t.max_speed)
 	player.velocity = tangent * player.speed
 	player.heading = atan2(-tangent.x, -tangent.z)
@@ -61,6 +66,10 @@ func physics_update(delta: float) -> void:
 	_offset += _direction * player.speed * delta
 	if _offset < 0.0 or _offset > _length:
 		player.velocity += Vector3.UP * t.grind_exit_pop
+		if rail != null and rail.end_launch > 0.0:
+			# Crown launch: a sap rail fires you off its end.
+			player.velocity += tangent * rail.end_launch
+			player.flash_boost()
 		machine.transition_to(&"Air", {})
 		return
 	if player.speed < t.grind_fall_off_speed:
