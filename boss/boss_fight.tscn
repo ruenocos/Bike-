@@ -1,0 +1,14 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://boss/boss_fight.gd" id="1_fight"]
+[ext_resource type="PackedScene" path="res://boss/boss_hud.tscn" id="2_hud"]
+[ext_resource type="Script" path="res://boss/boss_data.gd" id="3_data"]
+[ext_resource type="Resource" path="res://boss/data/warden_1.tres" id="4_b1"]
+[ext_resource type="Resource" path="res://boss/data/colossus_2.tres" id="5_b2"]
+[ext_resource type="Resource" path="res://boss/data/titan_3.tres" id="6_b3"]
+
+[node name="BossFight" type="Node3D"]
+script = ExtResource("1_fight")
+bosses = Array[ExtResource("3_data")]([ExtResource("4_b1"), ExtResource("5_b2"), ExtResource("6_b3")])
+
+[node name="BossHud" parent="." instance=ExtResource("2_hud")]

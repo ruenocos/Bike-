@@ -1,4 +1,4 @@
-[gd_scene load_steps=47 format=3]
+[gd_scene load_steps=48 format=3]
 
 [ext_resource type="PackedScene" path="res://audio/vehicle_audio.tscn" id="90_audio"]
 [ext_resource type="Script" path="res://game.gd" id="1_game"]
@@ -44,6 +44,7 @@
 [ext_resource type="Script" path="res://player/start_sprint.gd" id="21_sprint"]
 [ext_resource type="Script" path="res://chunks/parts/mountain_ring.gd" id="22_mountains"]
 [ext_resource type="Script" path="res://chunks/parts/drastic/skyline.gd" id="v31_skyline"]
+[ext_resource type="PackedScene" path="res://boss/boss_fight.tscn" id="v33_boss"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.17, 0.29, 0.56, 1)
@@ -171,3 +172,5 @@ layer = 20
 
 [node name="Skyline" type="Node3D" parent="."]
 script = ExtResource("v31_skyline")
+
+[node name="BossFight" parent="." instance=ExtResource("v33_boss")]
