@@ -283,6 +283,10 @@ extends Resource
 @export_range(0.0, 1.0, 0.05) var cam_ground_roll: float = 0.45
 ## ...never more than this (deg).
 @export_range(0.0, 30.0, 0.5) var cam_ground_roll_max_deg: float = 12.0
+## Limit on the camera's total roll from every source added together: ground
+## tilt, carve, lean, shake (deg). Gravity rings aren't limited: there the
+## whole rig turns with you.
+@export_range(0.0, 45.0, 0.5) var max_total_roll_deg: float = 12.0
 ## How fast that roll follows the ground (s).
 @export_range(0.01, 1.0, 0.01) var cam_ground_roll_time: float = 0.25
 @export var fov_base: float = 75.0

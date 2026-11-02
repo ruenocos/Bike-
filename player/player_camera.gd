@@ -232,6 +232,8 @@ func _process(delta: float) -> void:
 		camera.position += Vector3(randf_range(-amount, amount), randf_range(-amount, amount), 0.0)
 	_update_lean(delta, speed_ratio, grounded)
 	camera.rotation.z += _roll + _ground_roll
+	var limit: float = deg_to_rad(t.max_total_roll_deg)
+	camera.rotation.z = clampf(camera.rotation.z, -limit, limit)
 	camera.rotation.x -= _look_down
 
 
