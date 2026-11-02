@@ -149,7 +149,8 @@ func _ride(chunk: Chunk, line: RideLine, label: String) -> void:
 
 func _crash_check(chunk: Chunk) -> void:
 	# Our own tree on open ground in the middle of the valley, and a run at it
-	# from 25 m uphill along the valley.
+	# from 12 m uphill along the valley (v0.31: from further up a swell crest
+	# could launch you over it).
 	var terrain: TerrainPatch = chunk.get_node(^"Terrain") as TerrainPatch
 	var line: RideLine = chunk.get_ride_lines()[0]
 	var target: Vector3 = terrain.local_to_valley(terrain.to_local(line.get_global_points()[60]))
@@ -157,7 +158,7 @@ func _crash_check(chunk: Chunk) -> void:
 	tree.name = "TestTree"
 	chunk.add_child(tree)
 	tree.global_position = terrain.to_global(terrain.valley_to_local(target.x, terrain.surface_height(target.x, -target.z), target.z))
-	var start: Vector3 = terrain.to_global(terrain.valley_to_local(target.x, terrain.surface_height(target.x, -(target.z - 25.0)) + 0.3, target.z - 25.0))
+	var start: Vector3 = terrain.to_global(terrain.valley_to_local(target.x, terrain.surface_height(target.x, -(target.z - 12.0)) + 0.3, target.z - 12.0))
 	for i: int in 2:
 		await get_tree().physics_frame
 	var aim: Vector3 = tree.global_position - start

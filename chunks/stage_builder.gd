@@ -43,8 +43,17 @@ signal finished
 	preload("res://chunks/landscape/set_rail_gap.tscn"),
 	preload("res://chunks/landscape/set_canyon_slot.tscn"),
 	preload("res://chunks/landscape/set_fork.tscn"),
+	# v0.31 drastic set pieces (each biome also features one of them).
+	preload("res://chunks/landscape/set_megacliff.tscn"),
+	preload("res://chunks/landscape/set_megapipe.tscn"),
+	preload("res://chunks/landscape/set_world_tree.tscn"),
+	preload("res://chunks/landscape/set_alien_garden.tscn"),
 ]
-@export var set_pieces_per_stage: Vector2i = Vector2i(1, 2)
+## v0.31: two per stage, so every stage gets its biome's big drastic piece
+## (the last of the biome's set_pieces is tried first) plus one more.
+@export var set_pieces_per_stage: Vector2i = Vector2i(2, 2)
+## A set piece at least this long (m) takes the next middle slot too.
+@export_range(100.0, 2000.0, 10.0, "suffix:m") var long_set_piece: float = 600.0
 ## The stage's own set pieces (v0.16, from its biome): the first set-piece
 ## slot tries these first, so each biome shows off its own.
 var featured_set_pieces: Array[PackedScene] = []
@@ -124,7 +133,13 @@ func build(stage_seed: int, middle: int = -1, stage_index: int = 0) -> void:
 	for scene: PackedScene in featured_set_pieces:
 		if not pool.has(scene):
 			pool.append(scene)
+	var skip_next: bool = false
 	for i: int in count:
+		# v0.31: a long set piece (the drastic ones are ~700 m, two normal
+		# chunks) takes the next slot too, so the stage stays the same length.
+		if skip_next:
+			skip_next = false
+			continue
 		# A set piece slot tries the set pieces first (each once per stage).
 		if set_slots.has(i) and not pool.is_empty():
 			var options: Array[int] = []
@@ -151,6 +166,7 @@ func build(stage_seed: int, middle: int = -1, stage_index: int = 0) -> void:
 				used_sets.append(pick)
 				last = -1
 				placed_set = true
+				skip_next = float(_chunk_property(pool[pick], &"length", 400.0)) >= long_set_piece
 				break
 			if placed_set:
 				continue

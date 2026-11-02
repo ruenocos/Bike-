@@ -1,13 +1,16 @@
-[gd_resource type="Resource" script_class="GroundCover" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="GroundCover" load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://chunks/terrain/ground_cover.gd" id="1_cover"]
 [ext_resource type="Script" path="res://chunks/terrain/ground_cover_layer.gd" id="9_layer"]
 [ext_resource type="Resource" path="res://chunks/terrain/cover/layer_grass_short.tres" id="2_l"]
 [ext_resource type="Resource" path="res://chunks/terrain/cover/layer_grass_dirt.tres" id="3_l"]
+[ext_resource type="Resource" path="res://chunks/terrain/cover/layer_wisp_tall.tres" id="v31_0"]
+[ext_resource type="Resource" path="res://chunks/terrain/cover/layer_bush_edge.tres" id="v31_1"]
+[ext_resource type="Resource" path="res://chunks/terrain/cover/layer_deadtree_giant.tres" id="v31_2"]
 
 [resource]
 script = ExtResource("1_cover")
 patch_frequency = 0.02
 patch_seed = 11
 grass_amount = 0.28
-layers = Array[ExtResource("9_layer")]([ExtResource("2_l"), ExtResource("3_l")])
+layers = Array[ExtResource("9_layer")]([ExtResource("2_l"), ExtResource("3_l"), ExtResource("v31_0"), ExtResource("v31_1"), ExtResource("v31_2")])

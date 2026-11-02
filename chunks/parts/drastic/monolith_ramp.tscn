@@ -1,0 +1,33 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Material" path="res://chunks/parts/drastic/alien_slab.tres" id="1_slab"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_mono"]
+size = Vector3(12, 3, 44)
+
+[sub_resource type="BoxShape3D" id="Box_mono"]
+size = Vector3(12, 3, 44)
+
+[sub_resource type="PrismMesh" id="Prism_fin"]
+size = Vector3(2.5, 18, 1.2)
+
+[node name="MonolithRamp" type="StaticBody3D"]
+
+[node name="Slab" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.965926, 0.258819, 0, -0.258819, 0.965926, 0, 2.2, -16)
+mesh = SubResource("BoxMesh_mono")
+surface_material_override/0 = ExtResource("1_slab")
+
+[node name="Shape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.965926, 0.258819, 0, -0.258819, 0.965926, 0, 2.2, -16)
+shape = SubResource("Box_mono")
+
+[node name="FinLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.965926, 0, 0.258819, 0, 1, 0, -0.258819, 0, 0.965926, -7.5, 6, -30)
+mesh = SubResource("Prism_fin")
+surface_material_override/0 = ExtResource("1_slab")
+
+[node name="FinRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.965926, 0, -0.258819, 0, 1, 0, 0.258819, 0, 0.965926, 7.5, 6, -30)
+mesh = SubResource("Prism_fin")
+surface_material_override/0 = ExtResource("1_slab")

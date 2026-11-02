@@ -8,7 +8,7 @@
 script = ExtResource("1_layer")
 mesh = ExtResource("2_mesh")
 material = ExtResource("3_grass")
-density = 14.0
+density = 20.0
 on_grass = 1.0
 zone = 0
 scale_min = 0.7
