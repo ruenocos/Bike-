@@ -26,6 +26,9 @@ const SKIP: PackedStringArray = ["land_start", "set_megapipe"]
 
 var _set_noise: float = -1.0
 var _set_bumps: float = -1.0
+## --swell=<m> [--swell-length=<m>]: Haste-size dunes (TerrainPatch Swells).
+var _set_swell: float = -1.0
+var _set_swell_length: float = 300.0
 
 
 func _initialize() -> void:
@@ -37,6 +40,10 @@ func _initialize() -> void:
 			_set_noise = arg.trim_prefix("--noise=").to_float()
 		elif arg.begins_with("--bumps="):
 			_set_bumps = arg.trim_prefix("--bumps=").to_float()
+		elif arg.begins_with("--swell="):
+			_set_swell = arg.trim_prefix("--swell=").to_float()
+		elif arg.begins_with("--swell-length="):
+			_set_swell_length = arg.trim_prefix("--swell-length=").to_float()
 	for file: String in DirAccess.get_files_at("res://chunks/landscape"):
 		if not file.ends_with(".tscn"):
 			continue
@@ -51,7 +58,7 @@ func _bump(file: String) -> void:
 	var path: String = "res://chunks/landscape/%s.tscn" % file
 	var root: Node3D = (load(path) as PackedScene).instantiate() as Node3D
 	var terrain: TerrainPatch = root.get_node_or_null(^"Terrain") as TerrainPatch
-	var retune: bool = _set_noise >= 0.0 or _set_bumps >= 0.0
+	var retune: bool = _set_noise >= 0.0 or _set_bumps >= 0.0 or _set_swell >= 0.0
 	if terrain == null or (terrain.bump_amplitude > 0.0 and not retune):
 		print("%s: no terrain or already bumpy, skipped" % file)
 		root.free()
@@ -96,6 +103,14 @@ func _bump(file: String) -> void:
 			terrain.noise_amplitude = _set_noise
 		if _set_bumps >= 0.0:
 			terrain.bump_amplitude = _set_bumps
+		if _set_swell >= 0.0:
+			if terrain.swell_amplitude <= 0.0:
+				# A skew and phase of its own per chunk, from its name.
+				var h: int = hash(file)
+				terrain.swell_skew_deg = float(h % 31) - 15.0
+				terrain.swell_phase = float((h / 31) % 100)
+			terrain.swell_amplitude = _set_swell
+			terrain.swell_wavelength = _set_swell_length
 	else:
 		terrain.noise_amplitude = minf(terrain.noise_amplitude * HILL_SCALE, HILL_MAX)
 		terrain.bump_amplitude = BUMPS
@@ -124,7 +139,7 @@ func _bump(file: String) -> void:
 	var err: int = packed.pack(root)
 	if err == OK:
 		err = ResourceSaver.save(packed, path)
-	print("%s: hills %.1f m, bumps %.1f m, %d nodes moved, %d lines, save %s" % [file, terrain.noise_amplitude, terrain.bump_amplitude, moved, line_before.size(), error_string(err)])
+	print("%s: swells %.1f m / %.0f m, hills %.1f m, bumps %.1f m, %d nodes moved, %d lines, save %s" % [file, terrain.swell_amplitude, terrain.swell_wavelength, terrain.noise_amplitude, terrain.bump_amplitude, moved, line_before.size(), error_string(err)])
 	root.free()
 
 

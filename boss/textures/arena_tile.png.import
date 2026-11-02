@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ce7vi8vxvp7xg"
-path="res://.godot/imported/arena_tile.png-e7a76e84ddd448ad1e51457ea6b75298.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://boss/textures/arena_tile.png"
-dest_files=["res://.godot/imported/arena_tile.png-e7a76e84ddd448ad1e51457ea6b75298.ctex"]
 
 [params]
 
