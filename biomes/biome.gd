@@ -84,3 +84,6 @@ extends Resource
 @export_group("Mountains")
 @export var peak_color: Color = Color(0.36, 0.38, 0.52)
 @export var haze_color: Color = Color(0.86, 0.66, 0.56)
+## Snow caps on the distant ranges, above this share of their height
+## (1 = none).
+@export_range(0.0, 1.0, 0.01) var mountain_snow_line: float = 1.0

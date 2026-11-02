@@ -87,6 +87,12 @@ func apply(b: Biome) -> void:
 	if mountains != null:
 		mountains.peak_color = b.peak_color
 		mountains.haze_color = b.haze_color
+		# Sun-facing faces and ridge rims take the sun's colour.
+		mountains.lit_color = b.peak_color.lerp(b.sun_color, 0.75)
+		mountains.rim_color = b.sun_color.lightened(0.35)
+		mountains.snow_line = b.mountain_snow_line
+		if sun != null:
+			mountains.sun_direction = sun.transform.basis.z
 	if near_mountains != null:
 		near_mountains.peak_color = b.peak_color.darkened(near_mountains_darken)
 		near_mountains.haze_color = b.haze_color.lerp(b.peak_color, 0.25)

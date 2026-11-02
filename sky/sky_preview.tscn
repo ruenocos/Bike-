@@ -72,6 +72,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -200, 0)
 script = ExtResource("22_mountains")
 
 [node name="Near" type="Node3D" parent="Mountains"]
+visible = false
 script = ExtResource("22_mountains")
 count = 26
 radius_min = 1300.0

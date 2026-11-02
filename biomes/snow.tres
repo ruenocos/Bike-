@@ -31,6 +31,7 @@ shadow_tint = Color(0.25, 0.45, 1, 1)
 shadow_tint_strength = 0.7
 height_fog_density = 0.0015
 prop_tint = Color(0.6, 0.72, 0.9, 1)
+mountain_snow_line = 0.62
 sky_look = ExtResource("80_sky")
 sky_top = Color(0.22, 0.38, 0.7, 1)
 sky_horizon = Color(0.78, 0.82, 0.9, 1)
