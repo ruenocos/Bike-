@@ -7,6 +7,10 @@ extends Node
 ##   --autopilot-lose         from stage 2 on, brake after a while so the
 ##                            collapse catches up (shows the warning and RUN OVER)
 ##   --autopilot-trace        print progress / speed / gap every second
+##   --autopilot-mistakes=<n> about n human-style mistakes a minute: a hard
+##                            0.4-0.9 s swerve to a random side (crashes into
+##                            trees, rides off the edge). For balance checks:
+##                            prints MISTAKE / CAUGHT lines with --autopilot-trace.
 ##   --autopilot-oob          in stage 1, steer gently left from 8 s to 14 s (rides
 ##                            over the crest: out-of-bounds countdown + respawn)
 ## Like the demo driver it only presses InputMap actions (Input.action_press),
@@ -61,6 +65,12 @@ var _sprint: StartSprint
 var _chosen: Dictionary[int, RideLine] = {}
 var _oob: bool = false
 var _was_oob: bool = false
+## --autopilot-mistakes: mistakes per minute, the next one, the swerve.
+var _mistakes_per_min: float = 0.0
+var _next_mistake: float = 0.0
+var _swerve_until: float = 0.0
+var _swerve_dir: float = 1.0
+var _mistake_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 
 func _ready() -> void:
@@ -76,6 +86,10 @@ func _ready() -> void:
 	_trace = args.has("--autopilot-trace")
 	_oob = args.has("--autopilot-oob")
 	for arg: String in args:
+		if arg.begins_with("--autopilot-mistakes="):
+			_mistakes_per_min = arg.trim_prefix("--autopilot-mistakes=").to_float()
+		if arg.begins_with("--seed="):
+			_mistake_rng.seed = arg.trim_prefix("--seed=").to_int()
 		if arg.begins_with("--autopilot-shots="):
 			_shot_dir = arg.trim_prefix("--autopilot-shots=")
 	if _trace:
@@ -118,6 +132,7 @@ func _physics_process(delta: float) -> void:
 	if _oob and int(_game.get("stage_index")) == 0 and _stage_time > 8.0 and _stage_time < 14.0:
 		Input.action_release(&"steer_right")
 		Input.action_press(&"steer_left", 0.35)
+	_mistake()
 	var oob_timer: float = _game.get("oob_timer")
 	if _trace and (oob_timer > 0.0) != _was_oob:
 		print("t=%6.2f %s" % [_time, "OUT OF BOUNDS" if oob_timer > 0.0 else "back in bounds / respawned at x %.1f, %.1f m/s" % [_player.global_position.x, _player.speed]])
@@ -135,6 +150,24 @@ func _physics_process(delta: float) -> void:
 				_time, int(_game.get("stage_index")) + 1, progress, _builder.length, _player.speed,
 				_player.state_machine.get_state_name(), progress - _collapse.distance, _collapse.speed, _player.combo.run_total,
 				Engine.get_frames_per_second()])
+
+
+## --autopilot-mistakes: now and then a hard swerve to one side, like a
+## human misjudging a line (seeded by --seed, so runs repeat).
+func _mistake() -> void:
+	if _mistakes_per_min <= 0.0:
+		return
+	if _next_mistake <= 0.0:
+		_next_mistake = _time + _mistake_rng.randf_range(0.3, 1.7) * 60.0 / _mistakes_per_min
+	if _time >= _next_mistake:
+		_next_mistake = 0.0
+		_swerve_until = _time + _mistake_rng.randf_range(0.4, 0.9)
+		_swerve_dir = -1.0 if _mistake_rng.randf() < 0.5 else 1.0
+		if _trace:
+			print("t=%6.2f MISTAKE swerve %s" % [_time, "left" if _swerve_dir < 0.0 else "right"])
+	if _time < _swerve_until:
+		Input.action_release(&"steer_left" if _swerve_dir > 0.0 else &"steer_right")
+		Input.action_press(&"steer_right" if _swerve_dir > 0.0 else &"steer_left", 1.0)
 
 
 ## Follows one ride line of the chunk you're in (a different one per chunk),

@@ -6,8 +6,18 @@ extends Resource
 @export_group("Speed")
 ## Speed you start a run with (m/s).
 @export var base_speed: float = 14.0
-## Hard cap (m/s). FOV and speed lines scale against this.
+## Reference top speed (m/s): FOV, speed lines, the HUD dial, sound and the
+## other speed effects reach full strength here. Not a cap since v0.33
+## (Wons: "remove the max speed of 215"); see speed_cap.
 @export var max_speed: float = 60.0
+## Hard speed cap (m/s); 0 = no cap. Drag and slopes set the real top speed.
+@export_range(0.0, 200.0, 1.0, "suffix:m/s") var speed_cap: float = 0.0
+## Extra drag on the part of your speed above max_speed, everywhere (ground,
+## air, rails, gravity rings): decel = overspeed_drag x (speed² - max_speed²).
+## Without a cap this is what keeps long airs and boost chains from running
+## away; below max_speed nothing changes. 0.006: free fall settles ~87 m/s,
+## a gravity ring ~77 m/s.
+@export_range(0.0, 0.05, 0.0005) var overspeed_drag: float = 0.006
 ## Pedalling only helps up to this speed (m/s). Above it, speed comes from slopes and landings.
 @export var pedal_max_speed: float = 18.0
 @export var pedal_accel: float = 9.0
@@ -379,3 +389,13 @@ extends Resource
 ## After a speed boost the lines flash at full strength for this long (s),
 ## whatever the speed.
 @export var speed_lines_boost_time: float = 0.0
+
+
+## Deceleration from overspeed_drag at `value` m/s (0 at or below max_speed).
+func overspeed_decel(value: float) -> float:
+	return overspeed_drag * maxf(value * value - max_speed * max_speed, 0.0)
+
+
+## `value` limited by speed_cap (unchanged when there is no cap).
+func capped(value: float) -> float:
+	return value if speed_cap <= 0.0 else minf(value, speed_cap)

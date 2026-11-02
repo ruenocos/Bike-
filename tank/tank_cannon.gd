@@ -59,5 +59,5 @@ func _on_hop() -> void:
 	# A hop adds height, not ground speed, so no speed_gained unless a tuning
 	# gives the recoil a forward kick.
 	if player.tuning.hop_speed_kick > 0.0:
-		player.speed = minf(player.speed + player.tuning.hop_speed_kick, player.tuning.max_speed)
+		player.speed = player.tuning.capped(player.speed + player.tuning.hop_speed_kick)
 		Events.speed_gained.emit(player.tuning.hop_speed_kick)

@@ -367,7 +367,7 @@ func update_perfect_streak(perfect: bool) -> void:
 		return
 	if perfect:
 		perfect_streak = mini(perfect_streak + 1, int(tuning.perfect_streak_max))
-		speed = minf(speed + tuning.perfect_streak_boost * perfect_streak, tuning.max_speed)
+		speed = tuning.capped(speed + tuning.perfect_streak_boost * perfect_streak)
 		streak_changed.emit(perfect_streak)
 	elif perfect_streak > 0:
 		perfect_streak = 0
@@ -553,7 +553,7 @@ func update_ground_normal(delta: float) -> void:
 ## Starts riding on the ground along `dir` (flattened onto ground_normal).
 func set_ground_motion(dir: Vector3, new_speed: float) -> void:
 	ground_dir = tangent_dir(dir, ground_normal)
-	speed = minf(new_speed, tuning.max_speed)
+	speed = tuning.capped(new_speed)
 	up_direction = ground_normal
 	_update_heading(ground_dir)
 
@@ -615,9 +615,10 @@ func ground_move(delta: float, input_enabled: bool) -> void:
 		accel += float(_gravity_body.get(&"boost_accel")) if _gravity_body.get(&"boost_accel") != null else 0.0
 	else:
 		accel -= t.rolling_drag * speed + t.air_drag * speed * speed
+	accel -= t.overspeed_decel(speed)
 	# Hard carving at speed scrubs a little speed.
 	accel -= t.carve_drag * absf(steer) * smoothstep(t.carve_drag_from, 1.0, speed_ratio)
-	speed = clampf(speed + accel * delta, 0.0, t.max_speed)
+	speed = t.capped(maxf(speed + accel * delta, 0.0))
 
 	velocity = ground_dir * speed - ground_normal * t.ground_stick_velocity
 	var approach: Vector3 = ground_dir * speed
@@ -892,7 +893,7 @@ func try_pump(delta: float) -> void:
 	if steepening or descending_transition:
 		if descending_transition:
 			_transition_pump_armed = false
-		speed = minf(speed * (1.0 + tuning.pump_gain), tuning.max_speed)
+		speed = tuning.capped(speed * (1.0 + tuning.pump_gain))
 		_pump_cooldown_timer = tuning.pump_cooldown
 		pump_count += 1
 
@@ -953,12 +954,12 @@ func update_visual(delta: float, steer: float, up_target: Vector3, forward: Vect
 	visual.position = base * pivot - full * pivot + contact
 
 
-## Adds speed now, in any state, up to max_speed; returns what was gained. In
+## Adds speed now, in any state, up to speed_cap (if any); returns what was gained. In
 ## the air `speed` doesn't move you and landing replaces it, so the flight
 ## gets the boost too.
 func add_speed(amount: float) -> float:
 	var before: float = speed
-	speed = minf(speed + amount, tuning.max_speed)
+	speed = tuning.capped(speed + amount)
 	var gained: float = speed - before
 	if state_machine.get_state_name() == &"Air" and velocity.length() > 1.0:
 		velocity += velocity.normalized() * gained
