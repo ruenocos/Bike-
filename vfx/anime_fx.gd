@@ -27,7 +27,7 @@ extends CanvasLayer
 ## Peak strength of the lines per event.
 @export_range(0.0, 1.0, 0.01) var perfect_lines: float = 0.45
 @export_range(0.0, 1.0, 0.01) var good_lines: float = 0.35
-@export_range(0.0, 1.0, 0.01) var boost_lines: float = 0.6
+@export_range(0.0, 1.0, 0.01) var boost_lines: float = 0.45
 
 @onready var player: Player = get_parent() as Player
 @onready var rect: ColorRect = $Burst
@@ -65,6 +65,9 @@ func cannon_shot() -> void:
 
 
 func _on_boost() -> void:
+	# A perfect landing also boosts: its own calmer lines win.
+	if _flash_left > 0 or _lines_left > 0.0:
+		return
 	_fire_lines(boost_lines, boost_lines_time)
 
 
