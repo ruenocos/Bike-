@@ -32,8 +32,10 @@ func transition_to(state_name: StringName, msg: Dictionary = {}) -> void:
 		return
 	state.exit()
 	state = _states[state_name]
-	state.enter(msg)
+	# Before enter(): Land can hand straight over to Ride or Bail in its
+	# enter(), and listeners should hear Land first.
 	state_changed.emit(state_name)
+	state.enter(msg)
 
 
 func get_state_name() -> StringName:
