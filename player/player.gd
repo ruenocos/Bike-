@@ -701,6 +701,7 @@ func _check_obstacle_hit(approach: Vector3) -> Hit:
 		if collider == null or not collider.is_in_group(&"obstacles"):
 			continue
 		if tuning.crushes_props and collider.is_in_group(&"crushable"):
+			_keep_going(approach)
 			crush_prop(collider as CollisionObject3D, approach.length())
 			return Hit.GLANCE
 		var normal: Vector3 = collision.get_normal()
@@ -728,6 +729,7 @@ func _check_obstacle_hit(approach: Vector3) -> Hit:
 			_crash_cooldown = 0.8
 			_shield_through(collider as PhysicsBody3D)
 			shield_used.emit()
+			_keep_going(approach)
 			speed = approach.length()
 			return Hit.GLANCE
 		elif impact > tuning.crash_min_impact and _crash_cooldown <= 0.0:
@@ -740,6 +742,14 @@ func _check_obstacle_hit(approach: Vector3) -> Hit:
 		speed = keep
 		return result
 	return Hit.NONE
+
+
+## Through an obstacle without a bounce: carries on the way it was going. In the
+## air ground_dir is left over from the last ground tick, and check_air_crash
+## flies along it.
+func _keep_going(approach: Vector3) -> void:
+	if approach.length_squared() > 0.0001:
+		ground_dir = approach.normalized()
 
 
 ## Rolls over something crushable: it stops colliding and flattens, you lose
