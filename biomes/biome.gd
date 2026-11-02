@@ -42,6 +42,9 @@ extends Resource
 ## Soft dark blob on the ground under trees, rocks and logs (v0.27), in the
 ## shadow tint; this is its darkness at the middle (0 = none).
 @export_range(0.0, 1.0, 0.01) var contact_shadow: float = 0.35
+## How much of each ink line is its surface's own darkened colour (v0.30; 0 =
+## all outline_color).
+@export_range(0.0, 1.0, 0.01) var outline_local_mix: float = 0.7
 ## Ink lines around props and the rider (darker = more contrast).
 @export var outline_color: Color = Color(0.16, 0.1, 0.09)
 
@@ -63,6 +66,9 @@ extends Resource
 @export_range(-180.0, 180.0, 0.5) var sun_heading: float = 143.0
 @export_range(0.0, 4.0, 0.05) var ambient_energy: float = 1.1
 @export_range(0.0, 2.0, 0.01) var saturation: float = 1.12
+## Colour response. Linear keeps the palette as painted (v0.30); AgX and
+## ACES mute bright colours.
+@export_enum("Linear", "Reinhard", "Filmic", "ACES", "AgX") var tonemap: int = 0
 ## Glow / bloom (bright snow blooms into a white haze: keep it low there).
 @export_range(0.0, 2.0, 0.01) var glow_intensity: float = 0.9
 @export_range(0.0, 1.0, 0.01) var glow_bloom: float = 0.08

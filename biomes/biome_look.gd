@@ -16,6 +16,8 @@ extends Node
 ## little darker and less hazy than the far one.
 @export var near_mountains: MountainRing
 @export_range(0.0, 1.0, 0.01) var near_mountains_darken: float = 0.12
+## Sun shadow edge blur (low = the crisp edge of a painted shadow, v0.30).
+@export_range(0.0, 4.0, 0.05) var shadow_blur: float = 0.4
 ## Editor only: shows this biome in the scene.
 @export var preview: Biome:
 	set(v):
@@ -25,6 +27,9 @@ extends Node
 
 
 func apply(b: Biome) -> void:
+	if sun != null:
+		sun.shadow_blur = shadow_blur
+	CelLook.set_outline_local_mix(b.outline_local_mix)
 	RenderingServer.global_shader_parameter_set(&"ground_dirt", b.ground_dirt)
 	RenderingServer.global_shader_parameter_set(&"ground_grass", b.ground_grass)
 	RenderingServer.global_shader_parameter_set(&"ground_rock", b.ground_rock)
@@ -52,6 +57,7 @@ func apply(b: Biome) -> void:
 		_height_fog_below = b.height_fog_below
 		env.ambient_light_energy = b.ambient_energy
 		env.adjustment_saturation = b.saturation
+		env.tonemap_mode = b.tonemap as Environment.ToneMapper
 		env.glow_intensity = b.glow_intensity
 		env.glow_bloom = b.glow_bloom
 		env.tonemap_exposure = b.exposure

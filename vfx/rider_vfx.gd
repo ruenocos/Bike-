@@ -15,6 +15,12 @@ extends Node3D
 ## ...and carve spray when steering harder than this (0-1) above this speed.
 @export_range(0.0, 1.0, 0.05) var spray_min_steer: float = 0.45
 @export_range(0.0, 60.0, 0.5, "suffix:m/s") var spray_min_speed: float = 25.0
+## Coloured ribbons off both wheels during a trick (v0.30): how long they
+## last, how wide, and their colours from the wheel to the tail.
+@export_range(0.05, 2.0, 0.05, "suffix:s") var trail_time: float = 0.5
+@export_range(0.05, 2.0, 0.05, "suffix:m") var trail_width: float = 0.25
+@export var trail_head: Color = Color(0.1, 0.95, 1.0, 0.95)
+@export var trail_tail: Color = Color(1.0, 0.15, 0.75, 0.0)
 ## Burst size per landing grade (amount ratio 0-1).
 @export var burst_perfect: float = 1.0
 @export var burst_good: float = 0.45
@@ -36,10 +42,23 @@ var _tinted: StandardMaterial3D
 @onready var debris: GPUParticles3D = $CollapseDebris
 
 var _collapse: float = 0.0
+var _trails: Array[TrailRibbon] = []
 
 
 func _ready() -> void:
 	Events.landed.connect(_on_landed)
+	# Children are ready before the Player, so its @onready refs are not set yet.
+	var rig: Node = player.get_node("Visual/RiderRig")
+	for wheel: String in ["Bike/Fork/FrontWheel", "Bike/RearWheel"]:
+		var trail: TrailRibbon = TrailRibbon.new()
+		trail.target = rig.get_node(wheel) as Node3D
+		trail.anchor = player
+		trail.lifetime = trail_time
+		trail.width = trail_width
+		trail.head_color = trail_head
+		trail.tail_color = trail_tail
+		add_child(trail)
+		_trails.append(trail)
 	Events.bailed.connect(func() -> void: _burst(burst_crash))
 
 
@@ -60,6 +79,9 @@ func _process(_delta: float) -> void:
 		var side: Vector3 = player.ground_dir.cross(player.ground_normal).normalized() * signf(player.get_steer())
 		(spray.process_material as ParticleProcessMaterial).direction = (side + Vector3.UP * 0.6).normalized()
 	sparks.emitting = state == &"Grind"
+	for trail: TrailRibbon in _trails:
+		trail.emitting = player.tricks.is_mid_trick()
+		trail.drift_direction = -player.get_heading_dir()
 	var forward: Vector3 = player.velocity.normalized() if player.velocity.length() > 1.0 else player.get_heading_dir()
 	debris.emitting = _collapse > debris_from
 	debris.amount_ratio = clampf((_collapse - debris_from) / maxf(1.0 - debris_from, 0.01), 0.1, 1.0)

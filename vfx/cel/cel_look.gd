@@ -14,7 +14,10 @@ const CUTOUT: Shader = preload("res://vfx/cel/cel-shader-cutout.gdshader")
 const OUTLINE: Shader = preload("res://vfx/cel/outline.gdshader")
 
 static var _cache: Dictionary[String, Material] = {}
-static var _outline: ShaderMaterial
+## Coloured ink (v0.30): how much of a line is its surface's darkened colour
+## (Biome.outline_local_mix, set per stage by BiomeLook).
+static var outline_local_mix: float = 0.7
+static var _outlines: Array[ShaderMaterial] = []
 static var _white: ImageTexture
 
 
@@ -44,16 +47,34 @@ static func material_for(source: Material, outline: bool, tint: Color = Color.WH
 	if cut:
 		mat.set_shader_parameter(&"alpha_cutoff", 0.5)
 	if outline and not cut:
-		mat.next_pass = _outline_material()
+		mat.next_pass = _outline_material(mat)
 	_cache[key] = mat
 	return mat
 
 
-static func _outline_material() -> ShaderMaterial:
-	if _outline == null:
-		_outline = ShaderMaterial.new()
-		_outline.shader = OUTLINE
-	return _outline
+static func _outline_material(surface: ShaderMaterial) -> ShaderMaterial:
+	var line: ShaderMaterial = ShaderMaterial.new()
+	line.shader = OUTLINE
+	line.set_shader_parameter(&"color", surface.get_shader_parameter(&"color"))
+	line.set_shader_parameter(&"base_texture", surface.get_shader_parameter(&"base_texture"))
+	line.set_shader_parameter(&"local_mix", outline_local_mix)
+	_outlines.append(line)
+	return line
+
+
+static func set_outline_local_mix(amount: float) -> void:
+	outline_local_mix = amount
+	for line: ShaderMaterial in _outlines:
+		line.set_shader_parameter(&"local_mix", amount)
+
+
+## A thicker ink line under `root` (pixels; the global outline_width is 2):
+## the rider and things you can hit.
+static func keep_outline(root: Node, width: float) -> void:
+	if root is GeometryInstance3D:
+		(root as GeometryInstance3D).set_instance_shader_parameter(&"outline_min", width)
+	for child: Node in root.get_children(true):
+		keep_outline(child, width)
 
 
 static func _white_texture() -> ImageTexture:

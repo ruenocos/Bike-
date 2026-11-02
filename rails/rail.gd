@@ -39,6 +39,9 @@ func _ready() -> void:
 		return
 	_material = (rail_mesh.material as StandardMaterial3D).duplicate() as StandardMaterial3D
 	_material.emission_energy_multiplier = glow_idle
+	_material.rim_enabled = true
+	_material.rim = 1.0
+	_material.rim_tint = 0.2
 	rail_mesh.material = _material
 	if get_node_or_null(^"Posts") == null:
 		_build_posts(null)

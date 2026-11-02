@@ -21,6 +21,8 @@ signal streak_changed(count: int)
 signal shield_used
 ## An air hop (Double Hop) fired.
 signal air_hopped
+## A boost just happened (AnimeFx).
+signal boost_flashed
 
 @export var tuning: PlayerTuning = preload("res://player/player_tuning.tres")
 
@@ -862,6 +864,7 @@ func update_visual(delta: float, steer: float, up_target: Vector3, forward: Vect
 ## Speed lines flash for speed_lines_boost_time (a boost just happened).
 func flash_boost() -> void:
 	boost_timer = tuning.speed_lines_boost_time
+	boost_flashed.emit()
 
 
 ## Freezes the game for a few frames. Sells impact.

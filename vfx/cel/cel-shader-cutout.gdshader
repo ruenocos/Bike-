@@ -163,7 +163,8 @@ void light() {
 			LIGHT_COLOR,
 			LIGHT,
 			NORMAL,
-			ATTENUATION
+			ATTENUATION,
+			FRAGCOORD.xy
 	);
 #endif
 

@@ -55,5 +55,5 @@ void fragment() {
 }
 
 void light() {
-	DIFFUSE_LIGHT += diffuse_light(ALBEDO, LIGHT_COLOR, LIGHT, NORMAL, ATTENUATION);
+	DIFFUSE_LIGHT += diffuse_light(ALBEDO, LIGHT_COLOR, LIGHT, NORMAL, ATTENUATION, FRAGCOORD.xy);
 }

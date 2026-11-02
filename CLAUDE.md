@@ -67,7 +67,7 @@ Prefer editor-visible setup: scenes, nodes, .tres, @export, @tool previews; code
 ## Input map (to set up)
 steer_left/right: left stick X · lean_forward: left stick up = pump (ground only; lean_back unused since v0.6) · pedal: RT · brake: LT · hop: South (hold to charge) · no_hander: West (X / Square), hold in the air (v0.18/v0.19) · grind: also West, legacy (Player still reads it for the old grind buffer, harmless: rails catch you by themselves since v0.9.1; kept so old test scenes still run) · pause: Start (v0.19 pause menu: Title screen records the run like a run over, Restart run doesn't; the hit-stop timer ignores pause and time scale, so pausing during it can't leave the game frozen) · menus: A confirm / B back · F3 debug readout · trick_left/right/up/down: right stick
 
-## Status (2026-11-01, v0.29.1 on branch `landscape`)
+## Status (2026-11-02, v0.30 on branch `landscape`)
 Done (v0.1): project settings, input map (+ debug_reset on Back/R), test track, Player with Ride/Air/Land/Bail, landing grades, debug overlay, physics interpolation. Feel gate approved by Wons.
 Done (v0.2, phase 2 batch A):
 - tricks/: TrickData resource + 4 starter tricks in tricks/data (up Frontloop, down Pocket, left/right Whirl). TrickRunner (child of Player) reads right-stick flicks (neutral -> >0.7 within 0.15 s), plays them on the Visual around the hips, chains a new flick in the last 30%.
@@ -289,6 +289,17 @@ Done (v0.25 "light and ink", branch `landscape`, + fixes from the external revie
 - Outlines thin out with distance (vfx/cel/outline.gdshader, Shader Globals `outline_fade_start` 40 m, `outline_fade_end` 150 m: none past that, cheap).
 - Rider rim: RiderRig `rim_color` sets a warm fresnel on the rider and bike materials so they stand out.
 - Review fixes: the bridge short-launch test checks the rider really dropped into the cut (≥ 3 m below the rim between z 200-232); the look-debug switches use BiomeLook's refs. Balance vs the 6-8 stages / 8-12 min lock is a playtest question (levers if needed: collapse curve for stages 3-5 or `trees_per_stage`, never stage length).
+Done (v0.30 "anime pop pass", branch `landscape`; Wons wants it closer to Denshattack / Hi-Fi Rush; the sky belongs to the sky thread and ui/ to the UI thread, neither is touched here):
+- Palettes: all four biomes/*.tres more saturated, colour-coded shadows (`shadow_tint` + `shadow_tint_strength` 0.65-0.7), less fog. Biome `tonemap` (default Linear, BiomeLook sets it): AgX was muting every colour. With Linear, lit colour = albedo x (`sun_energy` + `ambient_energy`), so keep that sum around 1 or bright ground clips to flat (snow 0.86).
+- Shading: vfx/cel/diffuse_curve.tres is one crisp shadow band (light dot normal 0.1-0.13). Halftone dots in the shadow band: `halftone_strength` 0.2 / `halftone_size` 7 px, uniforms in vfx/cel/includes/base-cel-shader.gdshaderinc, per material in the Inspector. Terrain `ground_edge` 0.1 paints the grass / dirt edge. BiomeLook `shadow_blur` 0.4: crisp shadows.
+- Outlines: coloured ink: each line is its surface's darkened colour over `outline_color` (Biome `outline_local_mix` 0.7, per-material `local_darken`; CelLook makes one outline material per cel material). Thicker on what matters through `instance uniform outline_min` (CelLook.keep_outline): RiderRig `line_width` 3.5 px, PropModel `hazard_outline` 3 px on logs / fences / boulders, falling trees 3 px. Distance fade kept.
+- Rider highlights: RiderRig `rim_color`, `highlight_color`. Rails: StandardMaterial rim in rails/rail.gd.
+- vfx/anime_fx.tscn (AnimeFx, CanvasLayer, child of Player): perfect landing = `impact_frames` 3 rendered frames of ink and paper (`impact_strength` 0.85) + radial lines; good landing = lines only; any boost (`Player.boost_flashed`) = radial burst. Cruising speed lines (vfx/speed_lines) unchanged.
+- Trick trails: vfx/trail_ribbon.gd (TrailRibbon: camera-facing world-space ribbon, optional `anchor` + `drift`), two off the wheels, made by RiderVfx (`trail_time`, `trail_width`, `trail_head`, `trail_tail`). The anchor keeps them curling round the bike at speed (a plain world-space trail is a 25 m bar running through the camera).
+- Squash and stretch, visual only: RiderRig `body_squash` 0.1 scales the whole rig on landing (x1.4 on a perfect), `boost_stretch` 0.08 along the bike during a boost.
+- Falling tree dust uses a round puff texture (it was white squares).
+- Parked: branch `stylize-slider` (BiomeLook.stylize, F5 cycles cel to soft low-poly), stills in captures/stylize-slider.
+
 Done (v0.29 "depth", branch `landscape`):
 - A second, nearer MountainRing (game.tscn Mountains/Near: 26 peaks at 1.3-1.7 km, 140-340 m, all Inspector exports on MountainRing) gives three depth planes: near ridges, the near ring, the far ring. BiomeLook `near_mountains` colours it a little darker (`near_mountains_darken` 0.12) and less hazy than the far ring.
 - v0.29.1: the near ring is `top_level` and placed by game.gd: halfway between the stage's middle and the rider (moves at half speed = parallax, stays ~0.6 km+ away) at a fixed height per stage (middle - 200 m), so it no longer rises and sinks with the rider. Only the far ring follows the rider.
@@ -324,7 +335,7 @@ Tweak in the editor (v0.9):
 - Hazards (v0.13): game.tscn HazardDirector (`trees_per_stage`, spacing), hazards/falling_tree.tscn (fall_time, reaction_time). Upgrades: scoring/upgrades/*.tres.
 - Biomes (v0.12): biomes/*.tres (everything about a stage's look); order in game.tscn Game `biomes`. Ground covers: chunks/terrain/cover/*.tres (layers are their own .tres, shared).
 - Rider (v0.11): player/rider/poses/*.tres (poses), RiderRig in player/rider/rider_rig.tscn (Feel: blend, tuck, steer, cadence, land dip; Body: limb lengths). Ground cover: chunks/terrain/cover/meadow.tres (patches + layers), ground colours in Shader Globals.
-- Look (v0.10): a prop scene's Model node (PropModel: variants, scale, outline); light bands in vfx/cel/diffuse_curve.tres; outline colour / width in Project Settings > Shader Globals.
+- Look (v0.10, shadow band since v0.30): a prop scene's Model node (PropModel: variants, scale, outline); light band in vfx/cel/diffuse_curve.tres; outline colour / width in Project Settings > Shader Globals.
 
 ## Next tasks, in order
 0. Playtest v0.11-v0.14 (see the final summary): the rider look, grass, the four biomes, falling trees (readable? fair?), the new upgrades, the title screen and bikes, the closer camera.

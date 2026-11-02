@@ -54,6 +54,8 @@ var _wheel_angle: float = 0.0
 var _dip: float = 0.0
 var _dip_speed: float = 0.0
 var _squash: float = 0.0
+## Whole-body squash now (0 = none).
+var _body: float = 0.0
 var _bars: float = 0.0
 var _flail: float = 0.0
 var _last_state: StringName = &""
@@ -88,6 +90,7 @@ func _ready() -> void:
 		CelLook.apply(self, outline)
 		_add_rim(self)
 		_set_layer(self)
+		CelLook.keep_outline(self, line_width)
 		var parent: Node = get_parent()
 		while parent != null and not parent is Player:
 			parent = parent.get_parent()
@@ -109,6 +112,11 @@ func _process(delta: float) -> void:
 	_dip_speed += (-_dip * 160.0 - _dip_speed * 18.0) * delta
 	_dip += _dip_speed * delta
 	_squash = lerpf(_squash, 0.0, 1.0 - exp(-delta / 0.09))
+	_body = lerpf(_body, 0.0, 1.0 - exp(-delta / 0.1))
+	var stretch: float = 0.0
+	if _player != null and _player.boost_timer > 0.0:
+		stretch = boost_stretch * _player.boost_timer / maxf(_player.tuning.speed_lines_boost_time, 0.01)
+	scale = Vector3((1.0 + _body * 0.5) * (1.0 - stretch * 0.5), (1.0 - _body) * (1.0 - stretch * 0.5), (1.0 + _body * 0.5) * (1.0 + stretch))
 	_solve()
 
 
@@ -119,6 +127,7 @@ func _drive(delta: float) -> RiderPose:
 		if state == &"Land":
 			_dip_speed = -land_dip * 14.0
 			_squash = land_squash * (1.4 if _player.last_landing_grade == &"perfect" else 1.0)
+			_body = body_squash * (1.4 if _player.last_landing_grade == &"perfect" else 1.0)
 		_last_state = state
 	var speed01: float = clampf(_player.speed / _player.tuning.max_speed, 0.0, 1.0)
 	var pedal: bool = Input.get_action_strength(&"pedal") > 0.1 and state == &"Ride"
@@ -219,7 +228,15 @@ func _solve() -> void:
 
 ## A warm rim on the rider and bike (v0.25) so they stand out from the
 ## ground: a stronger fresnel on their own cel materials.
-@export var rim_color: Color = Color(1.0, 0.86, 0.62, 0.45)
+@export var rim_color: Color = Color(1.0, 0.95, 0.8, 0.85)
+## A sharp anime highlight on the rider and bike (v0.30).
+@export var highlight_color: Color = Color(0.9, 0.9, 0.9, 0.45)
+## Ink line thickness on the rider and bike (px).
+@export_range(0.0, 8.0, 0.25) var line_width: float = 3.5
+## Whole rider and bike, visual only (v0.30): squash on landing (more on a
+## perfect), stretch along the bike during a boost.
+@export_range(0.0, 0.4, 0.01) var body_squash: float = 0.1
+@export_range(0.0, 0.3, 0.01) var boost_stretch: float = 0.08
 
 
 ## The rider and bike draw on layer 2 only, so props' contact-shadow decals
@@ -241,6 +258,7 @@ func _add_rim(node: Node) -> void:
 				# cache entry): the rider gets its own copy.
 				mat = mat.duplicate() as ShaderMaterial
 				mat.set_shader_parameter(&"fresnel", rim_color)
+				mat.set_shader_parameter(&"specular", highlight_color)
 				mi.set_surface_override_material(s, mat)
 	for child: Node in node.get_children():
 		_add_rim(child)
@@ -255,6 +273,8 @@ func set_frame_color(color: Color) -> void:
 		var mat: Material = mi.get_surface_override_material(0)
 		if mat is ShaderMaterial:
 			(mat as ShaderMaterial).set_shader_parameter(&"color", color)
+			if mat.next_pass is ShaderMaterial:
+				(mat.next_pass as ShaderMaterial).set_shader_parameter(&"color", color)
 
 
 ## Two-bone reach from `root` toward `target`: [joint, end]. The joint bends

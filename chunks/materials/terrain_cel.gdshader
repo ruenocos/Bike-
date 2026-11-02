@@ -14,6 +14,8 @@ global uniform vec4 ground_grass;
 global uniform vec4 ground_rock;
 global uniform float ground_variation;
 uniform bool use_ground_palette = false;
+// How soft the edge between grass and dirt is (small = a painted line, v0.30).
+uniform float ground_edge : hint_range(0.01, 0.5) = 0.1;
 // Steepness (normal y) where faces turn to rock.
 uniform float rock_from = 0.8;
 uniform float rock_full = 0.68;
@@ -60,7 +62,7 @@ void fragment() {
 		uv = world_pos.xy;
 	}
 	if (use_ground_palette) {
-		vec3 ground = mix(srgb(ground_dirt.rgb), srgb(ground_grass.rgb), grass);
+		vec3 ground = mix(srgb(ground_dirt.rgb), srgb(ground_grass.rgb), smoothstep(0.5 - ground_edge, 0.5 + ground_edge, grass));
 		float rock = 1.0 - smoothstep(rock_full, rock_from, normalize(world_normal).y);
 		ground = mix(ground, srgb(ground_rock.rgb), rock);
 		// Big soft patches (and a finer layer) so flat colour shows its shape.
@@ -76,7 +78,7 @@ void fragment() {
 }
 
 void light() {
-	DIFFUSE_LIGHT += diffuse_light(ALBEDO, LIGHT_COLOR, LIGHT, NORMAL, ATTENUATION);
+	DIFFUSE_LIGHT += diffuse_light(ALBEDO, LIGHT_COLOR, LIGHT, NORMAL, ATTENUATION, FRAGCOORD.xy);
 	SPECULAR_LIGHT += specular_light(LIGHT_COLOR, SPECULAR_COLOR, SPECULAR_STRENGTH, NORMAL, VIEW, LIGHT, ATTENUATION);
 	SPECULAR_LIGHT += fresnel_light(LIGHT_COLOR, FRESNEL_COLOR, FRESNEL_STRENGTH, NORMAL, VIEW, LIGHT, ATTENUATION);
 }
