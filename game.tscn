@@ -1,4 +1,4 @@
-[gd_scene load_steps=46 format=3]
+[gd_scene load_steps=47 format=3]
 
 [ext_resource type="Script" path="res://game.gd" id="1_game"]
 [ext_resource type="Script" path="res://biomes/biome.gd" id="30_biome"]
@@ -17,7 +17,8 @@
 [ext_resource type="Resource" path="res://biomes/quarry.tres" id="34_quarry"]
 [ext_resource type="Script" path="res://chunks/stage_builder.gd" id="2_builder"]
 [ext_resource type="PackedScene" path="res://hazards/collapse.tscn" id="3_collapse"]
-[ext_resource type="PackedScene" path="res://player/player.tscn" id="4_player"]
+[ext_resource type="PackedScene" path="res://tank/tank.tscn" id="4_player"]
+[ext_resource type="Resource" path="res://tank/tank_tuning.tres" id="93_tuning"]
 [ext_resource type="Script" path="res://scoring/stage_stats.gd" id="5_stats"]
 [ext_resource type="PackedScene" path="res://ui/run_hud.tscn" id="6_hud"]
 [ext_resource type="PackedScene" path="res://debug/debug_overlay.tscn" id="7_overlay"]
@@ -82,6 +83,7 @@ size = Vector2(4000, 4000)
 
 [node name="Game" type="Node3D"]
 script = ExtResource("1_game")
+base_tuning = ExtResource("93_tuning")
 bikes = Array[ExtResource("41_bike")]([ExtResource("42_trail"), ExtResource("43_dart"), ExtResource("44_hopper"), ExtResource("45_tank")])
 biomes = Array[ExtResource("30_biome")]([ExtResource("31_meadow"), ExtResource("32_canyon"), ExtResource("33_snow"), ExtResource("34_quarry")])
 upgrade_pool = Array[ExtResource("12_upgrade")]([ExtResource("13_u1"), ExtResource("14_u2"), ExtResource("15_u3"), ExtResource("16_u4"), ExtResource("17_u5"), ExtResource("18_u6"), ExtResource("19_u7"), ExtResource("20_u8"), ExtResource("36_u9"), ExtResource("37_u10"), ExtResource("38_u11"), ExtResource("47_u12")])

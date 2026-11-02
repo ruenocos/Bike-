@@ -4,8 +4,8 @@
 
 [resource]
 script = ExtResource("1_upgrade")
-display_name = "Spring Hop"
-description = "Full hops pop 1.5 m/s higher."
+display_name = "Heavy Shell"
+description = "Full cannon hops pop 1.5 m/s higher."
 stat = &"hop_max_velocity"
 mode = 0
 amount = 1.5

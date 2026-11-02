@@ -33,6 +33,8 @@ static var biome: Biome
 ## Ink line thickness on logs, fences and boulders (px; not scenery trees and
 ## rocks), so what you can hit stands out (v0.30).
 @export_range(0.0, 8.0, 0.25) var hazard_outline: float = 3.0
+## Trees shorter than this are "crushable": the tank flattens them (v0.31).
+@export_range(0.0, 40.0, 0.5, "suffix:m") var small_tree_height: float = 7.0
 ## A soft dark blob on the ground under it (v0.27; strength from the biome).
 @export var contact_shadow: bool = true
 ## Footprint of that blob compared with the model's own (1.3 = a bit wider).
@@ -93,6 +95,8 @@ func _rebuild() -> void:
 	CelLook.apply(_model, outline, tint)
 	if kind == "none":
 		CelLook.keep_outline(_model, hazard_outline)
+	if kind == "tree" and _model_aabb(_model, Transform3D.IDENTITY).size.y < small_tree_height:
+		get_parent().add_to_group(&"crushable")
 	if kind == "tree" and tree_sway > 0.0:
 		_set_sway(_model, tree_sway)
 	if contact_shadow and contact_shadows_on and biome != null and biome.contact_shadow > 0.0 and not Engine.is_editor_hint():
@@ -133,6 +137,14 @@ func _add_contact_shadow() -> void:
 	add_child(d, false, Node.INTERNAL_MODE_BACK)
 	contact_shadow_count += 1
 	d.tree_exiting.connect(func() -> void: contact_shadow_count -= 1)
+
+
+## Flattened by the tank: squash into the ground and go.
+func crush() -> void:
+	var tween: Tween = create_tween()
+	tween.tween_property(self, "scale", Vector3(1.25, 0.08, 1.25), 0.08)
+	tween.tween_property(self, "scale", Vector3(1.25, 0.0, 1.25), 0.5)
+	tween.tween_callback(queue_free)
 
 
 func _set_sway(node: Node, amount: float) -> void:

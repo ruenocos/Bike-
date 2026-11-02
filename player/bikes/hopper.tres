@@ -20,7 +20,7 @@ amount = 1.0
 [resource]
 script = ExtResource("1_bike")
 display_name = "Hopper"
-description = "Springy park bike: big hops and a double hop built in."
+description = "Short-barrel recoil rig: big hops and a double shot built in."
 frame_color = Color(1, 0.78, 0.15, 1)
 modifiers = Array[ExtResource("2_upgrade")]([SubResource("Mod_1"), SubResource("Mod_2")])
 unlock = 2

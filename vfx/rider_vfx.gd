@@ -48,10 +48,10 @@ var _trails: Array[TrailRibbon] = []
 func _ready() -> void:
 	Events.landed.connect(_on_landed)
 	# Children are ready before the Player, so its @onready refs are not set yet.
-	var rig: Node = player.get_node("Visual/RiderRig")
-	for wheel: String in ["Bike/Fork/FrontWheel", "Bike/RearWheel"]:
+	var rig: Node = player.get_node("Visual").get_child(0)
+	for point: Node3D in rig.call("trail_points"):
 		var trail: TrailRibbon = TrailRibbon.new()
-		trail.target = rig.get_node(wheel) as Node3D
+		trail.target = point
 		trail.anchor = player
 		trail.lifetime = trail_time
 		trail.width = trail_width

@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_upgrade")
-display_name = "Slick Pegs"
+display_name = "Slick Treads"
 description = "Rails push you forward (+6 m/s per second)."
 stat = &"grind_accel"
 mode = 0

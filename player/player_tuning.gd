@@ -52,7 +52,19 @@ extends Resource
 ## Crashes per stage that only glance off (Crash Shield upgrade, v0.13).
 @export_range(0.0, 5.0, 1.0) var crash_shields: float = 0.0
 
+@export_group("Tank (v0.31)")
+## Small trees, fences and logs (group "crushable") get crushed instead of
+## crashing you, for this share of your speed and these points.
+@export var crushes_props: bool = false
+@export_range(0.0, 0.5, 0.01) var crush_speed_cost: float = 0.06
+@export_range(0, 1000, 10) var crush_score: int = 50
+## Cannon blast (TankCannon): speed gained and reload time.
+@export_range(0.0, 30.0, 0.5, "suffix:m/s") var blast_speed: float = 7.0
+@export_range(0.1, 20.0, 0.1, "suffix:s") var blast_cooldown: float = 4.0
+
 @export_group("No Hander (v0.18)")
+## What the HUD calls it (the tank's is its Turret Spin).
+@export var no_hander_name: String = "No Hander"
 ## Hold West (X / Square) in the air: hands off the bars. Points per second
 ## held; let go before you touch down or it's a bail.
 @export_range(0.0, 5000.0, 10.0) var no_hander_score_per_second: float = 500.0

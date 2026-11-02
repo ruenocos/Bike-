@@ -4,8 +4,8 @@
 
 [resource]
 script = ExtResource("1_upgrade")
-display_name = "Double Hop"
-description = "Release hop in the air for a second pop (once per jump)."
+display_name = "Double Shot"
+description = "Release hop in the air to fire again for a second pop (once per jump)."
 stat = &"air_hops"
 mode = 0
 amount = 1.0

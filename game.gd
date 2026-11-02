@@ -148,7 +148,8 @@ func _ready() -> void:
 		if grade == &"perfect" and in_stage:
 			hud.flash_light())
 	player.shield_used.connect(func() -> void: hud.flash_message("SHIELD!", Color(0.45, 0.9, 1.0)))
-	player.air_hopped.connect(func() -> void: hud.flash_message("DOUBLE HOP", Color(1.0, 0.9, 0.45)))
+	player.air_hopped.connect(func() -> void: hud.flash_message("DOUBLE SHOT", Color(1.0, 0.9, 0.45)))
+	player.crushed.connect(func(_at: Vector3) -> void: hud.flash_message("CRUSHED!", Color(1.0, 0.75, 0.3)))
 	player.streak_changed.connect(func(count: int) -> void:
 		if count >= 2:
 			hud.flash_message("STREAK x%d" % count, Color(1.0, 0.6, 0.85)))
@@ -196,7 +197,7 @@ func start_run(new_seed: int = -1) -> void:
 	run_tuning = base_tuning.duplicate() as PlayerTuning
 	if bike != null:
 		bike.apply(run_tuning)
-		player.rider.set_frame_color(bike.frame_color)
+		player.rider.call(&"set_frame_color", bike.frame_color)
 	player.tuning = run_tuning
 	run_gates = 0
 	run_tricks = 0

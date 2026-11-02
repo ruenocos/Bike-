@@ -6,7 +6,7 @@
 height = 10.0
 radius = 0.42
 
-[node name="Log" type="StaticBody3D" groups=["obstacles"]]
+[node name="Log" type="StaticBody3D" groups=["obstacles", "crushable"]]
 
 [node name="Model" type="Node3D" parent="."]
 script = ExtResource("1_model")

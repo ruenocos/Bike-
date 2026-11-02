@@ -12,6 +12,10 @@ extends CanvasLayer
 @export_range(0, 8) var impact_frames: int = 3
 ## How strong the ink-and-paper flip is (lower it if the flash is too harsh).
 @export_range(0.0, 1.0, 0.01) var impact_strength: float = 0.85
+## Cannon shots (hops): a shorter, weaker flip and small lines.
+@export_range(0, 8) var cannon_frames: int = 2
+@export_range(0.0, 1.0, 0.01) var cannon_strength: float = 0.55
+@export_range(0.0, 1.0, 0.01) var cannon_lines: float = 0.45
 ## How long the radial lines fade after a landing / a boost.
 @export_range(0.05, 1.0, 0.01, "suffix:s") var impact_lines_time: float = 0.18
 @export_range(0.05, 1.0, 0.01, "suffix:s") var boost_lines_time: float = 0.32
@@ -25,6 +29,7 @@ extends CanvasLayer
 
 var _material: ShaderMaterial
 var _flash_left: int = 0
+var _flash_strength: float = 1.0
 var _lines: float = 0.0
 var _lines_peak: float = 0.0
 var _lines_time: float = 0.2
@@ -41,9 +46,17 @@ func _ready() -> void:
 func _on_landed(grade: StringName) -> void:
 	if grade == &"perfect":
 		_flash_left = impact_frames
+		_flash_strength = impact_strength
 		_fire_lines(perfect_lines, impact_lines_time)
 	elif grade == &"good":
 		_fire_lines(good_lines, impact_lines_time)
+
+
+## TankCannon: the cannon went off.
+func cannon_shot() -> void:
+	_flash_left = cannon_frames
+	_flash_strength = cannon_strength
+	_fire_lines(cannon_lines, impact_lines_time)
 
 
 func _on_boost() -> void:
@@ -66,7 +79,7 @@ func _process(delta: float) -> void:
 	rect.visible = flash or _lines > 0.003
 	if not rect.visible:
 		return
-	_material.set_shader_parameter(&"flash", impact_strength if flash else 0.0)
+	_material.set_shader_parameter(&"flash", _flash_strength if flash else 0.0)
 	_material.set_shader_parameter(&"lines", _lines)
 	# The ring of clear space opens outward as the burst fades.
 	_material.set_shader_parameter(&"radius", lerpf(0.75, 0.3, x))

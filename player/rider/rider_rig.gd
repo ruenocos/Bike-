@@ -239,6 +239,11 @@ func _solve() -> void:
 @export_range(0.0, 0.3, 0.01) var boost_stretch: float = 0.08
 
 
+## Where the trick trails come from.
+func trail_points() -> Array[Node3D]:
+	return [_front_wheel, _rear_wheel]
+
+
 ## The rider and bike draw on layer 2 only, so props' contact-shadow decals
 ## (cull mask 1) don't paint onto them riding past (v0.27).
 func _set_layer(node: Node) -> void:

@@ -23,6 +23,10 @@ signal shield_used
 signal air_hopped
 ## A boost just happened (AnimeFx).
 signal boost_flashed
+## A ground hop just fired (TankCannon).
+signal hopped
+## Something crushable got crushed (v0.31).
+signal crushed(at: Vector3)
 
 @export var tuning: PlayerTuning = preload("res://player/player_tuning.tres")
 
@@ -33,7 +37,8 @@ signal boost_flashed
 @onready var tricks: TrickRunner = $TrickRunner
 @onready var combo: ComboTracker = $ComboTracker
 @onready var vfx: RiderVfx = $RiderVfx
-@onready var rider: RiderRig = $Visual/RiderRig
+## The look under Visual: RiderRig or TankRig (set_frame_color, trail_points).
+@onready var rider: Node3D = $Visual.get_child(0) as Node3D
 
 ## Speed along the ground (m/s). The heart of the game.
 var speed: float = 0.0
@@ -262,7 +267,7 @@ func finish_no_hander() -> void:
 		combo.add_action(score)
 		if state_machine.get_state_name() == &"Air":
 			air_tricks += 1
-		Events.trick_completed.emit("No Hander", score)
+		Events.trick_completed.emit(tuning.no_hander_name, score)
 	no_hander_time = 0.0
 
 
@@ -362,6 +367,7 @@ func air_hop() -> void:
 func do_hop_from(base_velocity: Vector3, hop_dir: Vector3 = Vector3.UP) -> void:
 	var hop_velocity: float = lerpf(tuning.hop_min_velocity, tuning.hop_max_velocity, hop_release_charge)
 	velocity = base_velocity + hop_dir * hop_velocity
+	hopped.emit()
 	jump_buffer_timer = 0.0
 	coyote_timer = 0.0
 	# Godot note: move_and_slide() snaps a body that was on the floor back down
@@ -653,6 +659,9 @@ func _check_obstacle_hit(approach: Vector3) -> Hit:
 		var collider: Node = collision.get_collider() as Node
 		if collider == null or not collider.is_in_group(&"obstacles"):
 			continue
+		if tuning.crushes_props and collider.is_in_group(&"crushable"):
+			_crush(collider as CollisionObject3D, approach.length())
+			continue
 		var normal: Vector3 = collision.get_normal()
 		var impact: float = -approach.dot(normal)
 		# Keep going: slide along it, and if the hit was head-on (little left
@@ -690,6 +699,19 @@ func _check_obstacle_hit(approach: Vector3) -> Hit:
 		speed = keep
 		return result
 	return Hit.NONE
+
+
+## Rolls over something crushable: it stops colliding and flattens, you lose
+## a little speed and score a little.
+func _crush(body: CollisionObject3D, approach_speed: float) -> void:
+	body.collision_layer = 0
+	body.collision_mask = 0
+	var model: PropModel = body.get_node_or_null("Model") as PropModel
+	if model != null:
+		model.crush()
+	speed = approach_speed * (1.0 - tuning.crush_speed_cost)
+	combo.add_points(tuning.crush_score)
+	crushed.emit(body.global_position)
 
 
 ## "Tree", "Rock", ... from the obstacle's scene file (or its node name).

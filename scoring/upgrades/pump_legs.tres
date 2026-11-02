@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_upgrade")
-display_name = "Pump Legs"
+display_name = "Track Surge"
 description = "Each pump gives +2% more speed."
 stat = &"pump_gain"
 mode = 0
