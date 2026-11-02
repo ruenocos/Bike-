@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="BossData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://boss/boss_data.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+display_name = "TITAN"
+subtitle = "The last guard. Everything at once."
+tint = Color(0.78, 0.8, 1, 1)
+model_scale = 3.8
+max_health = 300.0
+time_limit = 170.0
+walk_speed = 7.0
+attack_interval = 3.2
+shockwave_speed = 32.0
+shockwave_rings = 2
+mortar_count = 9
+mortar_delay = 1.2
+charge_speed = 34.0
+charge_weight = 1.0
+score = 12000
+reward_rerolls = 2

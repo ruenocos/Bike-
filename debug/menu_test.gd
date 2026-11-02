@@ -115,6 +115,13 @@ func _run() -> void:
 	await _button(JOY_BUTTON_DPAD_LEFT)
 	await _button(JOY_BUTTON_A)
 	_check(got["ride"] == 1 and rode[0] == bikes[0], "title screen: back to the first bike, A rides it")
+	var boss: Array[BikeData] = []
+	title.boss_fight.connect(func(b: BikeData) -> void: boss.append(b))
+	title.open(bikes, 0)
+	await get_tree().create_timer(0.8).timeout
+	await _button(JOY_BUTTON_DPAD_DOWN)
+	await _button(JOY_BUTTON_A)
+	_check(boss.size() == 1 and boss[0] == bikes[0] and got["ride"] == 1, "title screen: d-pad down + A starts a boss fight")
 
 	print("MENU TEST %s" % ("PASSED" if _failures.is_empty() else "FAILED (%d)" % _failures.size()))
 	get_tree().quit(0 if _failures.is_empty() else 1)

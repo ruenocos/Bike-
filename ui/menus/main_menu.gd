@@ -4,6 +4,9 @@ extends Control
 ## changes and what unlocks it, your best run so far, then A to ride.
 
 signal ride(bike: BikeData)
+## The BOSS FIGHT button (v0.33, for now): a run that starts in the first
+## boss fight on this bike.
+signal boss_fight(bike: BikeData)
 
 ## How stat names read on the bike card.
 const STAT_NAMES: Dictionary[StringName, String] = {
@@ -29,6 +32,7 @@ var _waiting: bool = false
 @onready var bike_info: Label = %BikeInfo
 @onready var lock_label: Label = %Lock
 @onready var ride_button: Button = %Ride
+@onready var boss_button: Button = %BossFight
 @onready var best_label: Label = %Best
 @onready var swatch: ColorRect = %Swatch
 @onready var speed_bar: ProgressBar = %Speed
@@ -42,6 +46,7 @@ const BASE_TUNING: PlayerTuning = preload("res://player/player_tuning.tres")
 func _ready() -> void:
 	hide()
 	ride_button.pressed.connect(_on_ride)
+	boss_button.pressed.connect(_on_boss_fight)
 	(%Prev as Button).pressed.connect(func() -> void: _cycle(-1))
 	(%Next as Button).pressed.connect(func() -> void: _cycle(1))
 
@@ -56,6 +61,7 @@ func open(all_bikes: Array[BikeData], selected: int) -> void:
 	UiMotion.slide_in($Logo as Control, Vector2(-300.0, 0.0), 0.32)
 	UiMotion.slide_in($Panel as Control, Vector2(300.0, 0.0), 0.32, 0.08)
 	_waiting = true
+	boss_button.disabled = true
 	await MenuInput.delay_focus(self, ride_button, input_delay)
 	_waiting = false
 	_show_bike()
@@ -106,6 +112,7 @@ func _show_bike() -> void:
 	lock_label.text = "LOCKED: %s" % b.unlock_text().to_upper()
 	if not _waiting:
 		ride_button.disabled = not open_bike
+		boss_button.disabled = not open_bike
 	ride_button.text = "ROLL OUT" if open_bike else "LOCKED"
 
 
@@ -116,3 +123,12 @@ func _on_ride() -> void:
 	Save.choose_bike(b)
 	hide()
 	ride.emit(b)
+
+
+func _on_boss_fight() -> void:
+	var b: BikeData = bikes[index]
+	if not Save.is_unlocked(b):
+		return
+	Save.choose_bike(b)
+	hide()
+	boss_fight.emit(b)

@@ -209,12 +209,19 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 48
 text = "ROLL OUT"
 
+[node name="BossFight" type="Button" parent="Panel/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "BOSS FIGHT"
+
 [node name="Hint" type="Label" parent="Panel/VBox"]
 layout_mode = 2
 theme_type_variation = &"HudLabel"
 theme_override_colors/font_color = Color(0.957, 0.945, 0.91, 0.55)
 theme_override_font_sizes/font_size = 22
-text = "LEFT / RIGHT: CHANGE RIDE     A: ROLL OUT"
+text = "LEFT / RIGHT: CHANGE RIDE     DOWN: BOSS FIGHT     A: GO"
 horizontal_alignment = 1
 
 [node name="BestTape" type="PanelContainer" parent="."]
