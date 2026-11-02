@@ -1,12 +1,12 @@
 @tool
 class_name MountainRing
 extends Node3D
-## Distant mountain silhouettes: a ring of low-poly peaks around this node
-## (game.tscn puts it under FarGround, which follows the rider, so they stay
-## on the horizon). Greybox mood, not final art: change the count, sizes,
-## seed and colours in the inspector and the ring rebuilds in the editor.
-## The peaks ignore the fog and fade toward `haze_color` at the base, so they
-## read as far away instead of disappearing into the fog.
+## Distant mountain range: an open cylinder band around this node whose top
+## edge is cut into sharp, cel-lit anime peaks (chunks/materials/
+## mountain_ridge.gdshader). The game keeps it centred on the rider, so the
+## range stays on the horizon. Change the count, sizes, seed and colours in
+## the inspector and it rebuilds in the editor. The peaks ignore the fog and
+## fade toward `haze_color` at the base, so they melt into the sky.
 
 @export_range(1, 200) var count: int = 46:
 	set(v):
@@ -28,7 +28,7 @@ extends Node3D
 	set(v):
 		height_max = v
 		_rebuild()
-## Base radius as a multiple of the height.
+## Peak width as a multiple of the height (bigger = broader, gentler).
 @export_range(0.3, 4.0, 0.05) var spread: float = 1.4:
 	set(v):
 		spread = v
@@ -46,7 +46,44 @@ extends Node3D
 		haze_color = v
 		_rebuild()
 
-var _instance: MultiMeshInstance3D
+@export var lit_color: Color = Color(0.95, 0.75, 0.6):
+	set(v):
+		lit_color = v
+		_update_material()
+@export var rim_color: Color = Color(1.0, 0.88, 0.7):
+	set(v):
+		rim_color = v
+		_update_material()
+@export var snow_color: Color = Color(0.95, 0.95, 1.0):
+	set(v):
+		snow_color = v
+		_update_material()
+## Snow above this share of the range height (1 = no snow).
+@export_range(0.0, 1.0, 0.01) var snow_line: float = 1.0:
+	set(v):
+		snow_line = v
+		_update_material()
+## Towards the sun (BiomeLook sets it from the scene's sun).
+@export var sun_direction: Vector3 = Vector3(0.4, 0.3, -0.8):
+	set(v):
+		sun_direction = v
+		_update_material()
+
+## How much taller the band is than height_max.
+@export_range(0.5, 4.0, 0.05) var band_height_scale: float = 1.6:
+	set(v):
+		band_height_scale = v
+		_rebuild()
+
+## Plain haze below the range's foot (m), so it sinks into the clouds
+## instead of floating.
+@export_range(0.0, 5000.0, 10.0, "suffix:m") var skirt_depth: float = 1500.0:
+	set(v):
+		skirt_depth = v
+		_rebuild()
+
+var _instance: MeshInstance3D
+var _material: ShaderMaterial
 
 
 func _ready() -> void:
@@ -57,31 +94,48 @@ func _rebuild() -> void:
 	if not is_inside_tree():
 		return
 	if _instance == null:
-		_instance = MultiMeshInstance3D.new()
+		_instance = MeshInstance3D.new()
 		_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(_instance, false, Node.INTERNAL_MODE_BACK)
-	var cone: CylinderMesh = CylinderMesh.new()
-	cone.top_radius = 0.0
-	cone.bottom_radius = 1.0
-	cone.height = 1.0
-	cone.radial_segments = 7
-	cone.rings = 1
-	var mat: ShaderMaterial = ShaderMaterial.new()
-	mat.shader = preload("res://chunks/materials/mountain.gdshader")
-	mat.set_shader_parameter(&"peak_color", peak_color)
-	mat.set_shader_parameter(&"haze_color", haze_color)
-	cone.material = mat
-	var mm: MultiMesh = MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.mesh = cone
-	mm.instance_count = count
-	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
-	rng.seed = ring_seed
-	for i: int in count:
-		var angle: float = TAU * (i + rng.randf_range(-0.35, 0.35)) / count
-		var r: float = rng.randf_range(radius_min, radius_max)
-		var h: float = rng.randf_range(height_min, height_max)
-		var w: float = h * spread * rng.randf_range(0.7, 1.3)
-		var basis: Basis = Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3(w, h, w * rng.randf_range(0.7, 1.2)))
-		mm.set_instance_transform(i, Transform3D(basis, Vector3(cos(angle) * r, h * 0.5 - 60.0, sin(angle) * r)))
-	_instance.multimesh = mm
+		_material = ShaderMaterial.new()
+		_material.shader = preload("res://chunks/materials/mountain_ridge.gdshader")
+		var band: CylinderMesh = CylinderMesh.new()
+		band.top_radius = 1.0
+		band.bottom_radius = 1.0
+		band.height = 1.0
+		band.radial_segments = 256
+		band.rings = 1
+		band.cap_top = false
+		band.cap_bottom = false
+		band.material = _material
+		_instance.mesh = band
+		# Never culled: the band surrounds the camera.
+		_instance.extra_cull_margin = 16384.0
+	var r: float = (radius_min + radius_max) * 0.5
+	# The band is taller than the old cones: its peaks stand above the
+	# haze, which covers the lower part.
+	var h: float = height_max * band_height_scale
+	# Plus a haze skirt hanging far below, into the sea of clouds.
+	_instance.scale = Vector3(r, h + skirt_depth, r)
+	_instance.position = Vector3(0.0, (h + skirt_depth) * 0.5 - 60.0 - skirt_depth, 0.0)
+	_update_material()
+
+
+func _update_material() -> void:
+	if _material == null:
+		return
+	_material.set_shader_parameter(&"peak_color", peak_color)
+	_material.set_shader_parameter(&"haze_color", haze_color)
+	_material.set_shader_parameter(&"lit_color", lit_color)
+	_material.set_shader_parameter(&"rim_color", rim_color)
+	_material.set_shader_parameter(&"snow_color", snow_color)
+	_material.set_shader_parameter(&"snow_line", snow_line)
+	_material.set_shader_parameter(&"sun_direction", sun_direction)
+	# `count` was the number of cones; a range reads better with fewer,
+	# bigger peaks, each with its own shoulders.
+	_material.set_shader_parameter(&"peaks", maxf(roundf(count / 3.0), 3.0))
+	_material.set_shader_parameter(&"height_min", height_min / maxf(height_max, 1.0))
+	_material.set_shader_parameter(&"height_max", 1.0)
+	_material.set_shader_parameter(&"steepness", 11.0 / spread)
+	_material.set_shader_parameter(&"ring_seed", float(ring_seed))
+	_material.set_shader_parameter(&"skirt", skirt_depth / (height_max * band_height_scale + skirt_depth))
