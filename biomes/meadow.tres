@@ -3,7 +3,7 @@
 [ext_resource type="Resource" path="res://sky/looks/meadow.tres" id="80_sky"]
 [ext_resource type="Script" path="res://biomes/biome.gd" id="1_biome"]
 [ext_resource type="PackedScene" path="res://chunks/landscape/set_world_tree.tscn" id="92_set"]
-[ext_resource type="PackedScene" path="res://chunks/landscape/set_log_rhythm.tscn" id="91_set"]
+[ext_resource type="PackedScene" path="res://chunks/landscape/set_cliff.tscn" id="91_set"]
 [ext_resource type="PackedScene" path="res://chunks/landscape/set_river_logs.tscn" id="90_set"]
 [ext_resource type="Resource" path="res://chunks/terrain/cover/meadow.tres" id="2_cover"]
 

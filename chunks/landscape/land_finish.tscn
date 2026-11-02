@@ -45,48 +45,6 @@ outside_drop = 25.0
 
 [node name="Props" type="Node3D" parent="Terrain" unique_id=661204653]
 
-[node name="Tree1" type="StaticBody3D" parent="Terrain/Props" unique_id=30691954 groups=["obstacles"] instance=ExtResource("3_khwco")]
-transform = Transform3D(-0.2665988, 0, 1.0151913, 0, 1.0496134, 0, -1.0151913, 0, -0.2665988, -15.120861, -28.249197, -68.70221)
-
-[node name="Tree2" type="StaticBody3D" parent="Terrain/Props" unique_id=1635255581 groups=["obstacles"] instance=ExtResource("3_khwco")]
-transform = Transform3D(-0.58054036, 0, -1.0119655, 0, 1.1666625, 0, 1.0119655, 0, -0.58054036, -26.16105, -38.045338, -87.9068)
-
-[node name="Tree3" type="StaticBody3D" parent="Terrain/Props" unique_id=825322153 groups=["obstacles"] instance=ExtResource("3_khwco")]
-transform = Transform3D(-1.0933839, 0, 0.008095303, 0, 1.0934138, 0, -0.008095303, 0, -1.0933839, -21.922705, -34.21081, -78.80728)
-
-[node name="Tree4" type="StaticBody3D" parent="Terrain/Props" unique_id=1935612105 groups=["obstacles"] instance=ExtResource("3_khwco")]
-transform = Transform3D(0.42066422, 0, -0.82396424, 0, 0.9251354, 0, 0.82396424, 0, 0.42066422, -20.261374, -32.44733, -76.05332)
-
-[node name="Tree5" type="StaticBody3D" parent="Terrain/Props" unique_id=1917736005 groups=["obstacles"] instance=ExtResource("3_khwco")]
-transform = Transform3D(1.264743, 0, 0.103947304, 0, 1.2690074, 0, -0.103947304, 0, 1.264743, -24.87086, -34.332226, -78.69143)
-
-[node name="Tree6" type="StaticBody3D" parent="Terrain/Props" unique_id=330681631 groups=["obstacles"] instance=ExtResource("3_khwco")]
-transform = Transform3D(0.87551266, 0, -0.23867016, 0, 0.9074612, 0, 0.23867016, 0, 0.87551266, 20.856192, -70.98057, -250.47878)
-
-[node name="Tree7" type="StaticBody3D" parent="Terrain/Props" unique_id=1926284659 groups=["obstacles"] instance=ExtResource("3_khwco")]
-transform = Transform3D(0.6342101, 0, 0.63603354, 0, 0.89819884, 0, -0.63603354, 0, 0.6342101, 17.467773, -72.10009, -264.84454)
-
-[node name="Tree8" type="StaticBody3D" parent="Terrain/Props" unique_id=125040610 groups=["obstacles"] instance=ExtResource("3_khwco")]
-transform = Transform3D(-0.22122604, 0, -1.0497042, 0, 1.0727627, 0, 1.0497042, 0, -0.22122604, 36.388382, -71.69187, -249.72368)
-
-[node name="Tree9" type="StaticBody3D" parent="Terrain/Props" unique_id=1957311043 groups=["obstacles"] instance=ExtResource("3_khwco")]
-transform = Transform3D(0.8875238, 0, 0.42743626, 0, 0.98508894, 0, -0.42743626, 0, 0.8875238, 34.332504, -72.44873, -261.33783)
-
-[node name="Tree10" type="StaticBody3D" parent="Terrain/Props" unique_id=969341372 groups=["obstacles"] instance=ExtResource("3_khwco")]
-transform = Transform3D(-0.86467814, 0, 0.8400651, 0, 1.2055612, 0, -0.8400651, 0, -0.86467814, 30.726772, -72.39933, -255.28638)
-
-[node name="Tree11" type="StaticBody3D" parent="Terrain/Props" unique_id=770536306 groups=["obstacles"] instance=ExtResource("3_khwco")]
-transform = Transform3D(0.5361793, 0, -1.0872469, 0, 1.2122681, 0, 1.0872469, 0, 0.5361793, 23.741207, -71.79389, -263.1543)
-
-[node name="Rock12" type="StaticBody3D" parent="Terrain/Props" unique_id=1264576471 groups=["obstacles"] instance=ExtResource("4_fr2lm")]
-transform = Transform3D(-1.306703, 0, -0.8826994, 0, 1.5769055, 0, 0.8826994, 0, -1.306703, 36.368385, -54.327972, -135.72678)
-
-[node name="Rock14" type="StaticBody3D" parent="Terrain/Props" unique_id=83283894 groups=["obstacles"] instance=ExtResource("4_fr2lm")]
-transform = Transform3D(-1.1000137, 0, 0.06892836, 0, 1.1021712, 0, -0.06892836, 0, -1.1000137, -46.866135, -66.72982, -213.22908)
-
-[node name="Rock16" type="StaticBody3D" parent="Terrain/Props" unique_id=678690194 groups=["obstacles"] instance=ExtResource("4_fr2lm")]
-transform = Transform3D(-0.9470716, 0, 0.82085395, 0, 1.253294, 0, -0.82085395, 0, -0.9470716, -49.09225, -66.160904, -205.4457)
-
 [node name="TrackLine" type="Path3D" parent="." unique_id=2015314226]
 curve = SubResource("Curve3D_0upht")
 

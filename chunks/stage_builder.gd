@@ -45,13 +45,19 @@ signal finished
 	preload("res://chunks/landscape/set_fork.tscn"),
 	# v0.31 drastic set pieces (each biome also features one of them).
 	preload("res://chunks/landscape/set_megacliff.tscn"),
-	preload("res://chunks/landscape/set_megapipe.tscn"),
+	# set_megapipe.tscn removed from the pool (v0.34, Wons: its camera takeover
+	# "looks super weird and unusable"). The chunk file stays for reference.
 	preload("res://chunks/landscape/set_world_tree.tscn"),
 	preload("res://chunks/landscape/set_alien_garden.tscn"),
 ]
 ## v0.31: two per stage, so every stage gets its biome's big drastic piece
 ## (the last of the biome's set_pieces is tried first) plus one more.
-@export var set_pieces_per_stage: Vector2i = Vector2i(2, 2)
+## v0.34 declutter: four per stage (Wons: "bigger things happening"), so
+## every other middle slot is a set piece and the plain chunks are breathers.
+@export var set_pieces_per_stage: Vector2i = Vector2i(4, 4)
+## Set-piece slots are at least this many slots apart (2 = a plain chunk
+## between two set pieces; 1 = they may follow each other).
+@export_range(1, 4) var set_piece_spacing: int = 2
 ## A set piece at least this long (m) takes the next middle slot too.
 @export_range(100.0, 2000.0, 10.0, "suffix:m") var long_set_piece: float = 600.0
 ## The stage's own set pieces (v0.16, from its biome): the first set-piece
@@ -202,22 +208,36 @@ func build(stage_seed: int, middle: int = -1, stage_index: int = 0) -> void:
 
 
 ## Middle slots for this stage's set pieces: set_pieces_per_stage of them,
-## never in the first slot (the drop-in sets the pace) and never adjacent.
+## never in the first slot (the drop-in sets the pace), set_piece_spacing apart.
 func _pick_set_slots(rng: RandomNumberGenerator, count: int) -> Array[int]:
 	var slots: Array[int] = []
 	if count < 2 or set_pieces.is_empty():
 		return slots
 	var want: int = rng.randi_range(set_pieces_per_stage.x, set_pieces_per_stage.y)
-	for attempt: int in 40:
+	# Try the slots in a shuffled order and take every one that keeps the
+	# spacing (a few random tries used to leave slots unfilled).
+	var order: Array[int] = []
+	for s: int in range(1, count):
+		order.append(s)
+	for i: int in range(order.size() - 1, 0, -1):
+		var j: int = rng.randi_range(0, i)
+		var t: int = order[i]
+		order[i] = order[j]
+		order[j] = t
+	# Prefer the tightest packing first: slots 1, 1 + spacing, ... when that
+	# is what it takes to fit `want` of them.
+	if want * set_piece_spacing >= count - 1:
+		order.sort()
+	for s: int in order:
 		if slots.size() >= want:
 			break
-		var s: int = rng.randi_range(1, count - 1)
 		var ok: bool = true
 		for other: int in slots:
-			if absi(other - s) < 2:
+			if absi(other - s) < set_piece_spacing:
 				ok = false
 		if ok:
 			slots.append(s)
+	slots.sort()
 	return slots
 
 
