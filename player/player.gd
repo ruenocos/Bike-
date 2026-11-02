@@ -37,6 +37,10 @@ signal crushed(at: Vector3)
 @onready var tricks: TrickRunner = $TrickRunner
 @onready var combo: ComboTracker = $ComboTracker
 @onready var vfx: RiderVfx = $RiderVfx
+## 0-1 of this vehicle's top speed.
+var speed_ratio: float:
+	get:
+		return clampf(speed / tuning.max_speed, 0.0, 1.0)
 ## The look under Visual: RiderRig or TankRig (set_frame_color, trail_points).
 @onready var rider: Node3D = $Visual.get_child(0) as Node3D
 
@@ -661,7 +665,7 @@ func _check_obstacle_hit(approach: Vector3) -> Hit:
 			continue
 		if tuning.crushes_props and collider.is_in_group(&"crushable"):
 			_crush(collider as CollisionObject3D, approach.length())
-			continue
+			return Hit.GLANCE
 		var normal: Vector3 = collision.get_normal()
 		var impact: float = -approach.dot(normal)
 		# Keep going: slide along it, and if the hit was head-on (little left
@@ -712,6 +716,8 @@ func _crush(body: CollisionObject3D, approach_speed: float) -> void:
 	speed = approach_speed * (1.0 - tuning.crush_speed_cost)
 	combo.add_points(tuning.crush_score)
 	crushed.emit(body.global_position)
+	var kind: String = body.scene_file_path.get_file().get_basename()
+	Events.prop_crushed.emit(StringName(kind if not kind.is_empty() else "prop"), body.global_position)
 
 
 ## "Tree", "Rock", ... from the obstacle's scene file (or its node name).

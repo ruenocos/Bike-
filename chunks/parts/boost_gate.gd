@@ -83,6 +83,7 @@ func _on_body_entered(body: Node3D) -> void:
 	if player.state_machine.get_state_name() == &"Air" and player.velocity.length() > 1.0:
 		player.velocity += player.velocity.normalized() * speed_boost
 	player.flash_boost()
+	Events.speed_gained.emit(speed_boost)
 	player.combo.add_action(score)
 	Events.gate_collected.emit(score)
 	# Pop and vanish.

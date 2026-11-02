@@ -77,3 +77,4 @@ func _judge() -> void:
 	launched.emit(grade, boost)
 	if _player != null and boost > 0.0:
 		_player.flash_boost()
+		Events.speed_gained.emit(boost)

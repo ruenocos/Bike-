@@ -89,6 +89,9 @@ func enter(msg: Dictionary) -> void:
 	if grade == &"bail":
 		player.last_bail_reason = bail_reason
 	Events.landed.emit(grade)
+	if not player.tricks.last_trick_name.is_empty() and player.tricks.tricks_this_air > 0:
+		Events.trick_landed.emit(StringName(player.tricks.last_trick_name), grade)
+	player.tricks.tricks_this_air = 0
 
 	if not msg.get("lip_air", false):
 		player.update_perfect_streak(grade == &"perfect")
@@ -96,7 +99,10 @@ func enter(msg: Dictionary) -> void:
 		&"perfect":
 			# No speed bonus coming back from a lip air: the halfpipe would grow every wall.
 			var bonus: float = t.lip_air_perfect_bonus if msg.get("lip_air", false) else t.perfect_bonus
+			var before_bonus: float = player.speed
 			player.speed = minf(player.speed * (1.0 + bonus), t.max_speed)
+			if player.speed > before_bonus:
+				Events.speed_gained.emit(player.speed - before_bonus)
 			# Lip-air landings score but don't raise the multiplier (see ComboTracker).
 			if msg.get("lip_air", false):
 				player.combo.add_points(t.perfect_landing_score)

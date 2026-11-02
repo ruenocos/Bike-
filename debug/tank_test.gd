@@ -58,22 +58,28 @@ func _fail(msg: String) -> void:
 	_failures.append(msg)
 
 
-## Places the rider going straight down the slope at `speed`, `dist` m before z.
-func _start(z_distance: float, speed: float) -> void:
-	var at: Vector3 = _patch.to_global(_patch.valley_to_local(0.0, _patch.base_height(0.0, -z_distance) + 0.1, z_distance))
-	_player.place(at, 0.0, speed)
-	for i: int in 3:
+func _ground(x: float, z: float) -> Vector3:
+	return Vector3(x, _patch.surface_height(x, z), z)
+
+
+func _start(z: float, speed: float) -> void:
+	_player.set_physics_process(true)
+	_player.place(_ground(0.0, z) + Vector3.UP * 0.05, 0.0, speed)
+	_player.combo.drop()
+	_player.state_machine.transition_to(&"Air", {})
+	_player.bail_immunity_timer = 0.0
+	for i: int in 20:
 		await get_tree().physics_frame
 
 
 func _hit_case(label: String, scene: PackedScene, crushes: bool, want_crush: bool) -> void:
 	_player.tuning.crushes_props = crushes
 	var prop: Node3D = scene.instantiate() as Node3D
-	_patch.add_child(prop)
-	prop.position = _patch.valley_to_local(0.0, _patch.base_height(0.0, -200.0), 200.0)
+	add_child(prop)
+	await _start(-20.0, 40.0)
+	prop.global_position = _ground(0.0, _player.global_position.z - 45.0)
 	await get_tree().physics_frame
 	await get_tree().physics_frame
-	await _start(140.0, 40.0)
 	var before: float = _player.speed
 	_bails = 0
 	_crushes = 0
@@ -100,20 +106,32 @@ func _hit_case(label: String, scene: PackedScene, crushes: bool, want_crush: boo
 
 func _blast_case() -> void:
 	var cannon: TankCannon = _player.get_node("TankCannon") as TankCannon
-	await _start(100.0, 20.0)
+	await _start(-20.0, 20.0)
 	cannon.cooldown = 0.0
 	var before: float = _player.speed
+	var gained: Array[float] = []
+	var kinds: Array[StringName] = []
+	var on_gain: Callable = func(amount: float) -> void: gained.append(amount)
+	var on_fire: Callable = func(kind: StringName) -> void: kinds.append(kind)
+	Events.speed_gained.connect(on_gain)
+	Events.cannon_fired.connect(on_fire)
 	if not cannon.blast() or _player.speed < before + _player.tuning.blast_speed * 0.9:
 		_fail("blast: no speed gain (%.1f -> %.1f)" % [before, _player.speed])
 	if cannon.blast():
 		_fail("blast: fired again during the cooldown")
+	Events.speed_gained.disconnect(on_gain)
+	Events.cannon_fired.disconnect(on_fire)
+	if gained.size() != 1 or kinds != [&"boost"]:
+		_fail("blast: signals %s %s" % [gained, kinds])
+	if not is_equal_approx(_player.speed_ratio, clampf(_player.speed / _player.tuning.max_speed, 0.0, 1.0)):
+		_fail("speed_ratio is off")
 	await get_tree().create_timer(_player.tuning.blast_cooldown + 0.1).timeout
 	if not cannon.blast():
 		_fail("blast: didn't reload")
 
 
 func _hop_case() -> void:
-	await _start(100.0, 25.0)
+	await _start(-20.0, 25.0)
 	_hops = 0
 	_player.do_hop()
 	if _hops != 1:

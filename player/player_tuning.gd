@@ -61,6 +61,8 @@ extends Resource
 ## Cannon blast (TankCannon): speed gained and reload time.
 @export_range(0.0, 30.0, 0.5, "suffix:m/s") var blast_speed: float = 7.0
 @export_range(0.1, 20.0, 0.1, "suffix:s") var blast_cooldown: float = 4.0
+## Forward kick from a cannon hop's recoil.
+@export_range(0.0, 10.0, 0.1, "suffix:m/s") var hop_speed_kick: float = 0.0
 
 @export_group("No Hander (v0.18)")
 ## What the HUD calls it (the tank's is its Turret Spin).

@@ -38,8 +38,12 @@ func blast() -> bool:
 	if cooldown > 0.0 or player.state_machine.get_state_name() == &"Bail":
 		return false
 	cooldown = player.tuning.blast_cooldown
+	var before: float = player.speed
 	player.speed = minf(player.speed + player.tuning.blast_speed, player.tuning.max_speed)
 	player.flash_boost()
+	Events.cannon_fired.emit(&"boost")
+	if player.speed > before:
+		Events.speed_gained.emit(player.speed - before)
 	rig.fire()
 	vfx.puff(0.6)
 	return true
@@ -49,3 +53,9 @@ func _on_hop() -> void:
 	rig.fire()
 	vfx.puff(0.45)
 	fx.cannon_shot()
+	Events.cannon_fired.emit(&"hop")
+	# A hop adds height, not ground speed, so no speed_gained unless a tuning
+	# gives the recoil a forward kick.
+	if player.tuning.hop_speed_kick > 0.0:
+		player.speed = minf(player.speed + player.tuning.hop_speed_kick, player.tuning.max_speed)
+		Events.speed_gained.emit(player.tuning.hop_speed_kick)

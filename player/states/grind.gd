@@ -34,9 +34,11 @@ func enter(msg: Dictionary) -> void:
 	player.leave_surface()
 	player.combo.add_action(0)
 	Events.grind_started.emit()
+	Events.tread_grind_started.emit()
 
 
 func exit() -> void:
+	Events.tread_grind_ended.emit()
 	player.grind_cooldown_timer = player.tuning.grind_resnap_cooldown
 
 

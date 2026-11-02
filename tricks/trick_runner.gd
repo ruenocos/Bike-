@@ -19,6 +19,8 @@ var elapsed: float = 0.0
 var queued: TrickData
 ## Name of the last finished trick, for the debug overlay.
 var last_trick_name: String = "-"
+## Tricks finished since the last landing (Land reads and clears it).
+var tricks_this_air: int = 0
 
 # Gesture tracking. The stick must start at neutral ("armed"), then pass the
 # threshold within the gesture window. A slow push never counts.
@@ -84,6 +86,7 @@ func air_update(delta: float) -> void:
 		current = null
 		elapsed = 0.0
 		last_trick_name = done.display_name
+		tricks_this_air += 1
 		trick_completed.emit(done)
 		if queued != null:
 			_start(queued)
@@ -92,6 +95,7 @@ func air_update(delta: float) -> void:
 
 func _start(trick: TrickData) -> void:
 	current = trick
+	Events.trick_started.emit(StringName(trick.display_name))
 	elapsed = 0.0
 
 
@@ -103,6 +107,7 @@ func complete_current() -> void:
 	var done: TrickData = current
 	cancel()
 	last_trick_name = done.display_name
+	tricks_this_air += 1
 	trick_completed.emit(done)
 
 
