@@ -45,6 +45,8 @@ func apply(b: Biome) -> void:
 				_fallback_sky = env.sky.sky_material
 				_fallback_fog_sky_affect = env.fog_sky_affect
 			env.sky.sky_material = b.sky_look.material
+			# Below the horizon the sky is the fog, so the far valley melts in.
+			b.sky_look.material.set_shader_parameter(&"ground_color", b.fog_color)
 			env.fog_sky_affect = b.sky_look.fog_sky_affect
 		elif env.sky != null:
 			if _fallback_sky != null:
