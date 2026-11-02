@@ -118,7 +118,7 @@ func release() -> void:
 ## A crash or respawn: the collapse gains `seconds` of its speed (never
 ## closer than penalty_min_gap because of a penalty alone).
 func add_time_penalty(seconds: float, player_progress: float) -> void:
-	if not running:
+	if not running or waiting:
 		return
 	var gain: float = seconds * maxf(speed, penalty_min_speed)
 	distance = maxf(distance, minf(distance + gain, player_progress - penalty_min_gap))
