@@ -81,6 +81,8 @@ func _run_game_cases() -> void:
 	collapse.release()
 	collapse.add_time_penalty(3.0, waiting_at + 500.0)
 	_check(collapse.distance > waiting_at, "released: a penalty moves the collapse (%.1f -> %.1f m)" % [waiting_at, collapse.distance])
+	# Those penalties went past the rider; it mustn't count as caught.
+	collapse.stop()
 	# Past the title menu's input delay, which still holds its button.
 	await get_tree().create_timer(menu.input_delay + 0.1).timeout
 	game.queue_free()
