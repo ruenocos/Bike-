@@ -31,18 +31,12 @@ extends Node3D
 @export_range(5.0, 200.0, 1.0, "suffix:m") var fall_margin: float = 40.0
 ## Respawning puts you this far back up the nearest ride line...
 @export_range(0.0, 100.0, 1.0, "suffix:m") var fall_respawn_back: float = 10.0
-## ...at this fraction of your speed (never below respawn_min_speed).
-@export_range(0.0, 1.0, 0.05) var fall_respawn_speed: float = 0.6
-@export_range(0.0, 60.0, 1.0, "suffix:m/s") var respawn_min_speed: float = 25.0
+## Respawn speed and the time cost of crashes / respawns live in
+## hazards/difficulty.tres (Collapse.difficulty), with the collapse curve.
 
 @export_group("Out of bounds and penalties")
 ## Seconds past the valley crests before you're put back on a line.
 @export_range(0.5, 10.0, 0.1, "suffix:s") var oob_time: float = 3.0
-## Time cost of an out-of-bounds or fall respawn (s): added to the stage
-## clock, and the collapse gains this many seconds of its speed.
-@export_range(0.0, 20.0, 0.1, "suffix:s") var respawn_time_cost: float = 3.0
-## Time cost of a crash / bail (s). Crashes never end the run by themselves.
-@export_range(0.0, 20.0, 0.1, "suffix:s") var bail_time_cost: float = 1.0
 
 @onready var builder: StageBuilder = $StageBuilder
 ## Monoliths, spires, shards and the energy core beside the valley (v0.31).
@@ -367,7 +361,7 @@ func _on_launched(grade: StringName, _boost: float) -> void:
 ## A crash or a bailed landing costs time; it never ends the run by itself.
 func _on_bailed() -> void:
 	if in_stage:
-		_add_penalty(bail_time_cost)
+		_add_penalty(collapse.difficulty.bail_time_cost)
 
 
 func _add_penalty(seconds: float) -> void:
@@ -549,12 +543,13 @@ func _respawn_on_line() -> void:
 		var at: Transform3D = builder.transform_at_distance(maxf(player_progress - fall_respawn_back, 0.0))
 		pos = at.origin + at.basis.y * 0.5
 		forward = -at.basis.z
-	var new_speed: float = maxf(player.speed * fall_respawn_speed, respawn_min_speed)
+	var new_speed: float = maxf(player.speed * collapse.difficulty.respawn_speed, collapse.difficulty.respawn_min_speed)
 	player.combo.drop()
 	player.place(pos, atan2(-forward.x, -forward.z), new_speed)
 	player.state_machine.transition_to(&"Air", {})
 	player_progress = builder.progress_at(player.global_position, true)
-	_add_penalty(respawn_time_cost)
+	collapse.give_room(player_progress)
+	_add_penalty(collapse.difficulty.respawn_time_cost)
 
 
 ## Stops the rider where it is while a menu is up. (Only its physics tick:

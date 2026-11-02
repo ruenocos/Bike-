@@ -6,7 +6,7 @@ extends Area3D
 ## speed and score, and counts toward upgrade rerolls (RunRules). It faces
 ## along its -Z: rotate it to face the way you'd fly / ride through.
 
-## Speed added on the way through (m/s, never past max_speed).
+## Speed added on the way through (m/s, never past PlayerTuning.speed_cap).
 @export_range(0.0, 30.0, 0.5, "suffix:m/s") var speed_boost: float = 6.0
 ## Points (added to the combo, so it keeps a combo going).
 @export_range(0, 5000, 10) var score: int = 300
@@ -79,7 +79,7 @@ func _on_body_entered(body: Node3D) -> void:
 		return
 	_taken = true
 	var t: PlayerTuning = player.tuning
-	player.speed = minf(player.speed + speed_boost, t.max_speed)
+	player.speed = t.capped(player.speed + speed_boost)
 	if player.state_machine.get_state_name() == &"Air" and player.velocity.length() > 1.0:
 		player.velocity += player.velocity.normalized() * speed_boost
 	player.flash_boost()

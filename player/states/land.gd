@@ -79,7 +79,7 @@ func enter(msg: Dictionary) -> void:
 	# Landed tricks give a little speed back (tricks vs speed).
 	if grade != &"bail" and player.air_tricks > 0:
 		var boost: float = minf(player.air_tricks * t.trick_land_boost, t.trick_land_boost_max)
-		player.speed = minf(player.speed + boost, t.max_speed)
+		player.speed = t.capped(player.speed + boost)
 		if boost > 0.0:
 			player.flash_boost()
 	player.air_tricks = 0
@@ -100,7 +100,7 @@ func enter(msg: Dictionary) -> void:
 			# No speed bonus coming back from a lip air: the halfpipe would grow every wall.
 			var bonus: float = t.lip_air_perfect_bonus if msg.get("lip_air", false) else t.perfect_bonus
 			var before_bonus: float = player.speed
-			player.speed = minf(player.speed * (1.0 + bonus), t.max_speed)
+			player.speed = t.capped(player.speed * (1.0 + bonus))
 			if player.speed > before_bonus:
 				Events.speed_gained.emit(player.speed - before_bonus)
 			# Lip-air landings score but don't raise the multiplier (see ComboTracker).

@@ -9,8 +9,9 @@ extends Node3D
 ## Speed = start speed + accel * time, capped at max speed, times the run's
 ## collapse_speed_scale (an upgrade lowers it). It also never falls more than
 ## the leash behind you, so clean fast riding keeps it at bay but every bail
-## or slow line brings it closer. All four come from the "Difficulty curve"
-## arrays on the Collapse node: one entry per stage.
+## or slow line brings it closer. All of it comes from `difficulty`
+## (hazards/difficulty.tres): one entry per stage. Since v0.33 it also slows
+## down while it's close (mercy), so you can pull away once back up to speed.
 ## The look (Wall, Debris pieces, Glow light) is plain nodes in the scene;
 ## this script only moves them.
 ## v0.8: it waits on the start pad until the sprint start is judged
@@ -26,28 +27,10 @@ signal caught
 ## Starts this far behind the rider's spawn point.
 @export_range(0.0, 300.0, 1.0, "suffix:m") var start_gap: float = 40.0
 
-@export_group("Difficulty curve")
-## One entry per stage: stage 1 first, stages past the end use the last entry.
-## Speed when it starts moving (m/s)...
-@export var start_speed_by_stage: Array[float] = [24.0, 28.0, 30.0, 32.0, 34.0, 36.0, 37.0, 38.0]
-## ...gaining this much per second (m/s²)...
-@export var accel_by_stage: Array[float] = [0.6, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4]
-## ...up to this (m/s). Clean riding cruises at ~50-55 on the 23 deg slope,
-## ~40-45 in the slow technical sections (v0.9; a clean stage averages ~50),
-## so even stage 1 creeps up on you there and falls back on the fast drops.
-## From stage ~6 it is as fast as a clean average: then the leash decides.
-@export var max_speed_by_stage: Array[float] = [42.0, 44.0, 46.0, 47.5, 49.0, 50.0, 51.0, 52.5]
-## The leash: never more than this far behind the rider (m). Stage 1 is
-## loose, so only real mistakes (several bails, falling off, stalling) let
-## it catch up; later stages keep it close.
-@export var leash_by_stage: Array[float] = [170.0, 160.0, 150.0, 135.0, 120.0, 110.0, 100.0, 95.0]
-
-@export_group("Penalties")
-## A time penalty (crash, out-of-bounds respawn) moves the collapse forward
-## by seconds x its speed (at least this speed, m/s)...
-@export_range(0.0, 80.0, 1.0, "suffix:m/s") var penalty_min_speed: float = 30.0
-## ...but a penalty alone never brings it closer than this (m).
-@export_range(0.0, 100.0, 1.0, "suffix:m") var penalty_min_gap: float = 40.0
+@export_group("Difficulty")
+## Chase speed, leash, mercy and penalties per stage (hazards/difficulty.tres,
+## shared with the Game and the HazardDirector).
+@export var difficulty: DifficultyCurve = preload("res://hazards/difficulty.tres")
 
 @export_group("Feel")
 ## It's felt from this far away (m): shake and rumble grow as it closes in.
@@ -119,8 +102,18 @@ func release() -> void:
 func add_time_penalty(seconds: float, player_progress: float) -> void:
 	if not running:
 		return
-	var gain: float = seconds * maxf(speed, penalty_min_speed)
-	distance = maxf(distance, minf(distance + gain, player_progress - penalty_min_gap))
+	var gain: float = seconds * maxf(speed, difficulty.penalty_min_speed)
+	distance = maxf(distance, minf(distance + gain, player_progress - difficulty.penalty_min_gap))
+
+
+## A respawn: pulls the wall back to at least `difficulty.respawn_safe_gap`
+## behind the rider's (new) progress. Never moves it forward.
+func give_room(player_progress: float) -> void:
+	if not running:
+		return
+	distance = minf(distance, player_progress - difficulty.respawn_safe_gap)
+	_place()
+	reset_physics_interpolation()
 
 
 ## 0 (far or not running) .. 1 (right behind you), for shake / rumble / HUD.
@@ -140,11 +133,13 @@ func advance(delta: float, player_progress: float) -> void:
 		return
 	_time += delta
 	if _time > start_delay:
-		var start: float = _for_stage(start_speed_by_stage)
-		speed = minf(start + _for_stage(accel_by_stage) * (_time - start_delay), _for_stage(max_speed_by_stage))
+		var start: float = _for_stage(difficulty.start_speed_by_stage)
+		speed = minf(start + _for_stage(difficulty.accel_by_stage) * (_time - start_delay), _for_stage(difficulty.max_speed_by_stage))
 		speed *= _speed_scale
+		if player_progress - distance < difficulty.mercy_gap:
+			speed *= _for_stage(difficulty.mercy_by_stage)
 		distance += speed * delta
-		distance = maxf(distance, player_progress - _for_stage(leash_by_stage))
+		distance = maxf(distance, player_progress - _for_stage(difficulty.leash_by_stage))
 	_place()
 	_builder.crumble_before(distance - 20.0)
 	if distance >= player_progress:
@@ -154,9 +149,7 @@ func advance(delta: float, player_progress: float) -> void:
 
 ## This stage's entry of a difficulty-curve array (the last one past its end).
 func _for_stage(values: Array[float]) -> float:
-	if values.is_empty():
-		return 0.0
-	return values[clampi(_stage_index, 0, values.size() - 1)]
+	return DifficultyCurve.pick(values, _stage_index)
 
 
 func _place() -> void:

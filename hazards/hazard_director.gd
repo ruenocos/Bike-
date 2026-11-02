@@ -7,8 +7,8 @@ extends Node
 ## near a rail or a boost gate.
 
 @export var falling_tree: PackedScene = preload("res://hazards/falling_tree.tscn")
-## Falling trees per stage (stage 1 first; the last entry repeats).
-@export var trees_per_stage: Array[int] = [1, 2, 3, 4, 5, 6, 6, 7]
+## Falling trees per stage come from here (DifficultyCurve.trees_per_stage).
+@export var difficulty: DifficultyCurve = preload("res://hazards/difficulty.tres")
 ## Hazards stay at least this far apart (m).
 @export_range(20.0, 500.0, 5.0, "suffix:m") var min_spacing: float = 120.0
 ## ...and this far from rails and boost gates (m).
@@ -30,9 +30,10 @@ var placed: Array[FallingTree] = []
 
 func populate(builder: StageBuilder, stage_index: int, stage_seed: int) -> void:
 	placed.clear()
-	if trees_per_stage.is_empty() or falling_tree == null:
+	var per_stage: Array[int] = difficulty.trees_per_stage if difficulty else ([] as Array[int])
+	if per_stage.is_empty() or falling_tree == null:
 		return
-	var want: int = trees_per_stage[mini(stage_index, trees_per_stage.size() - 1)]
+	var want: int = per_stage[mini(stage_index, per_stage.size() - 1)]
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.seed = hash(stage_seed + 911)
 	var avoid: PackedVector3Array = _avoid_points()

@@ -71,7 +71,7 @@ func _judge() -> void:
 		grade = &"good"
 		boost = good_boost
 	if _player != null and boost > 0.0:
-		_player.speed = minf(_player.speed + boost, _player.tuning.max_speed)
+		_player.speed = _player.tuning.capped(_player.speed + boost)
 		if _player.is_on_floor():
 			_player.velocity = _player.ground_dir * _player.speed
 	launched.emit(grade, boost)
