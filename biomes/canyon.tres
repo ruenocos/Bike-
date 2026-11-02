@@ -1,5 +1,6 @@
-[gd_resource type="Resource" script_class="Biome" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="Biome" load_steps=12 format=3]
 
+[ext_resource type="Resource" path="res://sky/looks/canyon.tres" id="80_sky"]
 [ext_resource type="Script" path="res://biomes/biome.gd" id="1_biome"]
 [ext_resource type="PackedScene" path="res://chunks/landscape/set_narrows.tscn" id="91_set"]
 [ext_resource type="PackedScene" path="res://chunks/landscape/set_mesa_launch.tscn" id="90_set"]
@@ -31,6 +32,7 @@ shadow_tint = Color(0.6, 0.2, 0.72, 1)
 shadow_tint_strength = 0.65
 height_fog_density = 0.0015
 prop_tint = Color(1, 0.88, 0.78, 1)
+sky_look = ExtResource("80_sky")
 sky_top = Color(0.28, 0.42, 0.68, 1)
 sky_horizon = Color(0.95, 0.83, 0.68, 1)
 ground_horizon = Color(0.9, 0.75, 0.62, 1)

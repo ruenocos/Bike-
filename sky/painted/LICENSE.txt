@@ -1,0 +1,5 @@
+Painted sky panoramas (fs_sky_*.png): FreeStylized, https://freestylized.com/category/skybox/anime
+(sky_101, sky_113, sky_116, sky_118, 2K equirect versions).
+Royalty Free License: free for commercial and non-commercial use, per each
+asset page. FreeStylized notes these were made by combining generative AI
+with traditional painting.

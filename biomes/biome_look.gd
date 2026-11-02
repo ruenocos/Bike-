@@ -40,7 +40,16 @@ func apply(b: Biome) -> void:
 	RenderingServer.global_shader_parameter_set(&"ground_variation", b.ground_variation)
 	if world_environment != null and world_environment.environment != null:
 		var env: Environment = world_environment.environment
-		if env.sky != null:
+		if env.sky != null and b.sky_look != null and b.sky_look.material != null:
+			if _fallback_sky == null and env.sky.sky_material is ProceduralSkyMaterial:
+				_fallback_sky = env.sky.sky_material
+				_fallback_fog_sky_affect = env.fog_sky_affect
+			env.sky.sky_material = b.sky_look.material
+			env.fog_sky_affect = b.sky_look.fog_sky_affect
+		elif env.sky != null:
+			if _fallback_sky != null:
+				env.sky.sky_material = _fallback_sky
+				env.fog_sky_affect = _fallback_fog_sky_affect
 			var sky: ProceduralSkyMaterial = env.sky.sky_material as ProceduralSkyMaterial
 			if sky != null:
 				sky.sky_top_color = b.sky_top
@@ -82,6 +91,9 @@ func apply(b: Biome) -> void:
 
 
 var _height_fog_below: float = 40.0
+## The scene's own procedural sky, kept for biomes without a sky look.
+var _fallback_sky: Material
+var _fallback_fog_sky_affect: float = 0.5
 
 
 ## The height fog follows whoever is looking (the rider, or the title

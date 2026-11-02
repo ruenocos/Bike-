@@ -1,0 +1,46 @@
+[gd_resource type="Resource" script_class="SkyLook" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://sky/sky_look.gd" id="1_look"]
+[ext_resource type="Shader" path="res://sky/anime_sky.gdshader" id="2_sky"]
+[ext_resource type="Texture2D" path="res://sky/cloud_noise.tres" id="3_noise"]
+[ext_resource type="Texture2D" path="res://sky/painted/fs_sky_113.png" id="4_pano"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
+shader = ExtResource("2_sky")
+shader_parameter/cloud_noise = ExtResource("3_noise")
+shader_parameter/panorama = ExtResource("4_pano")
+shader_parameter/use_panorama = true
+shader_parameter/panorama_sun_u = 359.5
+shader_parameter/panorama_exposure = 0.85
+shader_parameter/panorama_saturation = 1.2
+shader_parameter/panorama_contrast = 1.05
+shader_parameter/sun_side_strength = 0.3
+shader_parameter/sun_size = 0.0
+shader_parameter/halo_strength = 0.1
+shader_parameter/ring_strength = 0.0
+shader_parameter/cloud_coverage = 0.0
+shader_parameter/wall_height = 0.0
+shader_parameter/structure_rim_width = 0.3
+shader_parameter/structure_haze = 0.55
+shader_parameter/panorama_tint = Color(0.95, 0.85, 1.0, 1)
+shader_parameter/ground_color = Color(0.62, 0.38, 0.46, 1)
+shader_parameter/horizon_color = Color(0.92, 0.42, 0.4, 1)
+shader_parameter/sun_side_color = Color(1.0, 0.5, 0.35, 1)
+shader_parameter/halo_color = Color(1.0, 0.6, 0.45, 1)
+shader_parameter/star_density = 0.006
+shader_parameter/star_fade_elevation = 25.0
+shader_parameter/structure_color = Color(0.25, 0.18, 0.38, 1)
+shader_parameter/structure_rim = Color(1.0, 0.55, 0.45, 1)
+shader_parameter/structure_glow = Color(1.0, 0.35, 0.8, 1)
+shader_parameter/structure_glow_strength = 1.6
+shader_parameter/ring = Vector3(-30.0, 0.0, 22.0)
+shader_parameter/ring_thickness = 2.6
+shader_parameter/ring_aspect = 0.6
+shader_parameter/spire = Vector3(26.0, 40.0, 4.0)
+shader_parameter/shards = Vector3(0.0, 0.0, 0.0)
+shader_parameter/shard_count = 0.0
+
+[resource]
+script = ExtResource("1_look")
+material = SubResource("ShaderMaterial_sky")
+fog_sky_affect = 0.0

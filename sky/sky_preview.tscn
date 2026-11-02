@@ -1,0 +1,95 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://sky/sky_preview.gd" id="1_prev"]
+[ext_resource type="Script" path="res://biomes/biome.gd" id="2_biome"]
+[ext_resource type="Resource" path="res://biomes/meadow.tres" id="3_meadow"]
+[ext_resource type="Resource" path="res://biomes/canyon.tres" id="4_canyon"]
+[ext_resource type="Resource" path="res://biomes/snow.tres" id="5_snow"]
+[ext_resource type="Resource" path="res://biomes/quarry.tres" id="6_quarry"]
+[ext_resource type="Script" path="res://biomes/biome_look.gd" id="7_look"]
+[ext_resource type="Shader" path="res://chunks/materials/far_ground.gdshader" id="11_grid"]
+[ext_resource type="Script" path="res://chunks/parts/mountain_ring.gd" id="22_mountains"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
+sky_top_color = Color(0.17, 0.29, 0.56, 1)
+sky_horizon_color = Color(1, 0.72, 0.5, 1)
+sky_curve = 0.09
+ground_bottom_color = Color(0.28, 0.22, 0.22, 1)
+ground_horizon_color = Color(0.95, 0.69, 0.52, 1)
+sun_angle_max = 25.0
+sun_curve = 0.08
+
+[sub_resource type="Sky" id="Sky_main"]
+sky_material = SubResource("ProceduralSkyMaterial_sky")
+
+[sub_resource type="Environment" id="Environment_main"]
+background_mode = 2
+sky = SubResource("Sky_main")
+ambient_light_source = 3
+ambient_light_energy = 1.1
+tonemap_mode = 4
+glow_enabled = true
+glow_intensity = 0.9
+glow_bloom = 0.08
+fog_enabled = true
+fog_light_color = Color(0.93, 0.72, 0.56, 1)
+fog_sun_scatter = 0.35
+fog_density = 0.0007
+fog_aerial_perspective = 0.6
+fog_sky_affect = 0.5
+adjustment_enabled = true
+adjustment_saturation = 1.12
+
+[sub_resource type="ShaderMaterial" id="Mat_far"]
+render_priority = 0
+shader = ExtResource("11_grid")
+shader_parameter/base_color = Color(0.46, 0.41, 0.33, 1)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_far"]
+material = SubResource("Mat_far")
+size = Vector2(4000, 4000)
+
+[node name="SkyPreview" type="Node3D"]
+script = ExtResource("1_prev")
+biomes = Array[ExtResource("2_biome")]([ExtResource("3_meadow"), ExtResource("4_canyon"), ExtResource("5_snow"), ExtResource("6_quarry")])
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_main")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.81915, 0.19617, -0.53899, 0.00000, 0.93969, 0.34202, 0.57358, 0.28017, -0.76975, 0, 0, 0)
+light_color = Color(1, 0.79, 0.56, 1)
+light_energy = 1.5
+shadow_enabled = true
+directional_shadow_max_distance = 220.0
+
+[node name="FarGround" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -320, 0)
+mesh = SubResource("PlaneMesh_far")
+
+[node name="Mountains" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -200, 0)
+script = ExtResource("22_mountains")
+
+[node name="Near" type="Node3D" parent="Mountains"]
+script = ExtResource("22_mountains")
+count = 26
+radius_min = 1300.0
+radius_max = 1700.0
+height_min = 140.0
+height_max = 340.0
+spread = 1.8
+ring_seed = 9
+
+[node name="BiomeLook" type="Node" parent="." node_paths=PackedStringArray("world_environment", "sun", "far_ground", "mountains", "near_mountains")]
+script = ExtResource("7_look")
+world_environment = NodePath("../WorldEnvironment")
+sun = NodePath("../DirectionalLight3D")
+far_ground = NodePath("../FarGround")
+mountains = NodePath("../Mountains")
+near_mountains = NodePath("../Mountains/Near")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.99863, 0.05234, 0, -0.05234, 0.99863, 0, 0, 0)
+fov = 80.0
+far = 4500.0
