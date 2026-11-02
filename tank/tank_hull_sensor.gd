@@ -18,7 +18,7 @@ extends Area3D
 @export_range(0.0, 200.0, 1.0, "suffix:m/s²") var scrape_push: float = 90.0
 @export_range(0.0, 0.3, 0.01) var scrape_speed_cost: float = 0.03
 
-@onready var player: Player = get_parent() as Player
+@onready var player: Player = get_parent().get_parent() as Player
 
 ## Solid bodies overlapping the hull, for the push while they do.
 var _scraping: Array[Node3D] = []

@@ -44,6 +44,9 @@ func _run() -> void:
 	await _hit_case("fence, tank: crushed", FENCE, true, true)
 	await _hit_case("rock, tank: crash", ROCK, true, false)
 	await _hit_case("log, no crushing: crash", LOG, false, false)
+	await _hull_case("log 1.1 m off the line: the hull reaches it", LOG, 1.1, true, false)
+	await _hull_case("rock 2.4 m off the line: scrape, no crash", ROCK, 2.4, false, false)
+	await _hull_case("rock 0.7 m off the line: head-on, crash", ROCK, 0.7, false, true)
 	await _blast_case()
 	await _hop_case()
 	if _failures.is_empty():
@@ -97,6 +100,32 @@ func _hit_case(label: String, scene: PackedScene, crushes: bool, want_crush: boo
 	elif _bails == 0 or _crushes != 0:
 		_fail("%s: crushes %d, bails %d" % [label, _crushes, _bails])
 	# Let any bail run out before the next case.
+	for i: int in 90:
+		await get_tree().physics_frame
+	if is_instance_valid(prop):
+		prop.queue_free()
+	await get_tree().physics_frame
+
+
+func _hull_case(label: String, scene: PackedScene, off: float, want_crush: bool, want_bail: bool) -> void:
+	_player.tuning.crushes_props = true
+	await _start(-20.0, 40.0)
+	var prop: Node3D = scene.instantiate() as Node3D
+	add_child(prop)
+	prop.global_position = _ground(off, _player.global_position.z - 45.0)
+	_bails = 0
+	_crushes = 0
+	var passed_z: float = prop.global_position.z - 8.0
+	for i: int in 60 * 3:
+		await get_tree().physics_frame
+		if _player.global_position.z < passed_z:
+			break
+	if want_crush and _crushes != 1:
+		_fail("%s: not crushed" % label)
+	if want_bail and _bails == 0:
+		_fail("%s: no crash" % label)
+	if not want_bail and _bails != 0:
+		_fail("%s: crashed (%s)" % [label, _player.last_bail_reason])
 	for i: int in 90:
 		await get_tree().physics_frame
 	if is_instance_valid(prop):

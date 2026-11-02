@@ -1,4 +1,4 @@
-[gd_scene load_steps=32 format=3]
+[gd_scene load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://player/player.gd" id="1_player"]
 [ext_resource type="Script" path="res://player/state_machine.gd" id="2_machine"]
@@ -19,11 +19,15 @@
 [ext_resource type="PackedScene" path="res://vfx/rider_vfx.tscn" id="18_vfx"]
 [ext_resource type="PackedScene" path="res://tank/tank_rig.tscn" id="19_rig"]
 [ext_resource type="Script" path="res://tank/tank_cannon.gd" id="91_cannon"]
+[ext_resource type="Script" path="res://tank/tank_hull_sensor.gd" id="94_hull"]
 [ext_resource type="Resource" path="res://tank/tank_tuning.tres" id="92_tuning"]
 [ext_resource type="PackedScene" path="res://vfx/anime_fx.tscn" id="90_animefx"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_body"]
 radius = 0.35
+
+[sub_resource type="BoxShape3D" id="Box_hull"]
+size = Vector3(2.9, 1.3, 3.9)
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_probe"]
 radius = 0.3
@@ -94,3 +98,11 @@ far = 4500.0
 
 [node name="TankCannon" type="Node" parent="."]
 script = ExtResource("91_cannon")
+
+[node name="HullSensor" type="Area3D" parent="Visual"]
+script = ExtResource("94_hull")
+monitorable = false
+
+[node name="Shape" type="CollisionShape3D" parent="Visual/HullSensor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)
+shape = SubResource("Box_hull")

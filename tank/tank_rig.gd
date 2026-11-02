@@ -55,10 +55,13 @@ var _last_state: StringName = &""
 func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
-	CelLook.apply(self, true)
-	_own_materials(self)
+	for part: Node in $Body.get_children():
+		if part is CrewMember or part is Teacup:
+			continue
+		CelLook.apply(part, true)
+		_own_materials(part)
+		_finish(part)
 	_set_up_flash()
-	_finish(self)
 	var parent: Node = get_parent()
 	while parent != null and not parent is Player:
 		parent = parent.get_parent()
@@ -144,6 +147,8 @@ func _drive_body(delta: float) -> void:
 ## The tank's own material copies (CelLook's are shared with props) with a
 ## brighter rim and a sharp highlight.
 func _own_materials(node: Node) -> void:
+	if node is CrewMember:
+		return
 	var mi: MeshInstance3D = node as MeshInstance3D
 	if mi != null:
 		for s: int in mi.mesh.get_surface_count():
@@ -159,9 +164,13 @@ func _own_materials(node: Node) -> void:
 
 func _finish(node: Node) -> void:
 	# Layer 2: props' contact-shadow decals (cull mask 1) don't paint on it.
+	if node is CrewMember:
+		return
 	if node is VisualInstance3D:
 		(node as VisualInstance3D).layers = 2
-	CelLook.keep_outline(self, line_width)
+		CelLook.keep_outline(node, line_width)
+	for child: Node in node.get_children():
+		_finish(child)
 
 
 ## A bright star at the muzzle, built here so CelLook leaves it unlit.

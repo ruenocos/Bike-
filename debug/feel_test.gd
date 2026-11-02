@@ -88,7 +88,8 @@ func _ready() -> void:
 	for arg: String in OS.get_cmdline_user_args():
 		if arg.begins_with("--feel-only="):
 			_only = arg.trim_prefix("--feel-only=")
-	_player = PLAYER.instantiate() as Player
+	# `-- --tank` rides the tank instead (v0.32).
+	_player = (load("res://tank/tank.tscn") as PackedScene if OS.get_cmdline_user_args().has("--tank") else PLAYER).instantiate() as Player
 	add_child(_player)
 	# The chunks descend hundreds of metres; never "fall off the world" here.
 	_player.kill_y = -100000.0

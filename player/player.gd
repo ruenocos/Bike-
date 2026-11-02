@@ -664,7 +664,7 @@ func _check_obstacle_hit(approach: Vector3) -> Hit:
 		if collider == null or not collider.is_in_group(&"obstacles"):
 			continue
 		if tuning.crushes_props and collider.is_in_group(&"crushable"):
-			_crush(collider as CollisionObject3D, approach.length())
+			crush_prop(collider as CollisionObject3D, approach.length())
 			return Hit.GLANCE
 		var normal: Vector3 = collision.get_normal()
 		var impact: float = -approach.dot(normal)
@@ -707,7 +707,9 @@ func _check_obstacle_hit(approach: Vector3) -> Hit:
 
 ## Rolls over something crushable: it stops colliding and flattens, you lose
 ## a little speed and score a little.
-func _crush(body: CollisionObject3D, approach_speed: float) -> void:
+func crush_prop(body: CollisionObject3D, approach_speed: float = -1.0) -> void:
+	if approach_speed < 0.0:
+		approach_speed = speed
 	body.collision_layer = 0
 	body.collision_mask = 0
 	var model: PropModel = body.get_node_or_null("Model") as PropModel

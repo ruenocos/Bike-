@@ -1,0 +1,247 @@
+[gd_scene load_steps=34 format=3]
+
+[ext_resource type="Script" path="res://tank/crew_member.gd" id="1_crew"]
+
+[sub_resource type="StandardMaterial3D" id="M1"]
+albedo_color = Color(0.106, 0.137, 0.251, 1)
+
+[sub_resource type="CapsuleMesh" id="S1"]
+material = SubResource("M1")
+radius = 0.17
+height = 0.62
+radial_segments = 10
+rings = 3
+
+[sub_resource type="StandardMaterial3D" id="M2"]
+albedo_color = Color(0.08, 0.09, 0.14, 1)
+
+[sub_resource type="BoxMesh" id="S2"]
+material = SubResource("M2")
+size = Vector3(0.34, 0.2, 0.24)
+
+[sub_resource type="StandardMaterial3D" id="M3"]
+albedo_color = Color(0.08, 0.09, 0.14, 1)
+
+[sub_resource type="CapsuleMesh" id="S3"]
+material = SubResource("M3")
+radius = 0.075
+height = 0.42
+radial_segments = 10
+rings = 3
+
+[sub_resource type="StandardMaterial3D" id="M4"]
+albedo_color = Color(0.08, 0.09, 0.14, 1)
+
+[sub_resource type="CapsuleMesh" id="S4"]
+material = SubResource("M4")
+radius = 0.075
+height = 0.42
+radial_segments = 10
+rings = 3
+
+[sub_resource type="StandardMaterial3D" id="M5"]
+albedo_color = Color(1, 0.45, 0.12, 1)
+
+[sub_resource type="CapsuleMesh" id="S5"]
+material = SubResource("M5")
+radius = 0.13
+height = 0.3
+radial_segments = 10
+rings = 3
+
+[sub_resource type="StandardMaterial3D" id="M6"]
+albedo_color = Color(0.16, 0.2, 0.34, 1)
+
+[sub_resource type="CapsuleMesh" id="S6"]
+material = SubResource("M6")
+radius = 0.06
+height = 0.42
+radial_segments = 10
+rings = 3
+
+[sub_resource type="StandardMaterial3D" id="M7"]
+albedo_color = Color(1, 0.82, 0.7, 1)
+
+[sub_resource type="SphereMesh" id="S7"]
+material = SubResource("M7")
+radius = 0.06
+height = 0.12
+radial_segments = 12
+rings = 8
+
+[sub_resource type="StandardMaterial3D" id="M8"]
+albedo_color = Color(0.16, 0.2, 0.34, 1)
+
+[sub_resource type="CapsuleMesh" id="S8"]
+material = SubResource("M8")
+radius = 0.06
+height = 0.42
+radial_segments = 10
+rings = 3
+
+[sub_resource type="StandardMaterial3D" id="M9"]
+albedo_color = Color(1, 0.82, 0.7, 1)
+
+[sub_resource type="SphereMesh" id="S9"]
+material = SubResource("M9")
+radius = 0.06
+height = 0.12
+radial_segments = 12
+rings = 8
+
+[sub_resource type="StandardMaterial3D" id="M10"]
+albedo_color = Color(1, 0.82, 0.7, 1)
+
+[sub_resource type="SphereMesh" id="S10"]
+material = SubResource("M10")
+radius = 0.21
+height = 0.42
+radial_segments = 12
+rings = 8
+
+[sub_resource type="StandardMaterial3D" id="M11"]
+albedo_color = Color(0.75, 0.32, 0.18, 1)
+
+[sub_resource type="SphereMesh" id="S11"]
+material = SubResource("M11")
+radius = 0.225
+height = 0.45
+radial_segments = 12
+rings = 8
+
+[sub_resource type="StandardMaterial3D" id="M12"]
+albedo_color = Color(0.106, 0.137, 0.251, 1)
+
+[sub_resource type="CylinderMesh" id="S12"]
+material = SubResource("M12")
+top_radius = 0.2
+bottom_radius = 0.24
+height = 0.08
+radial_segments = 12
+rings = 1
+
+[sub_resource type="StandardMaterial3D" id="M13"]
+albedo_color = Color(1, 0.45, 0.12, 1)
+
+[sub_resource type="CylinderMesh" id="S13"]
+material = SubResource("M13")
+top_radius = 0.245
+bottom_radius = 0.245
+height = 0.03
+radial_segments = 12
+rings = 1
+
+[sub_resource type="StandardMaterial3D" id="M14"]
+albedo_color = Color(0.75, 0.32, 0.18, 1)
+
+[sub_resource type="CapsuleMesh" id="S14"]
+material = SubResource("M14")
+radius = 0.1
+height = 0.55
+radial_segments = 10
+rings = 3
+
+[sub_resource type="StandardMaterial3D" id="M15"]
+albedo_color = Color(0.75, 0.32, 0.18, 1)
+
+[sub_resource type="CapsuleMesh" id="S15"]
+material = SubResource("M15")
+radius = 0.05
+height = 0.36
+radial_segments = 10
+rings = 3
+
+[sub_resource type="StandardMaterial3D" id="M16"]
+albedo_color = Color(0.75, 0.32, 0.18, 1)
+
+[sub_resource type="CapsuleMesh" id="S16"]
+material = SubResource("M16")
+radius = 0.05
+height = 0.36
+radial_segments = 10
+rings = 3
+
+[node name="CrewMember" type="Node3D"]
+script = ExtResource("1_crew")
+
+[node name="Figure" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="Jacket" type="MeshInstance3D" parent="Figure"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.36, 0)
+mesh = SubResource("S1")
+
+[node name="Hips" type="MeshInstance3D" parent="Figure"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
+mesh = SubResource("S2")
+
+[node name="LegL" type="MeshInstance3D" parent="Figure"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.09, -0.1, -0.02)
+mesh = SubResource("S3")
+
+[node name="LegR" type="MeshInstance3D" parent="Figure"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.09, -0.1, -0.02)
+mesh = SubResource("S4")
+
+[node name="Scarf" type="MeshInstance3D" parent="Figure"]
+transform = Transform3D(1.15, 0, 0, 0, 0.42, 0, 0, 0, 1.15, 0, 0.62, 0)
+mesh = SubResource("S5")
+
+[node name="ScarfPoint" type="Node3D" parent="Figure"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.62, 0.12)
+
+[node name="ArmL" type="Node3D" parent="Figure"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.22, 0.58, 0)
+
+[node name="Sleeve" type="MeshInstance3D" parent="Figure/ArmL"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.02, -0.2, 0)
+mesh = SubResource("S6")
+
+[node name="Hand" type="MeshInstance3D" parent="Figure/ArmL"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.02, -0.43, 0)
+mesh = SubResource("S7")
+
+[node name="ArmR" type="Node3D" parent="Figure"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.22, 0.58, 0)
+
+[node name="Sleeve" type="MeshInstance3D" parent="Figure/ArmR"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.02, -0.2, 0)
+mesh = SubResource("S8")
+
+[node name="Hand" type="MeshInstance3D" parent="Figure/ArmR"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.02, -0.43, 0)
+mesh = SubResource("S9")
+
+[node name="Head" type="Node3D" parent="Figure"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.92, 0)
+
+[node name="Face" type="MeshInstance3D" parent="Figure/Head"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("S10")
+
+[node name="Fringe" type="MeshInstance3D" parent="Figure/Head"]
+transform = Transform3D(1, 0, 0, 0, 0.8, 0, 0, 0, 0.95, 0, 0.06, 0.035)
+mesh = SubResource("S11")
+
+[node name="Cap" type="MeshInstance3D" parent="Figure/Head"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.19, 0)
+mesh = SubResource("S12")
+
+[node name="CapBand" type="MeshInstance3D" parent="Figure/Head"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15, 0)
+mesh = SubResource("S13")
+
+[node name="Hair" type="Node3D" parent="Figure/Head"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0.12)
+
+[node name="Tail" type="MeshInstance3D" parent="Figure/Head/Hair"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.22, 0.07)
+mesh = SubResource("S14")
+
+[node name="LockL" type="MeshInstance3D" parent="Figure/Head/Hair"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.14, -0.12, 0.02)
+mesh = SubResource("S15")
+
+[node name="LockR" type="MeshInstance3D" parent="Figure/Head/Hair"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.14, -0.12, 0.02)
+mesh = SubResource("S16")

@@ -48,7 +48,8 @@ func _run() -> void:
 				scenes.append(scene)
 	scenes.append(builder.finish_chunk)
 	builder.free()
-	_player = PLAYER.instantiate() as Player
+	# `-- --tank` rides the tank instead (v0.32).
+	_player = (load("res://tank/tank.tscn") as PackedScene if OS.get_cmdline_user_args().has("--tank") else PLAYER).instantiate() as Player
 	add_child(_player)
 	_player.kill_y = -100000.0
 	_player.auto_respawn = false

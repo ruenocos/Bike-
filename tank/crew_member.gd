@@ -35,8 +35,8 @@ var _home_y: float = 0.0
 
 func _ready() -> void:
 	_home_y = _figure.position.y
-	CelLook.apply(self, true)
-	CelLook.keep_outline(self, 2.5)
+	CelLook.apply($Figure, true)
+	CelLook.keep_outline($Figure, 2.5)
 	_set_layer(self)
 	var parent: Node = get_parent()
 	while parent != null and not parent is Player:
