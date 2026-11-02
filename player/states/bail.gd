@@ -12,6 +12,7 @@ func enter(_msg: Dictionary) -> void:
 	player.tricks.cancel()
 	player.combo.drop()
 	player.perfect_streak = 0
+	player.clear_no_hander()
 	Events.bailed.emit()
 
 

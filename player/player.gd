@@ -284,6 +284,13 @@ func finish_no_hander() -> void:
 	no_hander_time = 0.0
 
 
+## Forgets the No Hander: the hold, its time and a touchdown's grace.
+func clear_no_hander() -> void:
+	no_hander = false
+	no_hander_time = 0.0
+	_no_hander_grace = 0.0
+
+
 func _update_no_hander_grace(delta: float) -> void:
 	if _no_hander_grace <= 0.0:
 		return
@@ -993,8 +1000,11 @@ func place(at: Vector3, new_heading: float, new_speed: float) -> void:
 	respawn_hint = null
 	crashed = false
 	_crash_cooldown = 0.0
+	_pending_hazard = []
 	air_tricks = 0
 	_steer_smoothed = 0.0
+	clear_no_hander()
 	tricks.cancel()
+	tricks.tricks_this_air = 0
 	reset_physics_interpolation()
 	camera_rig.snap()
