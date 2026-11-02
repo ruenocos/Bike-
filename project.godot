@@ -193,6 +193,18 @@ ground_variation={
 "type": "float",
 "value": 0.06
 }
+ground_flow_strength={
+"type": "float",
+"value": 0.16
+}
+ground_flow_size={
+"type": "float",
+"value": 0.45
+}
+ground_flow_far={
+"type": "float",
+"value": 45.0
+}
 shadow_tint={
 "type": "color",
 "value": Color(0.52, 0.55, 0.78, 1)

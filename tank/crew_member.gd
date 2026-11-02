@@ -8,6 +8,8 @@ extends Node3D
 
 ## A character scene to show instead of the stand-in body.
 @export var model: PackedScene
+## Show the primitive stand-in when there's no model. Off: nobody is there.
+@export var show_stand_in: bool = false
 @export var scarf_color: Color = Color(1.0, 0.45, 0.12, 1.0)
 ## How far they lean against a carve (deg).
 @export_range(0.0, 60.0, 1.0) var lean_deg: float = 18.0
@@ -34,6 +36,10 @@ var _home_y: float = 0.0
 
 
 func _ready() -> void:
+	if model == null and not show_stand_in:
+		visible = false
+		set_process(false)
+		return
 	_home_y = _figure.position.y
 	CelLook.apply($Figure, true)
 	CelLook.keep_outline($Figure, 2.5)

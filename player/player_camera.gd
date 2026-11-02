@@ -17,6 +17,10 @@ extends Node3D
 @onready var player: Player = get_parent() as Player
 @onready var spring_arm: SpringArm3D = $SpringArm3D
 @onready var camera: Camera3D = $SpringArm3D/Camera3D
+## Speed framing, FOV kick and radial blur (v0.31). Optional.
+@onready var speed_feel: SpeedFeel = get_node_or_null(^"SpeedFeel") as SpeedFeel
+## Speed FOV before the kick is added (smoothed).
+var _fov: float = 75.0
 
 var _punch: float = 0.0
 var _punch_tween: Tween
@@ -60,6 +64,7 @@ func _ready() -> void:
 	spring_arm.rotation = Vector3(deg_to_rad(-t.cam_pitch_deg), 0.0, 0.0)
 	spring_arm.spring_length = t.cam_distance
 	camera.fov = t.fov_base
+	_fov = t.fov_base
 	global_position = player.global_position
 	rotation = Vector3(0.0, player.heading, 0.0)
 	_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
@@ -149,9 +154,21 @@ func _process(delta: float) -> void:
 	spring_arm.spring_length = lerpf(t.cam_distance, t.cam_distance_fast, fast) + t.cam_transition_distance * _transition_blend \
 			+ t.cam_open_distance * _open_blend + t.cam_tight_distance * _tight_blend
 
+	# Low chase framing at speed (SpeedFeel, v0.31): the camera drops to just
+	# off the ground and close behind, scaled to the vehicle's size, so the
+	# ground fills the lower half and streams past. Replaces the open-valley
+	# pull-back at speed; in the air SpeedFeel raises it partly back.
+	if speed_feel:
+		var low: float = speed_feel.low_blend * (1.0 - _transition_blend)
+		spring_arm.position.y = lerpf(spring_arm.position.y, speed_feel.low_height_m(), low)
+		spring_arm.spring_length = lerpf(spring_arm.spring_length, speed_feel.low_distance_m(), low)
+		spring_arm.rotation.x = lerpf(spring_arm.rotation.x, -speed_feel.low_pitch_rad() - _slope_pitch, low)
+
 	# FOV widens with speed. fov_smoothing is roughly the time to get there.
+	# A speed gain kicks it wider on top (SpeedFeel.fov_kick).
 	var target_fov: float = lerpf(t.fov_base, t.fov_max, pow(speed_ratio, t.fov_speed_curve))
-	camera.fov = lerpf(camera.fov, target_fov, _damp_weight(t.fov_smoothing / 3.0, delta))
+	_fov = lerpf(_fov, target_fov, _damp_weight(t.fov_smoothing / 3.0, delta))
+	camera.fov = _fov + (speed_feel.fov_kick if speed_feel else 0.0)
 
 	# Landing punch: shove the camera forward and down, ease back out.
 	# The spring arm places its child at z = hit length, so offset from there.

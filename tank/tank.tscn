@@ -1,4 +1,4 @@
-[gd_scene load_steps=34 format=3]
+[gd_scene load_steps=35 format=3]
 
 [ext_resource type="Script" path="res://player/player.gd" id="1_player"]
 [ext_resource type="Script" path="res://player/state_machine.gd" id="2_machine"]
@@ -18,6 +18,7 @@
 [ext_resource type="PackedScene" path="res://vfx/speed_lines.tscn" id="16_speed_lines"]
 [ext_resource type="PackedScene" path="res://vfx/rider_vfx.tscn" id="18_vfx"]
 [ext_resource type="PackedScene" path="res://tank/tank_rig.tscn" id="19_rig"]
+[ext_resource type="PackedScene" path="res://vfx/speed_feel/speed_feel.tscn" id="95_speedfeel"]
 [ext_resource type="Script" path="res://tank/tank_cannon.gd" id="91_cannon"]
 [ext_resource type="Script" path="res://tank/tank_hull_sensor.gd" id="94_hull"]
 [ext_resource type="Resource" path="res://tank/tank_tuning.tres" id="92_tuning"]
@@ -106,3 +107,6 @@ monitorable = false
 [node name="Shape" type="CollisionShape3D" parent="Visual/HullSensor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)
 shape = SubResource("Box_hull")
+
+[node name="SpeedFeel" parent="CameraRig" instance=ExtResource("95_speedfeel")]
+vehicle_height = 2.6

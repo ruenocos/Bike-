@@ -39,5 +39,6 @@ signal tread_grind_started
 @warning_ignore("unused_signal")
 signal tread_grind_ended
 ## Speed was just added (m/s): boosts, cannon hops, perfect landings.
+## SpeedFeel kicks the FOV and blur on it.
 @warning_ignore("unused_signal")
 signal speed_gained(amount: float)

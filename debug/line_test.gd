@@ -161,6 +161,8 @@ func _crash_check(chunk: Chunk) -> void:
 	var start: Vector3 = terrain.to_global(terrain.valley_to_local(target.x, terrain.surface_height(target.x, -(target.z - 25.0)) + 0.3, target.z - 25.0))
 	for i: int in 2:
 		await get_tree().physics_frame
+	# This check wants a solid tree: the tank would crush a sapling.
+	_player.tuning.crushes_props = false
 	var aim: Vector3 = tree.global_position - start
 	_player.place(start, atan2(-aim.x, -aim.z), 50.0)
 	_player.state_machine.transition_to(&"Air", {})

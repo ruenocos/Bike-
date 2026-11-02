@@ -8,6 +8,7 @@ shader_type spatial;
 
 #include "res://vfx/cel/includes/base-cel-shader.gdshaderinc"
 #include "res://chunks/materials/ground_noise.gdshaderinc"
+#include "res://vfx/speed_feel/ground_flow.gdshaderinc"
 
 global uniform vec4 ground_dirt;
 global uniform vec4 ground_grass;
@@ -67,6 +68,8 @@ void fragment() {
 		ground = mix(ground, srgb(ground_rock.rgb), rock);
 		// Big soft patches (and a finer layer) so flat colour shows its shape.
 		ALBEDO = ground * ground_patches(world_pos.xz, ground_variation);
+		// Near-camera flecks so speed reads (v0.31, vfx/speed_feel).
+		ALBEDO *= ground_flow(world_pos, CAMERA_POSITION_WORLD);
 	} else {
 		float lines = max(grid_lines(uv, cell, line_width), grid_lines(uv, cell * major_every, line_width * 1.6));
 		ALBEDO = mix(base_color, line_color, lines);
