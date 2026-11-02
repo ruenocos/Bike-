@@ -1,27 +1,32 @@
 class_name AnimeFx
 extends CanvasLayer
 ## Full-screen anime punches (vfx/anime_fx.tscn, child of Player, v0.30):
-##   Impact frame: a perfect landing flips the screen to ink and paper for a
-##   few frames with radial lines, then the lines fade. A good landing only
-##   gets the lines.
+##   Impact frame: a perfect landing gives a short, soft pale wash with thin
+##   radial lines that fade fast (v0.30.1, Wons: "calm down the perfect flash").
+##   A good landing only gets the lines. `ink_flip` brings back the full flip
+##   to ink and paper.
 ##   Boost burst: radial lines bursting out from the middle on any boost.
 ## Held cruising speed lines are vfx/speed_lines (they don't change here).
 
-## Rendered frames of ink and paper (counted in frames, so the hit stop
-## doesn't stretch or skip it). 0 = no flash, lines only.
-@export_range(0, 8) var impact_frames: int = 3
-## How strong the ink-and-paper flip is (lower it if the flash is too harsh).
-@export_range(0.0, 1.0, 0.01) var impact_strength: float = 0.85
-## Cannon shots (hops): a shorter, weaker flip and small lines.
-@export_range(0, 8) var cannon_frames: int = 2
-@export_range(0.0, 1.0, 0.01) var cannon_strength: float = 0.55
-@export_range(0.0, 1.0, 0.01) var cannon_lines: float = 0.45
+## Rendered frames of the wash (counted in frames, so the hit stop doesn't
+## stretch or skip it). 0 = no flash, lines only.
+@export_range(0, 8) var impact_frames: int = 2
+## How strong the wash is.
+@export_range(0.0, 1.0, 0.01) var impact_strength: float = 0.3
+## 0 = a soft pale wash, 1 = the full flip to ink and paper.
+@export_range(0.0, 1.0, 0.01) var ink_flip: float = 0.0
+## Width of the radial lines (1 = thick wedges).
+@export_range(0.0, 1.0, 0.01) var line_width: float = 0.4
+## Cannon shots (hops): gentler still, they happen often.
+@export_range(0, 8) var cannon_frames: int = 1
+@export_range(0.0, 1.0, 0.01) var cannon_strength: float = 0.15
+@export_range(0.0, 1.0, 0.01) var cannon_lines: float = 0.25
 ## How long the radial lines fade after a landing / a boost.
-@export_range(0.05, 1.0, 0.01, "suffix:s") var impact_lines_time: float = 0.18
+@export_range(0.05, 1.0, 0.01, "suffix:s") var impact_lines_time: float = 0.12
 @export_range(0.05, 1.0, 0.01, "suffix:s") var boost_lines_time: float = 0.32
 ## Peak strength of the lines per event.
-@export_range(0.0, 1.0, 0.01) var perfect_lines: float = 1.0
-@export_range(0.0, 1.0, 0.01) var good_lines: float = 0.5
+@export_range(0.0, 1.0, 0.01) var perfect_lines: float = 0.6
+@export_range(0.0, 1.0, 0.01) var good_lines: float = 0.35
 @export_range(0.0, 1.0, 0.01) var boost_lines: float = 0.6
 
 @onready var player: Player = get_parent() as Player
@@ -81,6 +86,8 @@ func _process(delta: float) -> void:
 		return
 	_material.set_shader_parameter(&"flash", _flash_strength if flash else 0.0)
 	_material.set_shader_parameter(&"lines", _lines)
+	_material.set_shader_parameter(&"ink_flip", ink_flip)
+	_material.set_shader_parameter(&"line_width", line_width)
 	# The ring of clear space opens outward as the burst fades.
 	_material.set_shader_parameter(&"radius", lerpf(0.75, 0.3, x))
 	if flash:

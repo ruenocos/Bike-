@@ -146,7 +146,7 @@ func _ready() -> void:
 	Events.gate_collected.connect(func(score: int) -> void: hud.flash_gate(score))
 	Events.landed.connect(func(grade: StringName) -> void:
 		if grade == &"perfect" and in_stage:
-			hud.flash_light())
+			hud.flash_light(0.06, 0.1))
 	player.shield_used.connect(func() -> void: hud.flash_message("SHIELD!", Color(0.45, 0.9, 1.0)))
 	player.air_hopped.connect(func() -> void: hud.flash_message("DOUBLE SHOT", Color(1.0, 0.9, 0.45)))
 	player.crushed.connect(func(_at: Vector3) -> void: hud.flash_message("CRUSHED!", Color(1.0, 0.75, 0.3)))
