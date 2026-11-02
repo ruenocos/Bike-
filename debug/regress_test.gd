@@ -72,6 +72,8 @@ func _run_game_cases() -> void:
 			break
 	_check(game.get("in_stage"), "ride: the stage starts")
 	_check(collapse.visible, "ride: the collapse wall is back")
+	# Past the title menu's input delay, which still holds its button.
+	await get_tree().create_timer(menu.input_delay + 0.1).timeout
 	game.queue_free()
 	await _ticks(2)
 
