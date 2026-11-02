@@ -4,11 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://sp5utx14rvih"
-valid=false
+path="res://.godot/imported/boss_mech.glb-7f9fa9c2a08a97b5c4362cdb592bdd26.scn"
 
 [deps]
 
 source_file="res://art/boss/boss_mech.glb"
+dest_files=["res://.godot/imported/boss_mech.glb-7f9fa9c2a08a97b5c4362cdb592bdd26.scn"]
 
 [params]
 
