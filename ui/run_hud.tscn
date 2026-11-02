@@ -1,14 +1,17 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://ui/run_hud.gd" id="1_hud"]
 [ext_resource type="Shader" path="res://ui/danger_vignette.gdshader" id="2_vignette"]
 [ext_resource type="Script" path="res://ui/stage_progress.gd" id="3_progress"]
-[ext_resource type="Theme" path="res://ui/bike_theme.tres" id="4_theme"]
+[ext_resource type="Theme" path="res://ui/theme/panzer_theme.tres" id="4_theme"]
+[ext_resource type="Script" path="res://ui/hud/speed_dial.gd" id="5_dial"]
+[ext_resource type="Script" path="res://ui/hud/shell_pips.gd" id="6_pips"]
+[ext_resource type="FontFile" path="res://ui/fonts/BarlowCondensed-BlackItalic.ttf" id="7_font"]
 
 [sub_resource type="ShaderMaterial" id="Mat_vignette"]
 shader = ExtResource("2_vignette")
 shader_parameter/intensity = 0.0
-shader_parameter/color = Color(1, 0.15, 0.05, 1)
+shader_parameter/color = Color(0.898, 0.196, 0.176, 1)
 
 [node name="RunHud" type="CanvasLayer"]
 layer = 5
@@ -23,273 +26,519 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="StageLabel" type="Label" parent="."]
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -200.0
-offset_top = 20.0
-offset_right = 200.0
-offset_bottom = 66.0
-grow_horizontal = 2
-theme = ExtResource("4_theme")
-theme_override_font_sizes/font_size = 36
-text = "STAGE 1"
-horizontal_alignment = 1
-
-[node name="TimeLabel" type="Label" parent="."]
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -200.0
-offset_top = 64.0
-offset_right = 200.0
-offset_bottom = 104.0
-grow_horizontal = 2
-theme = ExtResource("4_theme")
-theme_override_font_sizes/font_size = 30
-text = "0:00.00"
-horizontal_alignment = 1
-
-[node name="ScoreLabel" type="Label" parent="."]
-anchors_preset = 1
-anchor_left = 1.0
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
 anchor_right = 1.0
-offset_left = -520.0
-offset_top = 20.0
-offset_right = -32.0
-offset_bottom = 76.0
-grow_horizontal = 0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 theme = ExtResource("4_theme")
+
+[node name="TopLeft" type="VBoxContainer" parent="Root"]
+layout_mode = 0
+offset_left = -36.0
+offset_top = 30.0
+offset_right = 520.0
+offset_bottom = 230.0
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="StageTape" type="PanelContainer" parent="Root/TopLeft"]
+layout_mode = 2
+size_flags_horizontal = 0
+mouse_filter = 2
+theme_type_variation = &"TapeOliveL"
+
+[node name="StageLabel" type="Label" parent="Root/TopLeft/StageTape"]
+layout_mode = 2
+theme_type_variation = &"HudNumber"
 theme_override_font_sizes/font_size = 48
-text = "0"
-horizontal_alignment = 2
+text = "STAGE 1"
 
-[node name="CollapseLabel" type="Label" parent="."]
+[node name="TimeTape" type="PanelContainer" parent="Root/TopLeft"]
+layout_mode = 2
+size_flags_horizontal = 0
+mouse_filter = 2
+theme_type_variation = &"TapeInkL"
+
+[node name="TimeLabel" type="Label" parent="Root/TopLeft/TimeTape"]
+layout_mode = 2
+theme_type_variation = &"HudNumber"
+theme_override_font_sizes/font_size = 36
+text = "0:15.70"
+
+[node name="PenaltyTape" type="PanelContainer" parent="Root/TopLeft"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 0
+mouse_filter = 2
+theme_type_variation = &"TapeRedL"
+
+[node name="PenaltyLabel" type="Label" parent="Root/TopLeft/PenaltyTape"]
+layout_mode = 2
+theme_type_variation = &"HudNumber"
+theme_override_font_sizes/font_size = 32
+text = "+1.5 S"
+
+[node name="TopRight" type="VBoxContainer" parent="Root"]
+layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -520.0
-offset_top = 78.0
-offset_right = -32.0
-offset_bottom = 118.0
+offset_left = -560.0
+offset_top = 26.0
+offset_right = 36.0
+offset_bottom = 260.0
 grow_horizontal = 0
-theme = ExtResource("4_theme")
-theme_override_font_sizes/font_size = 30
-text = "COLLAPSE  120 m"
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="ScoreTape" type="PanelContainer" parent="Root/TopRight"]
+layout_mode = 2
+size_flags_horizontal = 8
+mouse_filter = 2
+theme_type_variation = &"TapeScore"
+
+[node name="ScoreLabel" type="Label" parent="Root/TopRight/ScoreTape"]
+layout_mode = 2
+theme_type_variation = &"HudNumber"
+theme_override_font_sizes/font_size = 76
+text = "12,450"
 horizontal_alignment = 2
 
-[node name="AlarmLabel" type="Label" parent="."]
+[node name="CollapseTape" type="PanelContainer" parent="Root/TopRight"]
 visible = false
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -400.0
-offset_top = -190.0
-offset_right = 400.0
-offset_bottom = -120.0
-grow_horizontal = 2
-grow_vertical = 0
-theme = ExtResource("4_theme")
-theme_override_colors/font_color = Color(1, 0.35, 0.2, 1)
-theme_override_font_sizes/font_size = 56
-text = "COLLAPSE!"
-horizontal_alignment = 1
+layout_mode = 2
+size_flags_horizontal = 8
+mouse_filter = 2
+theme_type_variation = &"TapeRedR"
 
-[node name="Progress" type="Control" parent="."]
+[node name="Row" type="HBoxContainer" parent="Root/TopRight/CollapseTape"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 14
+
+[node name="Caption" type="Label" parent="Root/TopRight/CollapseTape/Row"]
+layout_mode = 2
+theme_type_variation = &"HudLabelInk"
+theme_override_font_sizes/font_size = 26
+text = "COLLAPSE"
+
+[node name="CollapseLabel" type="Label" parent="Root/TopRight/CollapseTape/Row"]
+layout_mode = 2
+theme_type_variation = &"HudNumber"
+theme_override_font_sizes/font_size = 36
+text = "170 M"
+
+[node name="ShieldTape" type="PanelContainer" parent="Root/TopRight"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 8
+mouse_filter = 2
+theme_type_variation = &"TapeInkR"
+
+[node name="ShieldLabel" type="Label" parent="Root/TopRight/ShieldTape"]
+layout_mode = 2
+theme_type_variation = &"HudLabel"
+theme_override_colors/font_color = Color(0.949, 0.718, 0.02, 1)
+text = "SHIELD x1"
+
+[node name="ComboPanel" type="VBoxContainer" parent="Root"]
+visible = false
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 36.0
+offset_top = -150.0
+offset_right = 420.0
+offset_bottom = 20.0
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="Row" type="HBoxContainer" parent="Root/ComboPanel"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 18
+
+[node name="MultTape" type="PanelContainer" parent="Root/ComboPanel/Row"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"TapeInk"
+
+[node name="Mult" type="Label" parent="Root/ComboPanel/Row/MultTape"]
+layout_mode = 2
+theme_type_variation = &"HudNumber"
+theme_override_font_sizes/font_size = 92
+text = "x7"
+
+[node name="Pips" type="Control" parent="Root/ComboPanel/Row"]
+custom_minimum_size = Vector2(150, 40)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+script = ExtResource("6_pips")
+count = 7
+max_count = 8
+
+[node name="Points" type="Label" parent="Root/ComboPanel"]
+layout_mode = 2
+theme_type_variation = &"HudLabel"
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 34
+text = " 850 PTS"
+
+[node name="Callout" type="PanelContainer" parent="Root"]
+visible = false
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 30.0
+offset_top = 36.0
+offset_right = 330.0
+offset_bottom = 80.0
+grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"TapeMustard"
+
+[node name="CalloutLabel" type="Label" parent="Root/Callout"]
+layout_mode = 2
+theme_type_variation = &"HudLabelInk"
+text = "FRONTLOOP +400"
+
+[node name="SpeedPanel" type="Control" parent="Root"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 30.0
+offset_top = -230.0
+offset_right = 400.0
+offset_bottom = -26.0
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="Dial" type="Control" parent="Root/SpeedPanel"]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 10.0
+offset_right = 330.0
+offset_bottom = 160.0
+mouse_filter = 2
+script = ExtResource("5_dial")
+
+[node name="SpeedTape" type="PanelContainer" parent="Root/SpeedPanel"]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 46.0
+offset_top = 116.0
+offset_right = 330.0
+offset_bottom = 204.0
+mouse_filter = 2
+theme_type_variation = &"TapeInk"
+
+[node name="Row" type="HBoxContainer" parent="Root/SpeedPanel/SpeedTape"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="Value" type="Label" parent="Root/SpeedPanel/SpeedTape/Row"]
+layout_mode = 2
+theme_type_variation = &"HudNumber"
+theme_override_font_sizes/font_size = 72
+text = "215"
+horizontal_alignment = 2
+
+[node name="Unit" type="Label" parent="Root/SpeedPanel/SpeedTape/Row"]
+layout_mode = 2
+size_flags_vertical = 8
+theme_type_variation = &"HudLabel"
+theme_override_colors/font_color = Color(0.949, 0.718, 0.02, 1)
+theme_override_font_sizes/font_size = 24
+text = "KM/H"
+
+[node name="Progress" type="Control" parent="Root"]
+layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -480.0
+offset_left = -500.0
 offset_top = -84.0
-offset_right = 480.0
-offset_bottom = -60.0
+offset_right = 420.0
+offset_bottom = -50.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
 script = ExtResource("3_progress")
+font = ExtResource("7_font")
 
-[node name="CollapseMeter" type="ColorRect" parent="."]
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -352.0
-offset_top = 122.0
-offset_right = -32.0
-offset_bottom = 136.0
-grow_horizontal = 0
-mouse_filter = 2
-color = Color(0, 0, 0, 0.35)
-
-[node name="Fill" type="ColorRect" parent="CollapseMeter"]
-anchors_preset = 9
-anchor_bottom = 1.0
-offset_right = 0.0
-grow_vertical = 2
-mouse_filter = 2
-color = Color(1, 0.35, 0.15, 0.9)
-
-[node name="PenaltyLabel" type="Label" parent="."]
+[node name="AlarmTape" type="PanelContainer" parent="Root"]
 visible = false
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -200.0
-offset_top = 104.0
-offset_right = 200.0
-offset_bottom = 144.0
-grow_horizontal = 2
-theme = ExtResource("4_theme")
-theme_override_colors/font_color = Color(1, 0.45, 0.25, 1)
-theme_override_font_sizes/font_size = 30
-text = "+1.5 s"
-horizontal_alignment = 1
-
-[node name="OobLabel" type="Label" parent="."]
-visible = false
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -400.0
-offset_top = -200.0
-offset_right = 400.0
-offset_bottom = -130.0
-grow_horizontal = 2
-grow_vertical = 2
-theme = ExtResource("4_theme")
-theme_override_colors/font_color = Color(1, 0.75, 0.2, 1)
-theme_override_font_sizes/font_size = 48
-text = "OUT OF BOUNDS  3.0"
-horizontal_alignment = 1
-
-[node name="StartFlash" type="Label" parent="."]
-visible = false
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -400.0
-offset_top = -200.0
-offset_right = 400.0
-offset_bottom = -130.0
-grow_horizontal = 2
-grow_vertical = 2
-theme = ExtResource("4_theme")
-theme_override_colors/font_color = Color(0.5, 1, 0.55, 1)
-theme_override_font_sizes/font_size = 56
-text = "PERFECT START!"
-horizontal_alignment = 1
-
-[node name="StartPanel" type="Control" parent="."]
-visible = false
+layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -320.0
-offset_top = -330.0
-offset_right = 320.0
-offset_bottom = -200.0
+offset_left = -220.0
+offset_top = -200.0
+offset_right = 220.0
+offset_bottom = -116.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
+theme_type_variation = &"TapeRed"
 
-[node name="Prompt" type="Label" parent="StartPanel"]
-layout_mode = 0
-offset_right = 640.0
-offset_bottom = 56.0
-theme = ExtResource("4_theme")
-theme_override_font_sizes/font_size = 40
-text = "Hold RT to pedal"
+[node name="AlarmLabel" type="Label" parent="Root/AlarmTape"]
+layout_mode = 2
+theme_type_variation = &"HudNumber"
+theme_override_font_sizes/font_size = 64
+text = "COLLAPSE!"
 horizontal_alignment = 1
 
-[node name="MeterBack" type="ColorRect" parent="StartPanel"]
-layout_mode = 0
-offset_top = 76.0
-offset_right = 640.0
-offset_bottom = 104.0
-mouse_filter = 2
-color = Color(0, 0, 0, 0.45)
-
-[node name="GoodZone" type="ColorRect" parent="StartPanel/MeterBack"]
-layout_mode = 0
-offset_bottom = 28.0
-mouse_filter = 2
-color = Color(0.95, 0.85, 0.3, 0.55)
-
-[node name="SweetZone" type="ColorRect" parent="StartPanel/MeterBack"]
-layout_mode = 0
-offset_bottom = 28.0
-mouse_filter = 2
-color = Color(0.4, 1, 0.5, 0.85)
-
-[node name="Needle" type="ColorRect" parent="StartPanel/MeterBack"]
-layout_mode = 0
-offset_left = -3.0
-offset_top = -8.0
-offset_right = 3.0
-offset_bottom = 36.0
-mouse_filter = 2
-
-[node name="TitleCard" type="VBoxContainer" parent="."]
+[node name="Flash" type="PanelContainer" parent="Root"]
 visible = false
+layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -500.0
-offset_top = 190.0
-offset_right = 500.0
-offset_bottom = 400.0
+offset_left = -300.0
+offset_top = 330.0
+offset_right = 300.0
+offset_bottom = 410.0
 grow_horizontal = 2
+mouse_filter = 2
+theme_type_variation = &"TapeInk"
+
+[node name="FlashLabel" type="Label" parent="Root/Flash"]
+layout_mode = 2
+theme_type_variation = &"HudNumber"
+theme_override_font_sizes/font_size = 60
+text = "PERFECT START!"
+horizontal_alignment = 1
+
+[node name="OobTape" type="PanelContainer" parent="Root"]
+visible = false
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -320.0
+offset_top = 230.0
+offset_right = 320.0
+offset_bottom = 310.0
+grow_horizontal = 2
+mouse_filter = 2
+theme_type_variation = &"TapeMustard"
+
+[node name="OobLabel" type="Label" parent="Root/OobTape"]
+layout_mode = 2
+theme_type_variation = &"HudNumber"
+theme_override_colors/font_color = Color(0.078, 0.078, 0.086, 1)
+theme_override_font_sizes/font_size = 56
+text = "OUT OF BOUNDS  3.0"
+horizontal_alignment = 1
+
+[node name="StartPanel" type="VBoxContainer" parent="Root"]
+visible = false
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -340.0
+offset_top = -330.0
+offset_right = 340.0
+offset_bottom = -190.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="PromptTape" type="PanelContainer" parent="Root/StartPanel"]
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+theme_type_variation = &"TapeInk"
+
+[node name="Prompt" type="Label" parent="Root/StartPanel/PromptTape"]
+layout_mode = 2
+theme_type_variation = &"HudLabel"
+theme_override_font_sizes/font_size = 36
+text = "Hold RT to pedal"
+horizontal_alignment = 1
+
+[node name="MeterBack" type="ColorRect" parent="Root/StartPanel"]
+custom_minimum_size = Vector2(640, 26)
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+color = Color(0.078, 0.078, 0.086, 0.8)
+
+[node name="GoodZone" type="ColorRect" parent="Root/StartPanel/MeterBack"]
+layout_mode = 0
+offset_bottom = 26.0
+mouse_filter = 2
+color = Color(0.243, 0.357, 0.227, 1)
+
+[node name="SweetZone" type="ColorRect" parent="Root/StartPanel/MeterBack"]
+layout_mode = 0
+offset_bottom = 26.0
+mouse_filter = 2
+color = Color(0.949, 0.718, 0.02, 1)
+
+[node name="Needle" type="ColorRect" parent="Root/StartPanel/MeterBack"]
+layout_mode = 0
+offset_left = -4.0
+offset_top = -10.0
+offset_right = 4.0
+offset_bottom = 36.0
+mouse_filter = 2
+color = Color(0.957, 0.945, 0.91, 1)
+
+[node name="TitleCard" type="VBoxContainer" parent="Root"]
+visible = false
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -700.0
+offset_top = 170.0
+offset_right = 700.0
+offset_bottom = 470.0
+grow_horizontal = 2
+mouse_filter = 2
 theme_override_constants/separation = 0
 alignment = 1
 
-[node name="StageNo" type="Label" parent="TitleCard"]
+[node name="StageTape" type="PanelContainer" parent="Root/TitleCard"]
 layout_mode = 2
-theme = ExtResource("4_theme")
-theme_override_colors/font_color = Color(1, 0.86, 0.55, 1)
-theme_override_font_sizes/font_size = 30
+size_flags_horizontal = 4
+mouse_filter = 2
+theme_type_variation = &"TapeOlive"
+
+[node name="StageNo" type="Label" parent="Root/TitleCard/StageTape"]
+layout_mode = 2
+theme_type_variation = &"HudNumber"
+theme_override_font_sizes/font_size = 40
 text = "STAGE 1"
+
+[node name="Name" type="Label" parent="Root/TitleCard"]
+layout_mode = 2
+theme_type_variation = &"Headline"
+text = "SUNSET MEADOW"
 horizontal_alignment = 1
 
-[node name="Name" type="Label" parent="TitleCard"]
+[node name="Sub" type="Label" parent="Root/TitleCard"]
 layout_mode = 2
-theme = ExtResource("4_theme")
-theme_override_font_sizes/font_size = 84
-text = "Sunset Meadow"
-horizontal_alignment = 1
-
-[node name="Sub" type="Label" parent="TitleCard"]
-layout_mode = 2
-theme = ExtResource("4_theme")
-theme_override_colors/font_color = Color(1, 1, 1, 0.8)
-theme_override_font_sizes/font_size = 28
+theme_type_variation = &"HudLabel"
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 32
 text = "Golden hour in the high pastures"
 horizontal_alignment = 1
 
-[node name="ShieldLabel" type="Label" parent="."]
+[node name="Kana" type="Label" parent="Root/TitleCard"]
+layout_mode = 2
+theme_type_variation = &"Kana"
+theme_override_font_sizes/font_size = 28
+text = "第1戦区"
+horizontal_alignment = 1
+
+[node name="CutIn" type="Control" parent="Root"]
 visible = false
-anchors_preset = 1
-anchor_left = 1.0
+layout_mode = 1
+anchors_preset = 15
 anchor_right = 1.0
-offset_left = -360.0
-offset_top = 150.0
-offset_right = -32.0
-offset_bottom = 190.0
-grow_horizontal = 0
-theme = ExtResource("4_theme")
-theme_override_colors/font_color = Color(0.45, 0.9, 1, 1)
-theme_override_font_sizes/font_size = 26
-text = "SHIELD x1"
-horizontal_alignment = 2
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Slash" type="Control" parent="Root/CutIn"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -1200.0
+offset_top = 160.0
+offset_right = 1200.0
+offset_bottom = 330.0
+grow_horizontal = 2
+rotation = -0.122
+pivot_offset = Vector2(1200, 85)
+mouse_filter = 2
+
+[node name="Ink" type="ColorRect" parent="Root/CutIn/Slash"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -8.0
+offset_bottom = 8.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.078, 0.078, 0.086, 1)
+
+[node name="Band" type="ColorRect" parent="Root/CutIn/Slash"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.898, 0.196, 0.176, 1)
+
+[node name="Portrait" type="TextureRect" parent="Root/CutIn"]
+visible = false
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -720.0
+offset_top = 70.0
+offset_right = -420.0
+offset_bottom = 410.0
+grow_horizontal = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Words" type="HBoxContainer" parent="Root/CutIn/Slash"]
+layout_mode = 0
+offset_left = 700.0
+offset_top = 0.0
+offset_right = 1800.0
+offset_bottom = 170.0
+mouse_filter = 2
+theme_override_constants/separation = 30
+alignment = 1
+
+[node name="Word" type="Label" parent="Root/CutIn/Slash/Words"]
+layout_mode = 2
+theme_type_variation = &"Headline"
+theme_override_colors/font_shadow_color = Color(0.078, 0.078, 0.086, 1)
+theme_override_font_sizes/font_size = 140
+text = "PERFECT"
+
+[node name="Line" type="Label" parent="Root/CutIn/Slash/Words"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"Kana"
+theme_override_colors/font_color = Color(0.078, 0.078, 0.086, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0)
+theme_override_font_sizes/font_size = 40
+text = "ナイス着地！"
 
 [node name="LightFlash" type="ColorRect" parent="."]
 visible = false
@@ -309,82 +558,4 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.04, 0.03, 0.05, 1)
-
-[node name="SpeedPanel" type="Control" parent="."]
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 40.0
-offset_top = -170.0
-offset_right = 360.0
-offset_bottom = -40.0
-grow_vertical = 0
-mouse_filter = 2
-
-[node name="Value" type="Label" parent="SpeedPanel"]
-layout_mode = 0
-offset_right = 220.0
-offset_bottom = 90.0
-theme = ExtResource("4_theme")
-theme_override_colors/font_outline_color = Color(0.08, 0.06, 0.08, 1)
-theme_override_constants/outline_size = 14
-theme_override_font_sizes/font_size = 80
-text = "0"
-horizontal_alignment = 2
-
-[node name="Unit" type="Label" parent="SpeedPanel"]
-layout_mode = 0
-offset_left = 228.0
-offset_top = 38.0
-offset_right = 320.0
-offset_bottom = 80.0
-theme = ExtResource("4_theme")
-theme_override_colors/font_color = Color(1, 1, 1, 0.75)
-theme_override_colors/font_outline_color = Color(0.08, 0.06, 0.08, 1)
-theme_override_constants/outline_size = 8
-theme_override_font_sizes/font_size = 28
-text = "km/h"
-
-[node name="Bar" type="ColorRect" parent="SpeedPanel"]
-layout_mode = 0
-offset_top = 100.0
-offset_right = 300.0
-offset_bottom = 112.0
-color = Color(0.08, 0.06, 0.08, 0.6)
-
-[node name="Fill" type="ColorRect" parent="SpeedPanel/Bar"]
-layout_mode = 0
-offset_right = 150.0
-offset_bottom = 12.0
-color = Color(0.45, 0.9, 1, 1)
-
-[node name="ComboPanel" type="VBoxContainer" parent="."]
-visible = false
-anchors_preset = 4
-anchor_top = 0.5
-anchor_bottom = 0.5
-offset_left = 40.0
-offset_top = -120.0
-offset_right = 360.0
-offset_bottom = 40.0
-grow_vertical = 2
-mouse_filter = 2
-theme_override_constants/separation = -10
-
-[node name="Mult" type="Label" parent="ComboPanel"]
-layout_mode = 2
-theme = ExtResource("4_theme")
-theme_override_colors/font_color = Color(1, 0.82, 0.3, 1)
-theme_override_colors/font_outline_color = Color(0.08, 0.06, 0.08, 1)
-theme_override_constants/outline_size = 14
-theme_override_font_sizes/font_size = 72
-text = "x2"
-
-[node name="Points" type="Label" parent="ComboPanel"]
-layout_mode = 2
-theme = ExtResource("4_theme")
-theme_override_colors/font_outline_color = Color(0.08, 0.06, 0.08, 1)
-theme_override_constants/outline_size = 10
-theme_override_font_sizes/font_size = 40
-text = "0"
+color = Color(0.078, 0.078, 0.086, 1)

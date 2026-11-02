@@ -1,10 +1,7 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://ui/menus/main_menu.gd" id="1_script"]
-[ext_resource type="Theme" path="res://ui/bike_theme.tres" id="2_theme"]
-
-[sub_resource type="SystemFont" id="Font_mono"]
-font_names = PackedStringArray("Consolas", "Menlo", "monospace")
+[ext_resource type="Theme" path="res://ui/theme/panzer_theme.tres" id="2_theme"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -16,170 +13,225 @@ grow_vertical = 2
 theme = ExtResource("2_theme")
 script = ExtResource("1_script")
 
-[node name="Dim" type="ColorRect" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="Shard" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = -500.0
+offset_top = -300.0
+offset_right = 420.0
+offset_bottom = 1500.0
+rotation = 0.26
 mouse_filter = 2
-color = Color(0.05, 0.03, 0.06, 0.15)
+color = Color(0.078, 0.078, 0.086, 0.88)
 
-[node name="Center" type="CenterContainer" parent="."]
+[node name="Stripe" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = 440.0
+offset_top = -300.0
+offset_right = 470.0
+offset_bottom = 1500.0
+rotation = 0.26
+mouse_filter = 2
+color = Color(0.898, 0.196, 0.176, 1)
+
+[node name="Logo" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 90.0
+offset_top = 90.0
+offset_right = 900.0
+offset_bottom = 480.0
+rotation = -0.07
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="Title" type="Label" parent="Logo"]
+layout_mode = 2
+theme_type_variation = &"Headline"
+theme_override_font_sizes/font_size = 260
+text = "BIKE!"
+
+[node name="Kana" type="Label" parent="Logo"]
+layout_mode = 2
+theme_type_variation = &"Kana"
+theme_override_colors/font_color = Color(0.949, 0.718, 0.02, 1)
+theme_override_font_sizes/font_size = 40
+text = "崩壊から逃げ切れ！"
+
+[node name="TagTape" type="PanelContainer" parent="Logo"]
+layout_mode = 2
+size_flags_horizontal = 0
+mouse_filter = 2
+theme_type_variation = &"TapeRed"
+
+[node name="Tag" type="Label" parent="Logo/TagTape"]
+layout_mode = 2
+theme_type_variation = &"HudLabel"
+theme_override_font_sizes/font_size = 34
+text = "RIDE DOWN. OUTRUN THE COLLAPSE."
+
+[node name="Panel" type="PanelContainer" parent="."]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 0.5
-anchor_bottom = 1.0
-grow_horizontal = 2
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -800.0
+offset_top = -330.0
+offset_right = -120.0
+offset_bottom = 330.0
+grow_horizontal = 0
 grow_vertical = 2
 
-[node name="Panel" type="PanelContainer" parent="Center"]
-layout_mode = 2
-
-[node name="VBox" type="VBoxContainer" parent="Center/Panel"]
-custom_minimum_size = Vector2(720, 0)
+[node name="VBox" type="VBoxContainer" parent="Panel"]
 layout_mode = 2
 theme_override_constants/separation = 18
 
-[node name="Title" type="Label" parent="Center/Panel/VBox"]
+[node name="Caption" type="Label" parent="Panel/VBox"]
 layout_mode = 2
-pivot_offset = Vector2(316, 80)
-rotation = -0.06
-theme_override_colors/font_color = Color(1, 0.8, 0.25, 1)
-theme_override_colors/font_shadow_color = Color(0.85, 0.3, 0.2, 1)
-theme_override_constants/shadow_offset_x = 6
-theme_override_constants/shadow_offset_y = 7
-theme_override_constants/outline_size = 26
-theme_override_font_sizes/font_size = 140
-text = "BIKE!"
-horizontal_alignment = 1
+theme_type_variation = &"HudLabel"
+theme_override_colors/font_color = Color(0.949, 0.718, 0.02, 1)
+theme_override_font_sizes/font_size = 24
+text = "CHOOSE YOUR RIDE"
 
-[node name="Tag" type="Label" parent="Center/Panel/VBox"]
+[node name="BikeRow" type="HBoxContainer" parent="Panel/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 0.75)
-text = "Ride down. Outrun the collapse."
-horizontal_alignment = 1
-
-[node name="BikeRow" type="HBoxContainer" parent="Center/Panel/VBox"]
-layout_mode = 2
+theme_override_constants/separation = 18
 alignment = 1
-theme_override_constants/separation = 20
 
-[node name="Prev" type="Button" parent="Center/Panel/VBox/BikeRow"]
+[node name="Prev" type="Button" parent="Panel/VBox/BikeRow"]
 unique_name_in_owner = true
 layout_mode = 2
 focus_mode = 0
-text = " < "
+text = "<"
 
-[node name="Swatch" type="ColorRect" parent="Center/Panel/VBox/BikeRow"]
+[node name="Swatch" type="ColorRect" parent="Panel/VBox/BikeRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(36, 36)
+custom_minimum_size = Vector2(22, 70)
 layout_mode = 2
-size_flags_vertical = 4
 color = Color(0.1, 0.62, 0.66, 1)
 
-[node name="BikeName" type="Label" parent="Center/Panel/VBox/BikeRow"]
+[node name="BikeName" type="Label" parent="Panel/VBox/BikeRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(360, 0)
+custom_minimum_size = Vector2(320, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 48
+size_flags_horizontal = 3
+theme_type_variation = &"HudNumber"
+theme_override_font_sizes/font_size = 84
 text = "TRAIL"
-horizontal_alignment = 1
 
-[node name="Next" type="Button" parent="Center/Panel/VBox/BikeRow"]
+[node name="Next" type="Button" parent="Panel/VBox/BikeRow"]
 unique_name_in_owner = true
 layout_mode = 2
 focus_mode = 0
-text = " > "
+text = ">"
 
-[node name="BikeInfo" type="Label" parent="Center/Panel/VBox"]
+[node name="BikeInfo" type="Label" parent="Panel/VBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(680, 0)
+custom_minimum_size = Vector2(600, 110)
 layout_mode = 2
-theme_override_font_sizes/font_size = 26
+theme_type_variation = &"CardBody"
+theme_override_colors/font_color = Color(0.957, 0.945, 0.91, 0.85)
 text = "The all-rounder."
-horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="Stats" type="GridContainer" parent="Center/Panel/VBox"]
-unique_name_in_owner = true
+[node name="Stats" type="GridContainer" parent="Panel/VBox"]
 layout_mode = 2
-size_flags_horizontal = 4
-theme_override_constants/h_separation = 18
-theme_override_constants/v_separation = 6
+theme_override_constants/h_separation = 24
+theme_override_constants/v_separation = 12
 columns = 2
 
-[node name="SpeedLabel" type="Label" parent="Center/Panel/VBox/Stats"]
+[node name="SpeedLabel" type="Label" parent="Panel/VBox/Stats"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "Speed"
+theme_type_variation = &"HudLabel"
+theme_override_font_sizes/font_size = 26
+text = "SPEED"
 
-[node name="Speed" type="ProgressBar" parent="Center/Panel/VBox/Stats"]
+[node name="Speed" type="ProgressBar" parent="Panel/VBox/Stats"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(300, 18)
+custom_minimum_size = Vector2(0, 22)
 layout_mode = 2
+size_flags_horizontal = 3
 size_flags_vertical = 4
 max_value = 1.0
 step = 0.01
 value = 0.5
 show_percentage = false
 
-[node name="HopLabel" type="Label" parent="Center/Panel/VBox/Stats"]
+[node name="HopLabel" type="Label" parent="Panel/VBox/Stats"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "Hop"
+theme_type_variation = &"HudLabel"
+theme_override_font_sizes/font_size = 26
+text = "HOP"
 
-[node name="Hop" type="ProgressBar" parent="Center/Panel/VBox/Stats"]
+[node name="Hop" type="ProgressBar" parent="Panel/VBox/Stats"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(300, 18)
+custom_minimum_size = Vector2(0, 22)
 layout_mode = 2
+size_flags_horizontal = 3
 size_flags_vertical = 4
 max_value = 1.0
 step = 0.01
 value = 0.5
 show_percentage = false
 
-[node name="ToughLabel" type="Label" parent="Center/Panel/VBox/Stats"]
+[node name="ToughLabel" type="Label" parent="Panel/VBox/Stats"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "Toughness"
+theme_type_variation = &"HudLabel"
+theme_override_font_sizes/font_size = 26
+text = "TOUGHNESS"
 
-[node name="Tough" type="ProgressBar" parent="Center/Panel/VBox/Stats"]
+[node name="Tough" type="ProgressBar" parent="Panel/VBox/Stats"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(300, 18)
+custom_minimum_size = Vector2(0, 22)
 layout_mode = 2
+size_flags_horizontal = 3
 size_flags_vertical = 4
 max_value = 1.0
 step = 0.01
 value = 0.5
 show_percentage = false
 
-[node name="Lock" type="Label" parent="Center/Panel/VBox"]
+[node name="Lock" type="Label" parent="Panel/VBox"]
 unique_name_in_owner = true
 visible = false
+custom_minimum_size = Vector2(600, 0)
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.6, 0.25, 1)
-theme_override_font_sizes/font_size = 28
-text = "LOCKED"
-horizontal_alignment = 1
-
-[node name="Ride" type="Button" parent="Center/Panel/VBox"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Ride"
-
-[node name="Best" type="Label" parent="Center/Panel/VBox"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_fonts/font = SubResource("Font_mono")
+theme_type_variation = &"HudLabel"
+theme_override_colors/font_color = Color(0.898, 0.196, 0.176, 1)
 theme_override_font_sizes/font_size = 26
-text = "Best stage   0"
+text = "LOCKED"
+autowrap_mode = 3
 
-[node name="Hint" type="Label" parent="Center/Panel/VBox"]
+[node name="Ride" type="Button" parent="Panel/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 90)
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 0.5)
+theme_override_font_sizes/font_size = 48
+text = "ROLL OUT"
+
+[node name="Hint" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+theme_type_variation = &"HudLabel"
+theme_override_colors/font_color = Color(0.957, 0.945, 0.91, 0.55)
 theme_override_font_sizes/font_size = 22
-text = "Left / right: bike    A: ride"
+text = "LEFT / RIGHT: CHANGE RIDE     A: ROLL OUT"
 horizontal_alignment = 1
+
+[node name="BestTape" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -36.0
+offset_top = -110.0
+offset_right = 900.0
+offset_bottom = -56.0
+grow_vertical = 0
+theme_type_variation = &"TapeInkL"
+
+[node name="Best" type="Label" parent="BestTape"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HudLabel"
+theme_override_font_sizes/font_size = 26
+text = "BEST STAGE 0   ·   BEST SCORE 0   ·   GATES 0   ·   RUNS 0"

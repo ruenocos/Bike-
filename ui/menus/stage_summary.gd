@@ -11,7 +11,9 @@ signal continued
 @export_range(0.0, 3.0, 0.05, "suffix:s") var input_delay: float = 0.5
 
 @onready var title_label: Label = %Title
-@onready var stats_label: Label = %Stats
+@onready var kana_label: Label = %Kana
+@onready var names_label: Label = %Names
+@onready var values_label: Label = %Values
 @onready var continue_button: Button = %Continue
 
 
@@ -23,9 +25,13 @@ func _ready() -> void:
 func open(stage: int, time: float, best_combo: int, stage_score: int, run_score: int,
 		gates: int = 0, gates_total: int = 0, rerolls_earned: int = 0, rerolls: int = 0) -> void:
 	title_label.text = "STAGE %d CLEAR" % stage
-	stats_label.text = "Time            %d:%05.2f\nBest combo      %d\nStage score     %d\nRun score       %d\nBoost gates     %d / %d\nRerolls         +%d  (%d)" % [
-		floori(time / 60.0), fmod(time, 60.0), best_combo, stage_score, run_score, gates, gates_total, rerolls_earned, rerolls]
+	kana_label.text = "第%d戦区 突破" % stage
+	names_label.text = "TIME\nBEST COMBO\nSTAGE SCORE\nRUN SCORE\nBOOST GATES\nREROLLS"
+	values_label.text = "%d:%05.2f\n%s\n%s\n%s\n%d / %d\n+%d  (%d)" % [
+		floori(time / 60.0), fmod(time, 60.0), RunHud.group_digits(best_combo), RunHud.group_digits(stage_score),
+		RunHud.group_digits(run_score), gates, gates_total, rerolls_earned, rerolls]
 	show()
+	UiMotion.open_menu(self)
 	await MenuInput.delay_focus(self, continue_button, input_delay)
 
 

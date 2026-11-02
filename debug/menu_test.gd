@@ -2,8 +2,9 @@ extends Node
 ## Gamepad check for the menus: real joypad button / d-pad events (not
 ## actions), the way a pad sends them. Opens each menu and checks:
 ##   - stage summary: A continues
-##   - upgrade picker: A picks the focused card; d-pad down reaches REROLL and A rerolls
-##   - run over: A restarts, d-pad down + A goes to the title screen
+##   - upgrade picker (v0.31 cards stacked): A picks the focused card; d-pad down
+##     past the last card reaches REROLL and A rerolls
+##   - run over: A restarts, d-pad right + A goes to the title screen
 ##   - pause menu (v0.19): A resumes, d-pad down twice + A goes to the title
 ##   - title screen (v0.14): d-pad right shows the next bike, A on a locked
 ##	 bike does nothing, back to the first bike and A rides on it
@@ -70,14 +71,15 @@ func _run() -> void:
 
 	picker.open(ups, 1)
 	await get_tree().create_timer(1.0).timeout
-	await _button(JOY_BUTTON_DPAD_DOWN)
+	for i: int in 3:
+		await _button(JOY_BUTTON_DPAD_DOWN)
 	await _button(JOY_BUTTON_A)
-	_check(got["reroll"] == 1, "upgrade picker: d-pad down + A rerolls")
+	_check(got["reroll"] == 1, "upgrade picker: d-pad down x3 + A rerolls")
 	picker.open(ups, 0)
 	await get_tree().create_timer(1.0).timeout
-	await _button(JOY_BUTTON_DPAD_RIGHT)
+	await _button(JOY_BUTTON_DPAD_DOWN)
 	await _button(JOY_BUTTON_A)
-	_check(got["picked"] == 1, "upgrade picker: d-pad right + A picks a card")
+	_check(got["picked"] == 1, "upgrade picker: d-pad down + A picks a card")
 
 	run_over.open(2, 1000, 1)
 	await get_tree().create_timer(1.2).timeout
@@ -85,9 +87,9 @@ func _run() -> void:
 	_check(got["restart"] == 1, "run over: A restarts")
 	run_over.open(2, 1000, 1)
 	await get_tree().create_timer(1.2).timeout
-	await _button(JOY_BUTTON_DPAD_DOWN)
+	await _button(JOY_BUTTON_DPAD_RIGHT)
 	await _button(JOY_BUTTON_A)
-	_check(got["menu"] == 1, "run over: d-pad down + A goes to the title screen")
+	_check(got["menu"] == 1, "run over (v0.31 buttons side by side): d-pad right + A goes to the title screen")
 
 	var paused: Dictionary[String, int] = {"resumed": 0, "menu": 0}
 	pause.resumed.connect(func() -> void: paused["resumed"] += 1)
