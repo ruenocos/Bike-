@@ -94,7 +94,8 @@ var _menu_flight: float = 0.0
 var _in_menu: bool = false
 ## `--biome=<n>`: start the biome order at n (look at one biome quickly).
 var biome_offset: int = 0
-## --boss-now: skip stage 1 and go straight to the first boss.
+## --boss-now or the title screen's BOSS FIGHT button: skip stage 1 and
+## go straight to the first boss.
 var _boss_now: bool = false
 
 var run_seed: int = 0
@@ -136,6 +137,9 @@ func _ready() -> void:
 	run_over.restart.connect(start_run)
 	run_over.to_menu.connect(_open_main_menu)
 	main_menu.ride.connect(_on_ride)
+	main_menu.boss_fight.connect(func(b: BikeData) -> void:
+		_boss_now = true
+		_on_ride(b))
 	pause_menu.resumed.connect(_unpause)
 	pause_menu.restart.connect(func() -> void:
 		_unpause()
